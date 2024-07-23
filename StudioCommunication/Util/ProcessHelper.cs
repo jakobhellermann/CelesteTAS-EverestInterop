@@ -10,9 +10,9 @@ public static class ProcessHelper
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
         } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-            Process.Start("xdg-open", [path]);
+            Process.Start("xdg-open", path);
         } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-            Process.Start("open", [path]);
+            Process.Start("open", path);
         } else {
             throw new NotImplementedException($"Unsupported platform: {RuntimeInformation.OSDescription} with {RuntimeInformation.OSArchitecture}");
         }
@@ -22,7 +22,7 @@ public static class ProcessHelper
     public static void Terminate(this Process process) {
         // Unix
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-            Process.Start("kill", ["-s", "SIGINT", process.Id.ToString()]);
+            Process.Start("kill", $"-s SIGINT ${process.Id.ToString()}");
             return;
         }
 
