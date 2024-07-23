@@ -412,7 +412,7 @@ public sealed class Studio : Form {
             }},
             new SubMenuItem { Text = "&View", Items = {
                 MenuEntry.View_ShowGameInfo.ToSettingToggle(nameof(Settings.ShowGameInfo)),
-                MenuEntry.View_ShowSubpixelIndicator.ToSettingToggle(nameof(Settings.ShowGameInfo)),
+                MenuEntry.View_ShowSubpixelIndicator.ToSettingToggle(nameof(Settings.ShowSubpixelIndicator)),
                 MenuUtils.CreateSettingNumberInput("Subpixel Indicator Scale", nameof(Settings.SubpixelIndicatorScale), 0.1f, 10.0f, 0.25f),
                 new SeparatorMenuItem(),
                 MenuEntry.View_AlwaysOnTop.ToSettingToggle(nameof(Settings.ShowGameInfo)),
