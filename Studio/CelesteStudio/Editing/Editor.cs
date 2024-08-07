@@ -3232,12 +3232,12 @@ public sealed class Editor : SkiaDrawable {
                     CaretMovementType.WordRight => ClampCaret(new CaretPosition(Document.Caret.Row, GetHardSnapColumns(actionLine).FirstOrDefault(c => c > Document.Caret.Col, Document.Caret.Col)), wrapLine: true),
                     CaretMovementType.LineStart => ClampCaret(new CaretPosition(Document.Caret.Row, leadingSpaces)),
                     CaretMovementType.LineEnd   => ClampCaret(new CaretPosition(Document.Caret.Row, line.Length)),
-                    _ => GetNewTextCaretPosition(direction),
+                    _ => GetNewTextCaretPosition(direction, updateSelection),
                 };
             }
         } else {
             // Regular text movement
-            Document.Caret = GetNewTextCaretPosition(direction);
+            Document.Caret = GetNewTextCaretPosition(direction, updateSelection);
         }
 
         // Apply / Update desired column
@@ -3287,17 +3287,33 @@ public sealed class Editor : SkiaDrawable {
         Document.Caret = Document.Caret;
         ScrollCaretIntoView(center: direction is CaretMovementType.LabelUp or CaretMovementType.LabelDown);
     }
+    
+    private CaretPosition GetSelectionCaretMovement(bool up, bool updateSelection) {
+        bool endSelection = !Document.Selection.Empty && !updateSelection;
+        if (endSelection) {
+            CaretPosition continueAtPosition = up ? Document.Selection.Min : Document.Selection.Max;
+            CaretPosition oppositePosition = up ? Document.Selection.Max : Document.Selection.Min;
+            
+            if (continueAtPosition.Row == Document.Caret.Row) {
+                return GetNextVisualLinePosition(up ? -1 : 1, Document.Caret);
+            } else {
+                return continueAtPosition;
+            }
+        }
 
+        return GetNextVisualLinePosition(up ? -1 : 1, Document.Caret);
+    }
+    
     // For regular text movement
-    private CaretPosition GetNewTextCaretPosition(CaretMovementType direction) =>
+    private CaretPosition GetNewTextCaretPosition(CaretMovementType direction, bool updateSelection = false) =>
         direction switch {
             CaretMovementType.None => Document.Caret,
             CaretMovementType.CharLeft => ClampCaret(new CaretPosition(Document.Caret.Row, Document.Caret.Col - 1), wrapLine: true),
             CaretMovementType.CharRight => ClampCaret(new CaretPosition(Document.Caret.Row, Document.Caret.Col + 1), wrapLine: true),
             CaretMovementType.WordLeft => ClampCaret(GetNextWordCaretPosition(-1), wrapLine: true),
             CaretMovementType.WordRight => ClampCaret(GetNextWordCaretPosition(1), wrapLine: true),
-            CaretMovementType.LineUp => ClampCaret(GetNextVisualLinePosition(-1, Document.Caret)),
-            CaretMovementType.LineDown => ClampCaret(GetNextVisualLinePosition(1, Document.Caret)),
+            CaretMovementType.LineUp => ClampCaret(GetSelectionCaretMovement(up: true, updateSelection)),
+            CaretMovementType.LineDown => ClampCaret(GetSelectionCaretMovement(up: false, updateSelection)),
             CaretMovementType.LabelUp => ClampCaret(GetLabelPosition(-1)),
             CaretMovementType.LabelDown => ClampCaret(GetLabelPosition(1)),
             // TODO: Page Up / Page Down
