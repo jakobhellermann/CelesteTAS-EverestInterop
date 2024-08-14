@@ -3742,8 +3742,19 @@ public sealed class Editor : Drawable {
             e.Graphics.DrawText(FontManager.EditorFontRegular, Settings.Instance.Theme.CalculateFg, x + padding, y, calculateLine);
         }
 
+        Dictionary<int, (int,Color)> edits = new() {
+            {5, (1,Settings.Instance.Theme.GitLineModified)},
+            {11, (3, Settings.Instance.Theme.GitLineAdded)},
+            {15, (2, Settings.Instance.Theme.GitLineDeleted)},
+            {103, (2, Settings.Instance.Theme.GitLineAdded)},
+        };
+        
         // Draw line numbers
         {
+            e.Graphics.DrawLine(Settings.Instance.Theme.ServiceLine,
+                scrollablePosition.X + textOffsetX - LineNumberPadding, 0.0f,
+                scrollablePosition.X + textOffsetX - LineNumberPadding, yPos + scrollableSize.Height);
+            
             e.Graphics.FillRectangle(BackgroundColor,
                 x: scrollablePosition.X,
                 y: scrollablePosition.Y,
@@ -3799,6 +3810,23 @@ public sealed class Editor : Drawable {
                     e.Graphics.DrawText(Font, textColor, scrollablePosition.X + LineNumberPadding + ident, yPos, numberString);
                 }
 
+                if (edits.TryGetValue(row, out var info)) {
+                    (int length, var color) = info;
+                    float height = Font.LineHeight();
+
+                    float inset = Font.LineHeight() * 0.1f;
+                    float width = 3.5f;
+
+                    float offsetX = scrollablePosition.X + textOffsetX - LineNumberPadding - width / 2;
+                    
+                    var from = new PointF(offsetX, yPos + inset);
+                    var to = new PointF(offsetX, yPos + height * length - inset);
+                    using Pen pen = new(color);
+                    pen.Thickness = width;
+                    pen.LineCap = PenLineCap.Round;
+                    e.Graphics.DrawLine(pen, from, to);
+                }
+                
                 bool collapsed = false;
                 if (GetCollapse(row) is { } collapse) {
                     row = collapse.MaxRow;
@@ -3820,10 +3848,6 @@ public sealed class Editor : Drawable {
                     yPos += Font.LineHeight();
                 }
             }
-
-            e.Graphics.DrawLine(Settings.Instance.Theme.ServiceLine,
-                scrollablePosition.X + textOffsetX - LineNumberPadding, 0.0f,
-                scrollablePosition.X + textOffsetX - LineNumberPadding, yPos + scrollableSize.Height);
         }
 
         // Draw toast message box

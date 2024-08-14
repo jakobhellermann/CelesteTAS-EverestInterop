@@ -34,7 +34,10 @@ public struct Theme {
     public Color PopoutButtonSelected;
     public Color SubpixelIndicatorBox;
     public Color SubpixelIndicatorDot;
-
+    public Color GitLineDeleted;
+    public Color GitLineModified;
+    public Color GitLineAdded;
+    
     // Popup menu
     public Color PopupMenuFg;
     public Color PopupMenuFgDisabled;
@@ -102,7 +105,9 @@ public struct Theme {
             PopupMenuEntryVerticalPadding = 5,
             PopupMenuEntrySpacing = 1,
             PopupMenuEntryRounding = 5.0f,
-
+            GitLineAdded = Color.FromRgb(0x10ed00),
+            GitLineModified = Color.FromRgb(0x007bed),
+            GitLineDeleted = Color.FromRgb(0xe6022c),
             Action = new Style(Color.FromRgb(0x1F7BEC)),
             Angle = new Style(Color.FromRgb(0xC835C8)),
             Breakpoint = new Style(Color.FromRgb(0xFFFFFF), Color.FromRgb(0xFF5555), FontStyle.Bold),
@@ -136,7 +141,9 @@ public struct Theme {
             PopoutButtonSelected = Color.FromRgb(0x646464),
             SubpixelIndicatorBox = Color.FromRgb(0x29A229),
             SubpixelIndicatorDot = Color.FromRgb(0xE30E0E),
-
+            GitLineAdded = Color.FromRgb(0x12b53b),
+            GitLineModified = Color.FromRgb(0x009dff),
+            GitLineDeleted = Color.FromRgb(0xff1500),
             PopupMenuFg = Color.FromRgb(0xDFDFDF),
             PopupMenuFgDisabled = Color.FromRgb(0x909090),
             PopupMenuFgExtra = Color.FromRgb(0x9F9F9F),
@@ -183,7 +190,9 @@ public struct Theme {
             PopoutButtonSelected = Color.FromRgb(0xA9A9A9),
             SubpixelIndicatorBox = Color.FromRgb(0x159F15),
             SubpixelIndicatorDot = Color.FromRgb(0xE30E0E),
-
+            GitLineAdded = Color.FromRgb(0x10ed00),
+            GitLineModified = Color.FromRgb(0x007bed),
+            GitLineDeleted = Color.FromRgb(0xe6022c),
             PopupMenuFg = Color.FromRgb(0x121212),
             PopupMenuFgDisabled = Color.FromRgb(0x8a8a8a),
             PopupMenuFgExtra = Color.FromRgb(0x646464),
@@ -229,7 +238,9 @@ public struct Theme {
             PopoutButtonSelected = Color.FromRgb(0x6F738F),
             SubpixelIndicatorBox = Color.FromRgb(0x1AB353),
             SubpixelIndicatorDot = Color.FromRgb(0xE30E0E),
-
+            GitLineAdded = Color.FromRgb(0x10ed00),
+            GitLineModified = Color.FromRgb(0x007bed),
+            GitLineDeleted = Color.FromRgb(0xe6022c),
             PopupMenuFg = Color.FromRgb(0xDFDFDF),
             PopupMenuFgDisabled = Color.FromRgb(0x909090),
             PopupMenuFgExtra = Color.FromRgb(0x9F9F9F),
