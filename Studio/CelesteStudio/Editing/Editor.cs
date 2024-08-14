@@ -3856,8 +3856,20 @@ public sealed class Editor : SkiaDrawable {
             canvas.DrawText(calculateLine, x + padding, y + Font.Offset(), Font, fillPaint);
         }
 
+        Dictionary<int, (int, GitLine)> edits = new() {
+            {5, (1, GitLine.Modified)},
+            {11, (3, GitLine.Added)},
+            {15, (2, GitLine.Deleted)},
+            {103, (2, GitLine.Added)},
+        };
+        
         // Draw line numbers
         {
+            fillPaint.ColorF = Settings.Instance.Theme.ServiceLine.ToSkia();
+            canvas.DrawLine(
+                scrollablePosition.X + textOffsetX - LineNumberPadding, 0.0f,
+                scrollablePosition.X + textOffsetX - LineNumberPadding, yPos + scrollableSize.Height, fillPaint);
+            
             fillPaint.ColorF = Settings.Instance.Theme.Background.ToSkia();
             canvas.DrawRect(
                 x: scrollablePosition.X,
@@ -3923,6 +3935,38 @@ public sealed class Editor : SkiaDrawable {
                     canvas.DrawText(numberString, scrollablePosition.X + LineNumberPadding + ident, yPos + Font.Offset(), Font, fillPaint);
                 }
 
+                if (edits.TryGetValue(row + 1, out var info)) {
+                    (int length, var line) = info;
+                    var color = line switch {
+                        GitLine.Added => Settings.Instance.Theme.GitLineAdded,
+                        GitLine.Modified => Settings.Instance.Theme.GitLineModified,
+                        GitLine.Deleted => Settings.Instance.Theme.GitLineDeleted,
+                        _ => throw new ArgumentOutOfRangeException(),
+                    };
+                    bool deletion = line == GitLine.Deleted;
+
+                    float height = Font.LineHeight();
+
+                    float inset = 0; // Font.LineHeight() * 0.1f;
+                    float width = 3.5f;
+
+                    float offsetX = scrollablePosition.X + textOffsetX - LineNumberPadding - width / 2;
+                    
+                    var from = new PointF(offsetX, yPos + inset);
+                    var to = new PointF(offsetX, yPos + height * length - inset);
+
+                    if (deletion) {
+                        from = new PointF(offsetX, yPos + inset);
+                        to = new PointF(offsetX, yPos + height*0.1f - inset);
+                    }
+                    
+                    using var paint = new SKPaint();
+                    paint.ColorF = color.ToSkia();
+                    paint.StrokeCap = SKStrokeCap.Round;
+                    paint.StrokeWidth = width;
+                    canvas.DrawLine(from.X, from.Y, to.X, to.Y, paint);
+                }
+                
                 bool collapsed = false;
                 if (GetCollapse(row) is { } collapse) {
                     row = collapse.MaxRow;
@@ -4159,4 +4203,10 @@ public sealed class Editor : SkiaDrawable {
     }
 
     #endregion
+}
+
+enum GitLine {
+    Added,
+    Deleted,
+    Modified
 }
