@@ -16,6 +16,9 @@ using Eto.Forms;
 using SkiaSharp;
 using StudioCommunication;
 using StudioCommunication.Util;
+using LibGit2Sharp;
+using System.Collections.Immutable;
+using System.Text;
 using WrapLine = (string Line, int Index);
 using WrapEntry = (int StartOffset, (string Line, int Index)[] Lines);
 
@@ -3856,12 +3859,65 @@ public sealed class Editor : SkiaDrawable {
             canvas.DrawText(calculateLine, x + padding, y + Font.Offset(), Font, fillPaint);
         }
 
-        Dictionary<int, (int, GitLine)> edits = new() {
-            {5, (1, GitLine.Modified)},
-            {11, (3, GitLine.Added)},
-            {15, (2, GitLine.Deleted)},
-            {103, (2, GitLine.Added)},
-        };
+        Dictionary<int, (int, GitLine)> edits = new();
+        try {
+            string normalizedPath = Path.GetFullPath(Document.FilePath);
+            string? repoPath = Repository.Discover(Document.FilePath);
+            
+            if (repoPath != null) {
+                var repo = new Repository(repoPath);
+                string relativePath = normalizedPath[repo.Info.WorkingDirectory.Length..].Replace("\\", "/");
+                var entry = repo.Head.Tip[relativePath];
+
+                if (entry.TargetType != TreeEntryTargetType.Blob) {
+                    throw new Exception("not a blob");
+                }
+                var blob = (Blob)entry.Target;
+
+                var newBlob = repo.ObjectDatabase.CreateBlob(new MemoryStream(Encoding.UTF8.GetBytes(Document.Text)));
+                var diff = repo.Diff.Compare(blob, newBlob, new CompareOptions { Algorithm = DiffAlgorithm.Myers });
+
+                var additions = diff.AddedLines.Select(line => line.LineNumber).ToImmutableHashSet();
+                int[] deletionsOldLineNo = diff.DeletedLines.Select(line => line.LineNumber).ToArray();
+                var deletions = deletionsOldLineNo.ToList();
+                
+                foreach (int deletionLine in deletionsOldLineNo.Reverse()) {
+                    for (int i = 0; i < deletions.Count; i++) {
+                        if (deletions[i] > deletionLine) {
+                            deletions[i] -= 1;
+                            if (i > 0 && deletions[i] == deletions[i - 1]) {
+                                deletions.RemoveAt(i);
+                            }
+                        }
+                    }
+                }
+                foreach (int additionLine in additions) {
+                    for (int i = 0; i < deletions.Count; i++) {
+                        if (deletions[i] > additionLine) {
+                            deletions[i] += 1;
+                        }
+                    }
+                }
+
+                foreach (int deletion in deletions) {
+                    if (additions.Contains(deletion)) {
+                        edits[deletion] = (1, GitLine.Modified);
+                    } else {
+                        edits[deletion] = (1, GitLine.Deleted);
+                    }
+                }
+                foreach (int addition in additions) {
+                    var kind = GitLine.Added;
+                    
+                    if ((edits.TryGetValue(addition, out var line) && line.Item2 == GitLine.Modified) || (edits.TryGetValue(addition - 1, out var previousLine) && previousLine.Item2 == GitLine.Modified)) {
+                        kind = GitLine.Modified;
+                    }
+                    edits[addition] = (1, kind);
+                }
+            }
+        } catch (Exception ex) {
+            Console.Error.WriteLine(ex);
+        }
         
         // Draw line numbers
         {
