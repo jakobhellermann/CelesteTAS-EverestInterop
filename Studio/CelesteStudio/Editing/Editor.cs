@@ -17,6 +17,9 @@ using Eto.Forms;
 using SkiaSharp;
 using StudioCommunication;
 using StudioCommunication.Util;
+using LibGit2Sharp;
+using System.Collections.Immutable;
+using System.Text;
 using WrapLine = (string Line, int Index);
 using WrapEntry = (int StartOffset, (string Line, int Index)[] Lines);
 
@@ -3822,12 +3825,131 @@ public sealed class Editor : SkiaDrawable {
             canvas.DrawText(calculateLine, x + padding, y + Font.Offset(), Font, fillPaint);
         }
 
-        Dictionary<int, (int,Color)> edits = new() {
-            {5, (1,Settings.Instance.Theme.GitLineModified)},
-            {11, (3, Settings.Instance.Theme.GitLineAdded)},
-            {15, (2, Settings.Instance.Theme.GitLineDeleted)},
-            {103, (2, Settings.Instance.Theme.GitLineAdded)},
-        };
+        Dictionary<int, (int, GitLine)> edits = new();
+        try {
+            string normalizedPath = Path.GetFullPath(Document.FilePath);
+            var repoPath = Repository.Discover(Document.FilePath);
+            
+            if (repoPath != null) {
+                var repo = new Repository(repoPath);
+                var relativePath = normalizedPath.Substring(repo.Info.WorkingDirectory.Length).Replace("\\", "/");
+                var entry = repo.Head.Tip[relativePath];
+
+                if (entry.TargetType != TreeEntryTargetType.Blob) {
+                    throw new Exception("a");
+                }
+                var blob = (Blob)entry.Target;
+
+                var newBlob = repo.ObjectDatabase.CreateBlob(new MemoryStream(Encoding.UTF8.GetBytes(Document.Text)));
+                var diff = repo.Diff.Compare(blob, newBlob, new CompareOptions { Algorithm = DiffAlgorithm.Myers });
+
+                
+                Console.WriteLine("\n\n\n");
+                /*foreach (var added in diff.AddedLines) {
+                    Console.WriteLine($"added {added.LineNumber}");
+                    edits[added.LineNumber] = (1, GitLine.Added);
+                }*/
+
+                int offset = 0;
+
+                var additions = diff.AddedLines.Select(line => line.LineNumber).ToImmutableHashSet();
+                int[] deletionsOldLineNo = diff.DeletedLines.Select(line => line.LineNumber).ToArray();
+                var deletions = deletionsOldLineNo.ToList();
+                
+                Console.WriteLine($"Additions: {string.Join(",", additions)}");
+                Console.WriteLine($"Deletions Before: {string.Join(",", deletionsOldLineNo)}");
+
+                foreach (int deletionLine in deletionsOldLineNo) {
+                    for (int i = 0; i < deletions.Count; i++) {
+                        if (deletions[i] > deletionLine) deletions[i] -= 1;
+                    }
+                }
+                foreach (int additionLine in additions) {
+                    for (int i = 0; i < deletions.Count; i++) {
+                        if (deletions[i] > additionLine) deletions[i] += 1;
+                    }
+                }
+
+                /*for (int i = 0; i < deletions.Count; i++) {
+                    deletions.Remove(deletions[i] + 1);
+                }*/
+                Console.WriteLine($"Deletions After: {string.Join(",", deletions)}");
+
+                foreach (int addition in additions) {
+                    Console.WriteLine($"added {addition}");
+                    edits[addition] = (1, GitLine.Added);
+                }
+                foreach (int deletion in deletions) {
+                    Console.WriteLine($"deleted {deletion}");
+                    if (additions.Contains(deletion)) {
+                        edits[deletion] = (1, GitLine.Modified);
+                        Console.WriteLine($"modified ");
+                    } else {
+                        edits[deletion] = (1, GitLine.Deleted);
+                    }
+                }
+
+                /*foreach ((bool isAddition, var line) in IterateOrdered(diff.AddedLines, diff.DeletedLines, Comparer<Line>.Create((a, b) => a.LineNumber.CompareTo(b.LineNumber)))) {
+
+                    if (isAddition) {
+                        edits[line.LineNumber] = (1, GitLine.Added);
+                        offset += 1;
+
+                    } else {
+                        int newLineNo = line.LineNumber + offset;
+                        
+                        Console.WriteLine($"deleted {line.LineNumber}/{newLineNo} offset {offset}");
+
+                        if (additions.Contains(newLineNo-1)) {
+                            edits[newLineNo-1] = (1, GitLine.Modified);
+                            Console.WriteLine("h");
+                        } else if (additions.Contains(newLineNo)) {
+                            edits[newLineNo] = (1, GitLine.Modified);
+                            Console.WriteLine("h2");
+                        } else {
+                            edits[line.LineNumber] = (1, GitLine.Deleted);
+                            Console.WriteLine("h3");
+                        }
+                        
+                        offset -= 1;
+                        
+                    }
+                }*/
+
+                /*int offset = 0;
+                foreach (var deleted in diff.DeletedLines) {
+                    var newLineNo = deleted.LineNumber - offset;
+                    Console.WriteLine($"deleted {deleted.LineNumber}/{newLineNo}");
+                    if (edits.TryGetValue(newLineNo, out var exist) && exist.Item2 == GitLine.Added) {
+                        edits[newLineNo] = (1, GitLine.Modified);
+                    } else {
+                        edits[newLineNo] = (1, GitLine.Deleted);
+                        offset += 1;
+                    }
+                }*/
+
+                /*foreach (var (line, (length, color)) in edits) {
+                    int nextLine = line + 1;
+                    while (true) {
+                        if (edits.TryGetValue(nextLine, out var existing) && existing.Item2 == color) {
+                            edits.Remove(nextLine);
+                        } else {
+                            break;
+                        }
+                        nextLine++;
+                    }
+
+                    edits[line] = (length + (nextLine - line - 1), color);
+                }*/
+            }
+
+            foreach (var (line, (length, col)) in edits) {
+                //Console.WriteLine($"{line}: {length} {col}");
+            }
+        } catch (Exception ex) {
+            Console.Error.WriteLine(ex);
+        }
+        
         
         // Draw line numbers
         {
@@ -3901,8 +4023,16 @@ public sealed class Editor : SkiaDrawable {
                     canvas.DrawText(numberString, scrollablePosition.X + LineNumberPadding + ident, yPos + Font.Offset(), Font, fillPaint);
                 }
 
-                if (edits.TryGetValue(row, out var info)) {
-                    (int length, var color) = info;
+                if (edits.TryGetValue(row+1, out var info)) {
+                    (int length, var line) = info;
+                    var color = line switch {
+                        GitLine.Added => Settings.Instance.Theme.GitLineAdded,
+                        GitLine.Modified => Settings.Instance.Theme.GitLineModified,
+                        GitLine.Deleted => Settings.Instance.Theme.GitLineDeleted,
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+                    var deletion = line == GitLine.Deleted;
+                    
                     float height = Font.LineHeight();
 
                     float inset = Font.LineHeight() * 0.1f;
@@ -3912,6 +4042,12 @@ public sealed class Editor : SkiaDrawable {
                     
                     var from = new PointF(offsetX, yPos + inset);
                     var to = new PointF(offsetX, yPos + height * length - inset);
+
+                    if (deletion) {
+                        from = new PointF(offsetX, yPos + inset);
+                        to = new PointF(offsetX, yPos + height*0.1f - inset);
+                    }
+                    
                     using var paint = new SKPaint();
                     paint.ColorF = color.ToSkia();
                     paint.StrokeCap = SKStrokeCap.Round;
@@ -4128,5 +4264,39 @@ public sealed class Editor : SkiaDrawable {
             : nextRight;
     }
 
+    IEnumerable<(bool, T)> IterateOrdered<T>(IEnumerable<T> a, IEnumerable<T> b, Comparer<T> comp) {
+        using var addedLines = a.GetEnumerator();
+        using var deletedLines = b.GetEnumerator();
+        
+        do {
+            bool addedHasNext = addedLines.MoveNext();
+            bool deletedHasNext = deletedLines.MoveNext();
+
+            if (!addedHasNext && !deletedHasNext) {
+                break;
+            } else if (addedHasNext && !deletedHasNext) {
+                yield return (true, addedLines.Current);
+            } else if (!addedHasNext && deletedHasNext) {
+                yield return (false, deletedLines.Current);
+            } else {
+                var added = addedLines.Current;
+                var deleted = deletedLines.Current;
+                if (comp.Compare(added, deleted) <= 0) {
+                    yield return (true, added);
+                    yield return (false, deleted);
+                } else {
+                    yield return (false, deleted);
+                    yield return (true, added);
+                }
+            }
+        } while (true);
+    }
+
     #endregion
+}
+
+enum GitLine {
+    Added,
+    Deleted,
+    Modified
 }
