@@ -3254,10 +3254,14 @@ public sealed class Editor : SkiaDrawable {
         }
 
         // When going from a non-action-line to an action-line, snap the caret to the frame count
-        if (direction is CaretMovementType.LineUp or CaretMovementType.LineDown or CaretMovementType.PageUp or CaretMovementType.PageDown or CaretMovementType.LabelUp or CaretMovementType.LabelDown &&
-            currentActionLine == null && TryParseAndFormatActionLine(Document.Caret.Row, out _))
-        {
-            Document.Caret.Col = desiredVisualCol = ActionLine.MaxFramesDigits;
+        if (direction is CaretMovementType.LineUp or CaretMovementType.LineDown
+            or CaretMovementType.PageUp or CaretMovementType.PageDown
+            or CaretMovementType.LabelUp or CaretMovementType.LabelDown) {
+            bool wasActionLine = currentActionLine != null || line.TrimStart().StartsWith("***");
+            bool isActionLine = TryParseAndFormatActionLine(Document.Caret.Row, out _);
+            if (!wasActionLine && isActionLine) {
+                Document.Caret.Col = desiredVisualCol = ActionLine.MaxFramesDigits;
+            }
         }
 
         if (updateSelection) {
