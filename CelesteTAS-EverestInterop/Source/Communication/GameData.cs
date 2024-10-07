@@ -181,14 +181,15 @@ public static class GameData {
         if (Engine.Scene is not Level level) {
             return null;
         }
-
+        Player player = level.Tracker.GetEntity<Player>();
+            
         AreaData areaData = AreaData.Get(level);
 
         int? wakeupTime = areaData.IntroType switch {
             // Player.IntroTypes.Transition => expr,
             Player.IntroTypes.Respawn => 36,
-            // Player.IntroTypes.WalkInRight => expr,
-            // Player.IntroTypes.WalkInLeft => expr,
+            Player.IntroTypes.WalkInRight => IntroWalkDuration(Facings.Right),
+            Player.IntroTypes.WalkInLeft => IntroWalkDuration(Facings.Right),
             // Player.IntroTypes.Jump => expr,
             Player.IntroTypes.WakeUp => 190,
             // Player.IntroTypes.Fall => expr,
@@ -203,7 +204,20 @@ public static class GameData {
         }
 
         return wakeupTime;
+        
+        int IntroWalkDuration(Facings walkDirection) {
+            float start = player.Position.X;
+            int target = walkDirection == Facings.Right
+                ? level.Bounds.Left - 16
+                : level.Bounds.Right + 16;
+            float distance = Math.Abs(target - start);
+            
+            float totalTime = 0.3f + (distance - 2) / 64 + 0.2f;
+
+            return (int) Math.Ceiling(totalTime / Engine.DeltaTime);
+        }
     }
+
 
     public static GameState? GetGameState() {
         if (Engine.Scene is not Level level) {
