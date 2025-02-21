@@ -61,7 +61,7 @@ public abstract class CommunicationAdapterBase : IDisposable {
     private const int MessageCountOffset = 4;
     private const int MessagesOffset = MessageCountOffset + 1;
 
-    private const int BufferCapacity = 1024 * 1024; // 1MB should be enough for everything
+    private const int BufferCapacity = 4 * 1024 * 1024; // 4MB should be enough for everything
     protected const int UpdateRate = 1000 / 60;
 
     // Safety caps to avoid any crashes
@@ -92,14 +92,16 @@ public abstract class CommunicationAdapterBase : IDisposable {
             mutex = new Mutex(initiallyOwned: true, MutexName, out _);
         }
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+        var isWine = Process.GetProcessesByName("winlogon").Length == 0;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !isWine) {
             writeFile = MemoryMappedFile.CreateOrOpen(writeName, BufferCapacity);
             readFile = MemoryMappedFile.CreateOrOpen(readName, BufferCapacity);
         } else {
-            var writePath = Path.Combine(Path.GetTempPath(), $"{writeName}.share");
-            var readPath  = Path.Combine(Path.GetTempPath(), $"{readName}.share");
+            var tempPath = isWine ? "/tmp" : Path.GetTempPath();
+            var writePath = Path.Combine(tempPath, $"{writeName}.share");
+            var readPath  = Path.Combine(tempPath, $"{readName}.share");
 
-            using var writeFs = File.Open(writePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+            using var writeFs = File.Open(writePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
             using var readFs = File.Open(readPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
 
             writeFile = MemoryMappedFile.CreateFromFile(writeFs, null, BufferCapacity, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: false);
