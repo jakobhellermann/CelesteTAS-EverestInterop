@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -61,7 +62,7 @@ public abstract class CommunicationAdapterBase : IDisposable {
     private const int MessageCountOffset = 4;
     private const int MessagesOffset = MessageCountOffset + 1;
 
-    private const int BufferCapacity = 1024 * 1024; // 1MB should be enough for everything
+    private const int BufferCapacity = 4 * 1024 * 1024; // 4MB should be enough for everything
     protected const int UpdateRate = 1000 / 60;
 
     // Safety caps to avoid any crashes
@@ -69,6 +70,15 @@ public abstract class CommunicationAdapterBase : IDisposable {
     private const byte MaxMessageCount = 100;
 
     private const string MutexName = "Global\\CelesteTAS_StudioCom";
+
+    // [SupportedOSPlatform("windows")]
+    /*private bool RegistryKeyExists(string keyPath) {
+        using RegistryKey? key = Registry.LocalMachine.OpenSubKey(keyPath);
+        return key != null;
+    }*/
+    // private bool IsWine() => RegistryKeyExists(@"SOFTWARE\Wine");
+    private bool IsWine() => false;
+
 
     protected CommunicationAdapterBase(Location location) {
         LogInfo("Starting communication...");
@@ -92,14 +102,16 @@ public abstract class CommunicationAdapterBase : IDisposable {
             mutex = new Mutex(initiallyOwned: true, MutexName, out _);
         }
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !IsWine()) {
             writeFile = MemoryMappedFile.CreateOrOpen(writeName, BufferCapacity);
             readFile = MemoryMappedFile.CreateOrOpen(readName, BufferCapacity);
         } else {
-            var writePath = Path.Combine(Path.GetTempPath(), $"{writeName}.share");
-            var readPath  = Path.Combine(Path.GetTempPath(), $"{readName}.share");
+            // !windows || wine
+            var tempPath = "/tmp";
+            var writePath = Path.Combine(tempPath, $"{writeName}.share");
+            var readPath  = Path.Combine(tempPath, $"{readName}.share");
 
-            using var writeFs = File.Open(writePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+            using var writeFs = File.Open(writePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
             using var readFs = File.Open(readPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
 
             writeFile = MemoryMappedFile.CreateFromFile(writeFs, null, BufferCapacity, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: false);
