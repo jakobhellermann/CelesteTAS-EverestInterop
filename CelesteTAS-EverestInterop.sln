@@ -13,8 +13,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CelesteStudio.Mac", "Studio
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CelesteStudio.WPF", "Studio\CelesteStudio.WPF\CelesteStudio.WPF.csproj", "{95582142-D687-4D70-9933-7FF6B2E52B3A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Featherline", "external\Featherline\Featherline.csproj", "{38937A93-618F-4C67-9437-5F1A2AE2C74D}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StudioCommunication", "StudioCommunication\StudioCommunication.csproj", "{8B5FB457-8B97-465D-B367-B3B3B7FAC9B7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncChecker", "SyncChecker\SyncChecker.csproj", "{FE4C8CDA-0720-4FFA-927C-82A9B272AABD}"

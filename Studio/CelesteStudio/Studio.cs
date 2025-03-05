@@ -73,12 +73,7 @@ public sealed class Studio : Form {
     private readonly Scrollable editorScrollable;
     private readonly GameInfoPanel gameInfoPanel;
 
-    private JadderlineForm? jadderlineForm;
-    private FeatherlineForm? featherlineForm;
-    private RadelineSimForm? radelineSimForm;
     private ThemeEditor? themeEditorForm;
-
-    private readonly RadelineSimForm.Config radelineFormPersistence = new();
 
     private string TitleBarText => Editor.Document.FilePath == Document.ScratchFile
         ? $"Studio {Version} - {(Editor.Document.Dirty ? "*" : string.Empty)}<Scratch>"
@@ -291,15 +286,6 @@ public sealed class Studio : Form {
         }
 
         Instance.GotFocus += Refocus;
-        if (Instance.jadderlineForm != null) {
-            Instance.jadderlineForm.GotFocus += Refocus;
-        }
-        if (Instance.featherlineForm != null) {
-            Instance.featherlineForm.GotFocus += Refocus;
-        }
-        if (Instance.radelineSimForm != null) {
-            Instance.radelineSimForm.GotFocus += Refocus;
-        }
 
         bool wasTopmost = Instance.Topmost;
 
@@ -822,22 +808,6 @@ public sealed class Studio : Form {
             new SubMenuItem { Text = "&Tools", Items = {
                 MenuUtils.CreateAction("&Project File Formatter", Keys.None, ProjectFileFormatterDialog.Show).Apply(item => item.Enabled = Editor.Document.FilePath != Document.ScratchFile),
                 MenuUtils.CreateAction("&Integrate Read Files", Keys.None, OnIntegrateReadFiles),
-                new SeparatorMenuItem(),
-                MenuUtils.CreateAction("&Jadderline", Keys.None, () => {
-                    jadderlineForm ??= new();
-                    jadderlineForm.Show();
-                    jadderlineForm.Closed += (_, _) => jadderlineForm = null;
-                }),
-                MenuUtils.CreateAction("&Featherline", Keys.None, () => {
-                    featherlineForm ??= new();
-                    featherlineForm.Show();
-                    featherlineForm.Closed += (_, _) => featherlineForm = null;
-                }),
-                MenuUtils.CreateAction("&Radeline Simulator", Keys.None, () => {
-                    radelineSimForm ??= new(radelineFormPersistence);
-                    radelineSimForm.Show();
-                    radelineSimForm.Closed += (_, _) => radelineSimForm = null;
-                }),
             }},
         ];
 

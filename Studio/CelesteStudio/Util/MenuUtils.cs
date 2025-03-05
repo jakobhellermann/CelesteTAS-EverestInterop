@@ -99,24 +99,6 @@ public static class MenuUtils {
         return item;
     }
 
-    public static MenuItem CreateFeatherlineSettingToggle(string text, string settingName) {
-        var property = typeof(FeatherlineSettings).GetProperty(settingName)!;
-
-        var item = new CheckMenuItem {
-            Text = text,
-            Checked = (bool)property.GetValue(FeatherlineSettings.Instance)!
-        };
-        item.Click += (_, _) => {
-            bool value = (bool)property.GetValue(FeatherlineSettings.Instance)!;
-            property.SetValue(FeatherlineSettings.Instance, !value);
-
-            FeatherlineSettings.OnChanged();
-            FeatherlineSettings.Save();
-        };
-
-        return item;
-    }
-
     public static MenuItem CreateSettingNumberInput<T>(string text, string settingName, T minValue, T maxValue, T step, Func<T, string>? toString = null) where T : INumber<T>  {
         var property = typeof(Settings).GetProperty(settingName)!;
 
@@ -131,23 +113,6 @@ public static class MenuUtils {
 
             Settings.OnChanged();
             Settings.Save();
-        };
-
-        return item;
-    }
-
-    public static MenuItem CreateFeatherlineSettingNumberInput<T>(string text, string settingName, T minValue, T maxValue, T step) where T : INumber<T> {
-        var property = typeof(FeatherlineSettings).GetProperty(settingName)!;
-
-        var item = new ButtonMenuItem {
-            Text = $"{text}: {property.GetValue(FeatherlineSettings.Instance)!}"
-        };
-        item.Click += (_, _) => {
-            T value = (T) property.GetValue(FeatherlineSettings.Instance)!;
-            property.SetValue(FeatherlineSettings.Instance, NumberInputDialog<T>.Show(text, value, minValue, maxValue, step));
-
-            FeatherlineSettings.OnChanged();
-            FeatherlineSettings.Save();
         };
 
         return item;
