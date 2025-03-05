@@ -15,8 +15,6 @@
         <Project Path="Studio/CelesteStudio.WPF/CelesteStudio.WPF.csproj">
             <Build Project="false" />
         </Project>
-        
-        <Project Path="external/Featherline/Featherline.csproj" />
     </Folder>
 
     <Project Path="StudioCommunication/StudioCommunication.csproj" />
