@@ -2,10 +2,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    featherline = {
-      url = "github:SomeoneSom/Featherline_StudioV3/724471a8258143816508261439b5bd6ca036a68c";
-      flake = false;
-    };
   };
 
   outputs =
@@ -13,7 +9,6 @@
       self,
       nixpkgs,
       flake-utils,
-      featherline,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
@@ -41,13 +36,7 @@
             pname = "celeste-studio";
             version = "3.11.0";
 
-            src = pkgs.runCommand "celeste-studio-src" { } ''
-              cp -r ${self} $out
-              chmod -R u+w $out
-              mkdir -p $out/external
-              rm -rf $out/external/Featherline
-              cp -r ${featherline} $out/external/Featherline
-            '';
+            src = self;
 
             projectFile = "Studio/CelesteStudio.GTK/CelesteStudio.GTK.csproj";
             nugetDeps = ./nuget-deps.json; # Regenerate with: just nuget-deps
