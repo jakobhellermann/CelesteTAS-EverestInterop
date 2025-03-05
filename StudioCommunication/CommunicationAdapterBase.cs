@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -70,6 +71,15 @@ public abstract class CommunicationAdapterBase : IDisposable {
 
     private const string MutexName = "Global\\CelesteTAS_StudioCom";
 
+    // [SupportedOSPlatform("windows")]
+    /*private bool RegistryKeyExists(string keyPath) {
+        using RegistryKey? key = Registry.LocalMachine.OpenSubKey(keyPath);
+        return key != null;
+    }*/
+    // private bool IsWine() => RegistryKeyExists(@"SOFTWARE\Wine");
+    private bool IsWine() => false;
+
+
     protected CommunicationAdapterBase(Location location) {
         LogInfo("Starting communication...");
 
@@ -92,12 +102,12 @@ public abstract class CommunicationAdapterBase : IDisposable {
             mutex = new Mutex(initiallyOwned: true, MutexName, out _);
         }
 
-        var isWine = Process.GetProcessesByName("winlogon").Length == 0;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !isWine) {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !IsWine()) {
             writeFile = MemoryMappedFile.CreateOrOpen(writeName, BufferCapacity);
             readFile = MemoryMappedFile.CreateOrOpen(readName, BufferCapacity);
         } else {
-            var tempPath = isWine ? "/tmp" : Path.GetTempPath();
+            // !windows || wine
+            var tempPath = "/tmp";
             var writePath = Path.Combine(tempPath, $"{writeName}.share");
             var readPath  = Path.Combine(tempPath, $"{readName}.share");
 
