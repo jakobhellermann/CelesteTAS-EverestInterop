@@ -1,3 +1,4 @@
+#if false
 using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -307,3 +308,5 @@ public sealed class FeatherlineProgressDialog : Eto.Forms.Dialog {
         ShowInTaskbar = true;
     }
 }
+
+#endif
