@@ -55,8 +55,8 @@ public sealed class Studio : Form {
     private readonly Scrollable editorScrollable;
     private readonly GameInfoPanel gameInfoPanel;
 
-    private JadderlineForm? jadderlineForm;
-    private FeatherlineForm? featherlineForm;
+    // private JadderlineForm? jadderlineForm;
+    // private FeatherlineForm? featherlineForm;
     private ThemeEditor? themeEditorForm;
 
     private string TitleBarText => Editor.Document.FilePath == Document.ScratchFile
@@ -291,12 +291,12 @@ public sealed class Studio : Form {
         }
 
         Instance.GotFocus += Refocus;
-        if (Instance.jadderlineForm != null) {
+        /*if (Instance.jadderlineForm != null) {
             Instance.jadderlineForm.GotFocus += Refocus;
         }
         if (Instance.featherlineForm != null) {
             Instance.featherlineForm.GotFocus += Refocus;
-        }
+        }*/
 
         bool wasTopmost = Instance.Topmost;
 
@@ -755,7 +755,7 @@ public sealed class Studio : Form {
                 MenuUtils.CreateAction("&Project File Formatter", Keys.None, ProjectFileFormatterDialog.Show),
                 MenuUtils.CreateAction("&Integrate Read Files", Keys.None, OnIntegrateReadFiles),
                 new SeparatorMenuItem(),
-                MenuUtils.CreateAction("&Jadderline", Keys.None, () => {
+                /*MenuUtils.CreateAction("&Jadderline", Keys.None, () => {
                     jadderlineForm ??= new();
                     jadderlineForm.Show();
                     jadderlineForm.Closed += (_, _) => jadderlineForm = null;
@@ -764,7 +764,7 @@ public sealed class Studio : Form {
                     featherlineForm ??= new();
                     featherlineForm.Show();
                     featherlineForm.Closed += (_, _) => featherlineForm = null;
-                }),
+                }),*/
             }},
         ];
 
