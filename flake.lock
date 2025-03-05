@@ -1,22 +1,5 @@
 {
   "nodes": {
-    "featherline": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1724170698,
-        "narHash": "sha256-gbb9OVWRYHGdmqZVIaotfc8j6MNDTiaKH5/VJMwx6uw=",
-        "owner": "SomeoneSom",
-        "repo": "Featherline_StudioV3",
-        "rev": "724471a8258143816508261439b5bd6ca036a68c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "SomeoneSom",
-        "repo": "Featherline_StudioV3",
-        "rev": "724471a8258143816508261439b5bd6ca036a68c",
-        "type": "github"
-      }
-    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -53,7 +36,6 @@
     },
     "root": {
       "inputs": {
-        "featherline": "featherline",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"
       }
