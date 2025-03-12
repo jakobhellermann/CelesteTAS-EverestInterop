@@ -4,18 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Celeste;
-using Celeste.Mod;
 using StudioCommunication;
 using StudioCommunication.Util;
-using TAS.EverestInterop;
-using TAS.EverestInterop.InfoHUD;
-using TAS.InfoHUD;
 using TAS.Input;
-using TAS.Input.Commands;
-using TAS.ModInterop;
-using TAS.Module;
-using TAS.Utils;
+using TAS.UnityInterop;
 
 namespace TAS.Communication;
 
@@ -26,6 +18,7 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
     }
 
     protected override void OnConnectionChanged() {
+        LogInfo($"On connection changed: {(Connected ? "Connected" : "Disconnected")}");
         if (Connected) {
             // Stall until input initialized to avoid sending invalid hotkey data
             while (Hotkeys.AllHotkeys == null) {
@@ -33,7 +26,7 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
             }
 
             CommunicationWrapper.SendCurrentBindings();
-            CommunicationWrapper.SendSettings(TasSettings.StudioShared);
+            // CommunicationWrapper.SendSettings(TasSettings.StudioShared);
             CommunicationWrapper.SendCommandList();
         }
     }
@@ -55,7 +48,7 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                 Hotkeys.AllHotkeys[hotkey].OverrideCheck = !released;
                 break;
 
-            case MessageID.SetCustomInfoTemplate:
+            /*case MessageID.SetCustomInfoTemplate:
                 var customInfoTemplate = reader.ReadString();
                 LogVerbose($"Received message SetCustomInfoTemplate: '{customInfoTemplate}'");
 
@@ -68,7 +61,7 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
 
                 InfoWatchEntity.ClearWatchEntities();
                 GameInfo.Update();
-                break;
+                break;*/
 
             case MessageID.RecordTAS:
                 var fileName = reader.ReadString();
@@ -95,7 +88,7 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                             case GameDataType.ConsoleCommand:
                                 gameData = GameData.GetConsoleCommand((bool)arg!);
                                 break;
-                            case GameDataType.ModInfo:
+                            /*case GameDataType.ModInfo:
                                 gameData = GameData.GetModInfo();
                                 break;
                             case GameDataType.ExactGameInfo:
@@ -115,7 +108,7 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                                 break;
                             case GameDataType.GameState:
                                 gameData = GameData.GetGameState();
-                                break;
+                                break;*/
                             case GameDataType.CommandHash:
                                 (string commandName, string[] commandArgs, string filePath, int fileLine) = ((string, string[], string, int))arg!;
 
@@ -128,12 +121,12 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
 
                                 gameData = meta.GetHash(commandArgs, filePath, fileLine);
                                 break;
-                            case GameDataType.LevelInfo:
+                            /*case GameDataType.LevelInfo:
                                 gameData = new LevelInfo {
                                     ModUrl = GameData.GetModUrl(),
                                     WakeupTime = GameData.GetWakeupTime(),
                                 };
-                                break;
+                                break;*/
 
                             default:
                                 gameData = null;
@@ -169,7 +162,7 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                             LogVerbose($"Sent message GameDataResponse: {gameDataType} = '{gameData}'");
                         });
                     } catch (Exception ex) {
-                        Logger.LogDetailed(ex, $"Failed to get game data for '{gameDataType}'");
+                        Log.Error($"Failed to get game data for '{gameDataType}': {ex}");
                     }
                 });
                 break;
@@ -273,14 +266,19 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                 var settings = reader.ReadObject<GameSettings>();
                 LogVerbose("Received message GameSettings");
 
-                TasSettings.StudioShared = settings;
-                CelesteTasModule.Instance.SaveSettings();
+                // TasSettings.StudioShared = settings;
+                // CelesteTasModule.Instance.SaveSettings();
                 break;
 
             default:
                 LogError($"Received unknown message ID: {messageId}");
                 break;
         }
+    }
+
+    public void WriteReset() {
+        QueueMessage(MessageID.Reset, _ => { });
+        LogVerbose("Sent reset");
     }
 
     public void WriteState(StudioState state) {
@@ -309,11 +307,11 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
     }
 
     private void ProcessRecordTAS(string fileName) {
-        if (!TASRecorderInterop.Installed) {
+        /*if (!TASRecorderUtils.Installed) {
             WriteRecordingFailed(RecordingFailedReason.TASRecorderNotInstalled);
             return;
         }
-        if (!TASRecorderInterop.IsFFmpegInstalled) {
+        if (!TASRecorderInterop.FFmpegInstalled) {
             WriteRecordingFailed(RecordingFailedReason.FFmpegNotInstalled);
             return;
         }
@@ -347,10 +345,10 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                 Audio.SetAmbience(null, startPlaying: false);
                 Audio.BusStopAll(Buses.GAMEPLAY, immediate: true);
             }
-        });
+        });*/
     }
 
-    protected override void LogInfo(string message) => Logger.Log(LogLevel.Info, "CelesteTAS/StudioCom", message);
-    protected override void LogVerbose(string message) => Logger.Log(LogLevel.Verbose, "CelesteTAS/StudioCom", message);
-    protected override void LogError(string message) => Logger.Log(LogLevel.Error, "CelesteTAS/StudioCom", message);
+    protected override void LogInfo(string message) => Log.Info($"[StudioCom] {message}");
+    protected override void LogVerbose(string message) => Log.Info($"[StudioCom] {message}");
+    protected override void LogError(string message) => Log.Error($"[StudioCom] {message}");
 }

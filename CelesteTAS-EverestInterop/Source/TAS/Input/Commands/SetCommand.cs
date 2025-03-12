@@ -1,22 +1,16 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using Celeste;
-using Celeste.Mod;
-using JetBrains.Annotations;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using Monocle;
 using StudioCommunication;
 using StudioCommunication.Util;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using TAS.Entities;
-using TAS.EverestInterop;
-using TAS.Gameplay;
+using NineSolsAPI;
 using TAS.InfoHUD;
 using TAS.ModInterop;
 using TAS.Utils;
+using UnityEngine;
+using Random = System.Random;
 
 namespace TAS.Input.Commands;
 
@@ -49,7 +43,7 @@ internal class NamespaceComparer : IComparer<(string Name, Type Type)> {
 
 public static class SetCommand {
     internal class SetMeta : ITasCommandMeta {
-        internal static readonly string[] ignoredNamespaces = ["System", "StudioCommunication", "TAS", "SimplexNoise", "FMOD", "MonoMod", "Snowberry"];
+        internal static readonly string[] ignoredNamespaces = ["System", "StudioCommunication", "TAS"];
 
         public string Insert => $"Set{CommandInfo.Separator}[0;(Mod).Setting]{CommandInfo.Separator}[1;Value]";
         public bool HasArguments => true;
@@ -75,10 +69,10 @@ public static class SetCommand {
 
             if (targetArgs.Length == 0) {
                 // Vanilla settings. Manually selected to filter out useless entries
-                var vanillaSettings = ((string[])["DisableFlashes", "ScreenShake", "GrabMode", "CrouchDashMode", "SpeedrunClock", "Pico8OnMainMenu", "VariantsUnlocked"]).Select(e => typeof(Settings).GetFieldInfo(e)!);
-                var vanillaSaveData = ((string[])["CheatMode", "AssistMode", "VariantMode", "UnlockedAreas", "RevealedChapter9", "DebugMode"]).Select(e => typeof(SaveData).GetFieldInfo(e)!);
+                // var vanillaSettings = ((string[])["DisableFlashes", "ScreenShake", "GrabMode", "CrouchDashMode", "SpeedrunClock", "Pico8OnMainMenu", "VariantsUnlocked"]).Select(e => typeof(Settings).GetFieldInfo(e)!);
+                // var vanillaSaveData = ((string[])["CheatMode", "AssistMode", "VariantMode", "UnlockedAreas", "RevealedChapter9", "DebugMode"]).Select(e => typeof(SaveData).GetFieldInfo(e)!);
 
-                foreach (var f in vanillaSettings) {
+                /*foreach (var f in vanillaSettings) {
                     yield return new CommandAutoCompleteEntry { Name = f.Name, Extra = $"{f.FieldType.CSharpName()} (Settings)", IsDone = true };
                 }
                 foreach (var f in vanillaSaveData) {
@@ -86,31 +80,32 @@ public static class SetCommand {
                 }
                 foreach (var f in typeof(Assists).GetFields()) {
                     yield return new CommandAutoCompleteEntry { Name = f.Name, Extra = $"{f.FieldType.CSharpName()} (Assists)", IsDone = true };
-                }
+                }*/
 
                 // Mod settings
-                foreach (var mod in Everest.Modules) {
+                /*foreach (var mod in Everest.Modules) {
                     if (mod.SettingsType != null && (mod.SettingsType.GetAllFieldInfos().Any() ||
                                                      mod.SettingsType.GetAllPropertyInfos().Any(p => p.SetMethod != null)))
                     {
                         yield return new CommandAutoCompleteEntry { Name = $"{mod.Metadata.Name}.", Extra = "Mod Setting", IsDone = false };
                     }
-                }
+                }*/
 
                 var allTypes = ModUtils.GetTypes();
                 foreach ((string typeName, var type) in allTypes
                              .Select(type => (type.CSharpName(), type))
-                             .Order(new NamespaceComparer()))
+                             .OrderBy(x => x, new NamespaceComparer()))
                 {
                     if (
                         // Filter-out types which probably aren't useful
-                        !type.IsClass || !type.IsPublic || type.FullName == null || type.Namespace == null || ignoredNamespaces.Any(ns => type.Namespace.StartsWith(ns)) ||
+                        !type.IsClass || !type.IsPublic || type.FullName == null || (type.Namespace != null && ignoredNamespaces.Any(ns => type.Namespace.StartsWith(ns))) ||
 
                         // Filter-out compiler generated types
                         !type.GetCustomAttributes<CompilerGeneratedAttribute>().IsEmpty() || type.FullName.Contains('<') || type.FullName.Contains('>') ||
 
                         // Require either an entity, level, session
-                        !type.IsSameOrSubclassOf(typeof(Entity)) && !type.IsSameOrSubclassOf(typeof(Level)) && !type.IsSameOrSubclassOf(typeof(Session)) &&
+                        // !type.IsSameOrSubclassOf(typeof(Entity)) && !type.IsSameOrSubclassOf(typeof(Level)) && !type.IsSameOrSubclassOf(typeof(Session)) &&
+                        !type.IsSameOrSubclassOf(typeof(MonoBehaviour)) &&
                         // Or type with static (settable) variables
                         type.GetFields(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)
                             .All(f => f.IsInitOnly || !IsSettableType(f.FieldType)) &&
@@ -129,14 +124,15 @@ public static class SetCommand {
 
                         string otherName = otherType.CSharpName();
                         if (type != otherType && typeName == otherName) {
-                            uniqueTypeName = $"{typeName}@{ConsoleEnhancements.GetModName(type)}";
+                            // uniqueTypeName = $"{typeName}@{ConsoleEnhancements.GetModName(type)}";
+                            uniqueTypeName = $"{typeName}@TODO";
                             break;
                         }
                     }
 
                     yield return new CommandAutoCompleteEntry { Name = $"{uniqueTypeName}.", Extra = type.Namespace ?? string.Empty, IsDone = false };
                 }
-            } else if (targetArgs.Length == 1 && targetArgs[0] == "ExtendedVariantMode") {
+            } /* else if (targetArgs.Length == 1 && targetArgs[0] == "ExtendedVariantMode") {
                 // Special case for setting extended variants
                 if (ExtendedVariantsInterop.GetVariantsEnum() is { } variantsEnum) {
                     foreach (object variant in Enum.GetValues(variantsEnum)) {
@@ -157,7 +153,7 @@ public static class SetCommand {
                 foreach (var entry in GetSetTypeAutoCompleteEntries(RecurseSetType(mod.SettingsType, args), isRootType: targetArgs.Length == 1)) {
                     yield return entry with { Name = entry.Name + (entry.IsDone ? "" : "."), Prefix = string.Join('.', targetArgs) + ".", HasNext = true };
                 }
-            } else if (targetArgs.Length >= 1 && TargetQuery.ResolveBaseTypes(targetArgs, out string[] memberArgs, out _, out _) is { } types && types.IsNotEmpty()) {
+            } */ else if (targetArgs.Length >= 1 && TargetQuery.ResolveBaseTypes(targetArgs, out string[] memberArgs, out _, out _) is { } types && types.IsNotEmpty()) {
                 // Assume the first type
                 foreach (var entry in GetSetTypeAutoCompleteEntries(RecurseSetType(types[0], memberArgs), isRootType: targetArgs.Length == 1)) {
                     yield return entry with { Name = entry.Name + (entry.IsDone ? "" : "."), Prefix = string.Join('.', targetArgs) + ".", HasNext = true };
@@ -166,7 +162,7 @@ public static class SetCommand {
         }
 
         private static IEnumerable<CommandAutoCompleteEntry> GetSetTypeAutoCompleteEntries(Type type, bool isRootType) {
-            bool staticMembers = isRootType && !(type.IsSameOrSubclassOf(typeof(Entity)) || type.IsSameOrSubclassOf(typeof(Level)) || type.IsSameOrSubclassOf(typeof(Session)) || type.IsSameOrSubclassOf(typeof(EverestModuleSettings)));
+            bool staticMembers = isRootType && !type.IsSameOrSubclassOf(typeof(MonoBehaviour)); // && !(type.IsSameOrSubclassOf(typeof(Entity)) || type.IsSameOrSubclassOf(typeof(Level)) || type.IsSameOrSubclassOf(typeof(Session)) || type.IsSameOrSubclassOf(typeof(EverestModuleSettings)));
             var bindingFlags = staticMembers
                 ? BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public
                 : BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
@@ -190,11 +186,11 @@ public static class SetCommand {
             }
         }
 
-        [MustDisposeResource]
+        // [MustDisposeResource]
         private static IEnumerator<CommandAutoCompleteEntry> GetParameterAutoCompleteEntries(string[] targetArgs) {
             if (targetArgs.Length == 1) {
                 // Vanilla setting / session / assist
-                if (typeof(Settings).GetFieldInfo(targetArgs[0], logFailure: false) is { } fSettings) {
+                /*if (typeof(Settings).GetFieldInfo(targetArgs[0], logFailure: false) is { } fSettings) {
                     return GetParameterTypeAutoCompleteEntries(fSettings.FieldType);
                 }
                 if (typeof(SaveData).GetFieldInfo(targetArgs[0], logFailure: false) is { } fSaveData) {
@@ -202,9 +198,9 @@ public static class SetCommand {
                 }
                 if (typeof(Assists).GetFieldInfo(targetArgs[0], logFailure: false) is { } fAssists) {
                     return GetParameterTypeAutoCompleteEntries(fAssists.FieldType);
-                }
+                }*/
             }
-            if (targetArgs.Length == 2 && targetArgs[0] == "ExtendedVariantMode") {
+            /*if (targetArgs.Length == 2 && targetArgs[0] == "ExtendedVariantMode") {
                 // Special case for setting extended variants
                 var variant = ExtendedVariantsInterop.ParseVariant(targetArgs[1]);
                 var variantType = ExtendedVariantsInterop.GetVariantType(new(variant));
@@ -215,7 +211,7 @@ public static class SetCommand {
             }
             if (targetArgs.Length >= 1 && Everest.Modules.FirstOrDefault(m => m.Metadata.Name == targetArgs[0] && m.SettingsType != null) is { } mod) {
                 return GetParameterTypeAutoCompleteEntries(RecurseSetType(mod.SettingsType, targetArgs[1..]));
-            }
+            }*/
             if (targetArgs.Length >= 1 && TargetQuery.ResolveBaseTypes(targetArgs, out string[] memberArgs, out _, out _) is { } types && types.IsNotEmpty()) {
                 // Assume the first type
                 return GetParameterTypeAutoCompleteEntries(RecurseSetType(types[0], memberArgs));
@@ -228,7 +224,7 @@ public static class SetCommand {
             if (type == typeof(bool)) {
                 yield return new CommandAutoCompleteEntry { Name = "true", Extra = type.CSharpName(), IsDone = true, HasNext = hasNextArgument };
                 yield return new CommandAutoCompleteEntry { Name = "false", Extra = type.CSharpName(), IsDone = true, HasNext = hasNextArgument };
-            } else if (type == typeof(ButtonBinding)) {
+            } /*else if (type == typeof(ButtonBinding)) {
                 foreach (var button in Enum.GetValues<MButtons>()) {
                     yield return new CommandAutoCompleteEntry { Name = button.ToString(), Extra = "Mouse", IsDone = true, HasNext = hasNextArgument };
                 }
@@ -239,7 +235,7 @@ public static class SetCommand {
                     }
                     yield return new CommandAutoCompleteEntry { Name = key.ToString(), Extra = "Key", IsDone = true, HasNext = hasNextArgument };
                 }
-            } else if (type.IsEnum) {
+            } */ else if (type.IsEnum) {
                 foreach (object value in Enum.GetValues(type)) {
                     yield return new CommandAutoCompleteEntry { Name = value.ToString()!, Extra = type.CSharpName(), IsDone = true, HasNext = hasNextArgument };
                 }
@@ -263,7 +259,7 @@ public static class SetCommand {
         }
 
         internal static bool IsSettableType(Type type) => !type.IsSameOrSubclassOf(typeof(Delegate));
-        private static bool IsFinalTarget(Type type) => type == typeof(string) || type == typeof(Vector2) || type == typeof(Random) || type == typeof(ButtonBinding) || type.IsEnum || type.IsPrimitive;
+        private static bool IsFinalTarget(Type type) => type == typeof(string) || type == typeof(Vector2) || type == typeof(Random) || /* type == typeof(ButtonBinding) || */ type.IsEnum || type.IsPrimitive;
 
         internal static IEnumerable<string> GetTargetArgs(string[] args) {
             if (args.Length == 0) {
@@ -281,21 +277,21 @@ public static class SetCommand {
 
     private static void ReportError(string message) {
         if (activeFile == null) {
-            $"Set Command Failed: {message}".ConsoleLog(LogLevel.Error);
+            ToastManager.Toast($"Set Command Failed: {message}");
         } else {
-            Toast.ShowAndLog($"""
+            ToastManager.Toast($"""
                               Set '{activeFile.Value.Name}' line {activeFile.Value.Line} failed:
                               {message}
                               """);
         }
     }
 
-    [Monocle.Command("set", "'set Settings/Level/Session/Entity value' | Example: 'set DashMode Infinite', 'set Player.Speed 325 -52.5' (CelesteTAS)"), UsedImplicitly]
+    /*[Monocle.Command("set", "'set Settings/Level/Session/Entity value' | Example: 'set DashMode Infinite', 'set Player.Speed 325 -52.5' (CelesteTAS)"), UsedImplicitly]
     private static void ConsoleSet(string? arg1, string? arg2, string? arg3, string? arg4, string? arg5, string? arg6, string? arg7, string? arg8, string? arg9) {
         // TODO: Support arbitrary amounts of arguments
         string?[] args = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9];
         Set(args.TakeWhile(arg => arg != null).ToArray()!);
-    }
+    }*/
 
     // Set, Setting, Value
     // Set, Mod.Setting, Value
@@ -328,7 +324,7 @@ public static class SetCommand {
         }
 
         // Handle special cases
-        if (baseTypes.Count == 1 && (baseTypes[0] == typeof(Settings) || baseTypes[0] == typeof(SaveData) || baseTypes[0] == typeof(Assists))) {
+        /*if (baseTypes.Count == 1 && (baseTypes[0] == typeof(Settings) || baseTypes[0] == typeof(SaveData) || baseTypes[0] == typeof(Assists))) {
             SetGameSetting(memberArgs[0], args[1..]);
             return;
         }
@@ -339,7 +335,7 @@ public static class SetCommand {
         {
             SetExtendedVariant(memberArgs[0], args[1..]);
             return;
-        }
+        }*/
 
         foreach (var type in baseTypes) {
             if (componentTypes.IsNotEmpty()) {
@@ -386,7 +382,7 @@ public static class SetCommand {
         }
     }
 
-    private static void SetGameSetting(string settingName, string[] valueArgs) {
+    /*private static void SetGameSetting(string settingName, string[] valueArgs) {
         object? settings = null;
 
         FieldInfo? field;
@@ -422,6 +418,7 @@ public static class SetCommand {
             SaveData.Instance.AssistMode = false;
         }
     }
+    
     private static void SetExtendedVariant(string variantName, string[] valueArgs) {
         var variant = new Lazy<object?>(ExtendedVariantsInterop.ParseVariant(variantName));
         var variantType = ExtendedVariantsInterop.GetVariantType(variant);
@@ -530,11 +527,12 @@ public static class SetCommand {
 
         return true;
     }
+    */
 
-    public static void ResetVariants(Assists assists) {
+    /*public static void ResetVariants(Assists assists) {
         SaveData.Instance.Assists = assists;
         HandleSpecialCases(nameof(Assists.GameSpeed), assists.GameSpeed);
         HandleSpecialCases(nameof(Assists.MirrorMode), assists.MirrorMode);
         HandleSpecialCases(nameof(Assists.PlayAsBadeline), assists.PlayAsBadeline);
-    }
+    }*/
 }

@@ -1,22 +1,18 @@
 using System.Collections.Generic;
 using System.Linq;
-using Celeste.Mod;
+using BepInEx.Logging;
 using StudioCommunication;
-using System.Diagnostics.CodeAnalysis;
-using TAS.EverestInterop;
 using TAS.Input;
-using TAS.Module;
-using TAS.Utils;
+using TAS.UnityInterop;
 
 namespace TAS.Communication;
 
 public static class CommunicationWrapper {
 
-    [MemberNotNullWhen(true, nameof(comm))]
     public static bool Connected => comm is { Connected: true };
     private static CommunicationAdapterCeleste? comm;
 
-    [Load]
+    /*[Load]
     private static void Load() {
         Everest.Events.Celeste.OnExiting += Stop;
     }
@@ -24,24 +20,31 @@ public static class CommunicationWrapper {
     private static void Unload() {
         Everest.Events.Celeste.OnExiting -= Stop;
         Stop();
-    }
+    }*/
 
     public static void Start() {
         if (comm != null) {
-            "Tried to start the communication adapter while already running!".Log(LogLevel.Warn);
+            "Tried to start the communication adapter while already running!".Log(LogLevel.Warning);
             return;
         }
 
         comm = new CommunicationAdapterCeleste();
     }
+
     public static void Stop() {
         if (comm == null) {
-            "Tried to stop the communication adapter while not running!".Log(LogLevel.Warn);
+            Log.Warn("Tried to stop the communication adapter while not running!");
             return;
         }
 
         comm.Dispose();
         comm = null;
+    }
+
+    public static void SendReset() {
+        if (!Connected) return;
+
+        comm!.WriteReset();
     }
 
     public static void ChangeStatus() {
@@ -59,14 +62,14 @@ public static class CommunicationWrapper {
             return;
         }
 
-        comm.WriteState(state);
+        comm!.WriteState(state);
     }
     public static void SendUpdateLines(Dictionary<int, string> updateLines) {
         if (!Connected) {
             return;
         }
 
-        comm.WriteUpdateLines(updateLines);
+        comm!.WriteUpdateLines(updateLines);
     }
     public static void SendCurrentBindings() {
         if (!Connected) {
@@ -74,28 +77,28 @@ public static class CommunicationWrapper {
         }
 
         Dictionary<int, List<int>> nativeBindings = Hotkeys.StudioHotkeys.ToDictionary(pair => (int) pair.Key, pair => pair.Value.Cast<int>().ToList());
-        comm.WriteCurrentBindings(nativeBindings);
+        comm!.WriteCurrentBindings(nativeBindings);
     }
     public static void SendRecordingFailed(RecordingFailedReason reason) {
         if (!Connected) {
             return;
         }
 
-        comm.WriteRecordingFailed(reason);
+        comm!.WriteRecordingFailed(reason);
     }
     public static void SendSettings(GameSettings settings) {
         if (!Connected) {
             return;
         }
 
-        comm.WriteSettings(settings);
+        comm!.WriteSettings(settings);
     }
     public static void SendCommandList() {
         if (!Connected) {
             return;
         }
 
-        comm.WriteCommandList(Command.GetCommandList());
+        comm!.WriteCommandList(Command.GetCommandList());
     }
 
     #endregion

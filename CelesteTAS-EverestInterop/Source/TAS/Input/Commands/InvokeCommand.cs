@@ -2,18 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Celeste;
-using Celeste.Mod;
-using JetBrains.Annotations;
-using Monocle;
 using StudioCommunication;
 using StudioCommunication.Util;
 using System.Runtime.CompilerServices;
-using TAS.Entities;
-using TAS.EverestInterop;
+using NineSolsAPI;
 using TAS.InfoHUD;
 using TAS.ModInterop;
 using TAS.Utils;
+using UnityEngine;
 
 namespace TAS.Input.Commands;
 
@@ -45,17 +41,17 @@ public static class InvokeCommand {
                 var allTypes = ModUtils.GetTypes();
                 foreach ((string typeName, var type) in allTypes
                              .Select(type => (type.CSharpName(), type))
-                             .Order(new NamespaceComparer()))
+                             .OrderBy(x => x, new NamespaceComparer()))
                 {
                     if (
                         // Filter-out types which probably aren't useful
-                        !type.IsClass || !type.IsPublic || type.FullName == null || type.Namespace == null || SetCommand.SetMeta.ignoredNamespaces.Any(ns => type.Namespace.StartsWith(ns)) ||
+                        !type.IsClass || !type.IsPublic || type.FullName == null || (type.Namespace != null && SetCommand.SetMeta.ignoredNamespaces.Any(ns => type.Namespace.StartsWith(ns))) ||
 
                         // Filter-out compiler generated types
                         !type.GetCustomAttributes<CompilerGeneratedAttribute>().IsEmpty() || type.FullName.Contains('<') || type.FullName.Contains('>') ||
 
                         // Require either an entity, level, session
-                        !type.IsSameOrSubclassOf(typeof(Entity)) && !type.IsSameOrSubclassOf(typeof(Level)) && !type.IsSameOrSubclassOf(typeof(Session)) &&
+                        // !type.IsSameOrSubclassOf(typeof(Entity)) && !type.IsSameOrSubclassOf(typeof(Level)) && !type.IsSameOrSubclassOf(typeof(Session)) &&
                         // Or type with static (invokable) methods
                         !type.GetMethods(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)
                             .Any(IsInvokableMethod))
@@ -72,7 +68,8 @@ public static class InvokeCommand {
 
                         string otherName = otherType.CSharpName();
                         if (type != otherType && typeName == otherName) {
-                            uniqueTypeName = $"{typeName}@{ConsoleEnhancements.GetModName(type)}";
+                            // uniqueTypeName = $"{typeName}@{ConsoleEnhancements.GetModName(type)}";
+                            uniqueTypeName = $"{typeName}@TODO";
                             break;
                         }
                     }
@@ -88,7 +85,7 @@ public static class InvokeCommand {
         }
 
         private static IEnumerable<CommandAutoCompleteEntry> GetInvokeTypeAutoCompleteEntries(Type type, bool isRootType) {
-            bool staticMembers = isRootType && !(type.IsSameOrSubclassOf(typeof(Entity)) || type.IsSameOrSubclassOf(typeof(Level)) || type.IsSameOrSubclassOf(typeof(Session)) || type.IsSameOrSubclassOf(typeof(EverestModuleSettings)));
+            bool staticMembers = isRootType && !type.IsSameOrSubclassOf(typeof(MonoBehaviour));
             var bindingFlags = staticMembers
                 ? BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public
                 : BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
@@ -103,7 +100,7 @@ public static class InvokeCommand {
             }
         }
 
-        [MustDisposeResource]
+        // [MustDisposeResource]
         private static IEnumerator<CommandAutoCompleteEntry> GetParameterAutoCompleteEntries(string[] targetArgs, int parameterIndex) {
             if (targetArgs.Length >= 1 && TargetQuery.ResolveBaseTypes(targetArgs, out string[] memberArgs, out _, out _) is { } types && types.IsNotEmpty() && memberArgs.Length == 1) {
                 // Assume the first type
@@ -145,21 +142,21 @@ public static class InvokeCommand {
 
     private static void ReportError(string message) {
         if (activeFile == null) {
-            $"Invoke Command Failed: {message}".ConsoleLog(LogLevel.Error);
+            ToastManager.Toast($"Invoke Command Failed: {message}");
         } else {
-            Toast.ShowAndLog($"""
+            ToastManager.Toast($"""
                               Invoke '{activeFile.Value.Name}' line {activeFile.Value.Line} failed:
                               {message}
                               """);
         }
     }
 
-    [Monocle.Command("invoke", "Invoke level/session/entity method. eg invoke Level.Pause; invoke Player.Jump (CelesteTAS)"), UsedImplicitly]
+    /*[Monocle.Command("invoke", "Invoke level/session/entity method. eg invoke Level.Pause; invoke Player.Jump (CelesteTAS)"), UsedImplicitly]
     private static void ConsoleInvoke(string? arg1, string? arg2, string? arg3, string? arg4, string? arg5, string? arg6, string? arg7, string? arg8, string? arg9) {
         // TODO: Support arbitrary amounts of arguments
         string?[] args = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9];
         Invoke(args.TakeWhile(arg => arg != null).ToArray()!);
-    }
+    }*/
 
     // Invoke, Level.Method, Parameters...
     // Invoke, Session.Method, Parameters...
@@ -199,7 +196,7 @@ public static class InvokeCommand {
                         ReportError(methodResult);
                         return;
                     }
-
+                    
                     var valuesResult = TargetQuery.ResolveValues(args[1..], methodResult.Value.GetParameters().Select(param => param.ParameterType).ToArray());
                     if (valuesResult.Failure) {
                         ReportError(valuesResult);
