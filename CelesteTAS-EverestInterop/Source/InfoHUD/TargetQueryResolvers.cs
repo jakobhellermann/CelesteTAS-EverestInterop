@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using TAS.Utils;
 using UnityEngine;
 
@@ -12,6 +13,28 @@ internal class GlobalInstanceResolver<T>(Func<T> instanceProvider) : IInstanceRe
     public List<object> Resolve(Type type, List<Type> componentTypes, EntityID? entityId) => [instanceProvider()];
 }
 
+internal class SingletonBehaviourResolver : IInstanceResolver {
+    public bool CanResolve(Type type) {
+        for(var ty = type; ty != null && ty != typeof(object); ty = ty.BaseType) {
+            if (ty.IsGenericType && ty.GetGenericTypeDefinition() == typeof(SingletonBehaviour<>)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public List<object> Resolve(Type type, List<Type> componentTypes, EntityID? entityId) {
+        for (var ty = type.BaseType; ty != null; ty = ty.BaseType) {
+            var field = ty.GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static);
+            if (field == null) continue;
+            return [field.GetValue(null)];
+        }
+
+        throw new Exception($"Could not find `_instance` field on SingletonBehaviour");
+    }
+}
+
 internal class MonobehaviourInstanceResolver : IInstanceResolver {
     public bool CanResolve(Type type) => type.IsSameOrSubclassOf(typeof(MonoBehaviour));
 
@@ -20,7 +43,7 @@ internal class MonobehaviourInstanceResolver : IInstanceResolver {
             UnityEngine.Object.FindObjectsByType(type, FindObjectsInactive.Exclude, FindObjectsSortMode.InstanceID);
 
         if (!componentTypes.IsEmpty()) {
-            Log.Warn("componentTypes filter not supported");
+            Log.Toast("componentTypes filter not supported");
         }
 
         return entityInstances.Select(e => (object) e).ToList();

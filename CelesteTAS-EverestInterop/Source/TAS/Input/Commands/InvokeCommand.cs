@@ -5,6 +5,7 @@ using System.Reflection;
 using StudioCommunication;
 using StudioCommunication.Util;
 using System.Runtime.CompilerServices;
+using NineSolsAPI;
 using TAS.InfoHUD;
 using TAS.ModInterop;
 using TAS.Utils;
@@ -141,9 +142,9 @@ public static class InvokeCommand {
 
     private static void ReportError(string message) {
         if (activeFile == null) {
-            Log.Toast($"Invoke Command Failed: {message}");
+            ToastManager.Toast($"Invoke Command Failed: {message}");
         } else {
-            Log.Toast($"""
+            ToastManager.Toast($"""
                               Invoke '{activeFile.Value.Name}' line {activeFile.Value.Line} failed:
                               {message}
                               """);

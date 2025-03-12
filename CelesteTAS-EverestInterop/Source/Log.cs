@@ -1,4 +1,5 @@
 using BepInEx.Logging;
+using NineSolsAPI;
 using UnityEngine;
 
 namespace TAS;
@@ -34,7 +35,6 @@ internal static class Log {
     }
 
     internal static void Toast(object message) {
-        // TODO: on screen toast
-        Log.Info(message);
+        ToastManager.Toast(message);
     }
 }

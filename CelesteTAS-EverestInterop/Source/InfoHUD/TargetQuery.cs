@@ -36,6 +36,7 @@ public static class TargetQuery {
 
     private static readonly IInstanceResolver[] TypeInstanceResolvers = [
         // new GlobalInstanceResolver<GameCore>(GameCore.Instance),
+        new SingletonBehaviourResolver(),
         new MonobehaviourInstanceResolver(),
     ];
 

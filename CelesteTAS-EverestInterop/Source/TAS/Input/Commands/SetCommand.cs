@@ -5,6 +5,7 @@ using StudioCommunication;
 using StudioCommunication.Util;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using NineSolsAPI;
 using TAS.InfoHUD;
 using TAS.ModInterop;
 using TAS.Utils;
@@ -276,9 +277,9 @@ public static class SetCommand {
 
     private static void ReportError(string message) {
         if (activeFile == null) {
-            Log.Toast($"Set Command Failed: {message}");
+            ToastManager.Toast($"Set Command Failed: {message}");
         } else {
-            Log.Toast($"""
+            ToastManager.Toast($"""
                               Set '{activeFile.Value.Name}' line {activeFile.Value.Line} failed:
                               {message}
                               """);
