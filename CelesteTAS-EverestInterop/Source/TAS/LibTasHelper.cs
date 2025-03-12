@@ -6,7 +6,6 @@ using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using StudioCommunication;
 using TAS.Input;
-using TAS.Input.Commands;
 using TAS.Utils;
 
 namespace TAS;
@@ -23,7 +22,7 @@ namespace TAS;
 public static class LibTasHelper {
     public static bool Exporting { get; private set; }
 
-    private static StreamWriter streamWriter;
+    private static StreamWriter? streamWriter;
     private static bool skipNextInput;
     private static string ltmFilePath = "";
     private static string inputsFilePath => Path.Combine(Path.GetDirectoryName(ltmFilePath), "intpus");
@@ -88,7 +87,7 @@ public static class LibTasHelper {
             return;
         }
 
-        if (InputFrame.TryParse(inputText, 0, null, out InputFrame inputFrame)) {
+        if (InputFrame.TryParse(inputText, 0, null, out var inputFrame)) {
             bool orig = skipNextInput;
             skipNextInput = false;
             WriteLibTasFrame(inputFrame);
@@ -109,9 +108,9 @@ public static class LibTasHelper {
 
     private static void WriteLibTasFrame(string outputKeys, string outputAxesLeft, string outputAxesRight, string outputButtons) {
         if (outputAxesLeft == "0:0" && outputAxesRight == "0:0" && outputButtons == "...............") {
-            streamWriter.WriteLine($"|K{outputKeys}|");
+            streamWriter!.WriteLine($"|K{outputKeys}|");
         } else {
-            streamWriter.WriteLine($"|K{outputKeys}|C1{outputAxesLeft}:{outputAxesRight}:0:0:{outputButtons}|");
+            streamWriter!.WriteLine($"|K{outputKeys}|C1{outputAxesLeft}:{outputAxesRight}:0:0:{outputButtons}|");
         }
 
         frameCount++;
@@ -310,14 +309,14 @@ public static class LibTasHelper {
         }
     }
 
-    private static TarEntry CreateTarEntry(string fileName, Func<string, string> contentsSelector = null) {
+    private static TarEntry CreateTarEntry(string fileName, Func<string, string>? contentsSelector = null) {
         CreateResourceFile(fileName, contentsSelector, out string filePath);
         TarEntry tarEntry = TarEntry.CreateEntryFromFile(filePath);
         tarEntry.Name = fileName;
         return tarEntry;
     }
 
-    private static void CreateResourceFile(string fileName, Func<string, string> contentsSelector, out string filePath) {
+    private static void CreateResourceFile(string fileName, Func<string, string>? contentsSelector, out string filePath) {
         string directory = Path.GetDirectoryName(ltmFilePath);
         filePath = Path.Combine(directory, fileName);
         string contents = GetResourceFile(fileName);
@@ -325,7 +324,7 @@ public static class LibTasHelper {
     }
 
     private static string GetResourceFile(string name) {
-        using Stream stream = typeof(LibTasHelper).Assembly.GetManifestResourceStream($"TAS.libTAS.{name}");
+        using Stream stream = typeof(LibTasHelper).Assembly.GetManifestResourceStream($"TAS.libTAS.{name}")!;
         using StreamReader reader = new(stream);
         return reader.ReadToEnd();
     }

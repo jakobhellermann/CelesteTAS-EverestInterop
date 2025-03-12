@@ -22,7 +22,7 @@ using TAS.Utils;
 namespace TAS;
 
 public static class GameInfo {
-    private static readonly GetDelegate<Level, float> LevelUnpauseTimer = FastReflection.CreateGetDelegate<Level, float>("unpauseTimer");
+    private static readonly GetDelegate<Level, float>? LevelUnpauseTimer = FastReflection.CreateGetDelegate<Level, float>("unpauseTimer");
 
     public static string Status = string.Empty;
     public static string StatusWithoutTime = string.Empty;
@@ -157,7 +157,7 @@ public static class GameInfo {
         ILCursor ilCursor = new(il);
         while (ilCursor.TryGotoNext(
                    ins => ins.MatchBox<float>(),
-                   ins => ins.OpCode == OpCodes.Stfld && ins.Operand.ToString().EndsWith("::<>2__current")
+                   ins => ins.OpCode == OpCodes.Stfld && ins.Operand.ToString()!.EndsWith("::<>2__current")
                )) {
             ilCursor.EmitDelegate<Func<float, float>>(SetDashTime);
             ilCursor.Index++;
@@ -265,7 +265,7 @@ public static class GameInfo {
 
                 int dashCooldown = player.dashCooldownTimer.ToFloorFrames();
 
-                PlayerSeeker playerSeeker = level.Tracker.GetEntity<PlayerSeeker>();
+                PlayerSeeker? playerSeeker = level.Tracker.GetEntity<PlayerSeeker>();
                 if (playerSeeker != null) {
                     pos = GetAdjustedPos(playerSeeker, out exactPos);
                     speed = GetAdjustedSpeed(playerSeeker.speed, out exactSpeed);
@@ -289,7 +289,7 @@ public static class GameInfo {
                 string statuses = GetStatuses(level, player);
 
                 string timers = string.Empty;
-                Follower firstRedBerryFollower = player.Leader.Followers.Find(follower => follower.Entity is Strawberry {Golden: false});
+                Follower? firstRedBerryFollower = player.Leader.Followers.Find(follower => follower.Entity is Strawberry {Golden: false});
                 if (firstRedBerryFollower?.Entity is Strawberry firstRedBerry) {
                     float collectTimer = firstRedBerry.collectTimer;
                     if (collectTimer <= 0.15f) {
@@ -363,7 +363,7 @@ public static class GameInfo {
             UpdateAdditionInfo();
         } else if (scene is Emulator {game: { } game} emulator) {
             StringBuilder stringBuilder = new();
-            Classic.player player = emulator.game.objects.FirstOrDefault(o => o is Classic.player) as Classic.player;
+            Classic.player? player = emulator.game.objects.FirstOrDefault(o => o is Classic.player) as Classic.player;
             if (player != null) {
                 stringBuilder.AppendLine($"Pos:   {player.x}, {player.y}");
                 stringBuilder.AppendLine($"Rem:   {player.rem.ToSimpleString(TasSettings.PositionDecimals)}");
@@ -445,7 +445,7 @@ public static class GameInfo {
                 string direction = player.forceMoveX switch {
                     > 0 => "R",
                     < 0 => "L",
-                    0 => "N"
+                    0 => "N",
                 };
                 statuses.Add($"ForceMove{direction}({forceMoveXTimer})");
             }
@@ -472,7 +472,7 @@ public static class GameInfo {
         return string.Join(" ", statuses);
     }
 
-    private static string GetStatusWithoutTime(string pos, string speed, string velocity, Player player, PlayerSeeker playerSeeker,
+    private static string GetStatusWithoutTime(string pos, string speed, string velocity, Player player, PlayerSeeker? playerSeeker,
         string polarVel, string analog, string retainedSpeed, string liftBoost, string miscStats, string statuses, string timers) {
         StringBuilder builder = new();
         builder.AppendLine(pos);
@@ -573,7 +573,6 @@ public static class GameInfo {
             $"Analog: {angleVector2.ToSimpleString(GameSettings.MaxDecimals)}, {GetAngle(new Vector2(angleVector2.X, -angleVector2.Y)).ToFormattedString(GameSettings.MaxDecimals)}°";
         return
             $"Analog: {angleVector2.ToSimpleString(TasSettings.AngleDecimals)}, {GetAngle(new Vector2(angleVector2.X, -angleVector2.Y)).ToFormattedString(TasSettings.AngleDecimals)}°";
-        ;
     }
 
     private static string GetAdjustedRetainedSpeed(Player player, out string exactRetainedSpeed) {
@@ -622,8 +621,6 @@ public static class GameInfo {
 }
 
 public static class PlayerStates {
-    private static readonly Func<StateMachine, string> GetCurrentStateNameFunc = typeof(StateMachine).GetMethodInfo("GetCurrentStateName")?.CreateDelegate<Func<StateMachine, string>>();
-
     private static readonly IDictionary<int, string> States = new Dictionary<int, string> {
         {Player.StNormal, nameof(Player.StNormal)},
         {Player.StClimb, nameof(Player.StClimb)},
@@ -655,7 +652,7 @@ public static class PlayerStates {
 
     [Obsolete("GetStateName(int) is deprecated, please use GetCurrentStateName(Player) instead.")]
     public static string GetStateName(int state) {
-        return States.TryGetValue(state, out string name) ? name : state.ToString();
+        return States.TryGetValue(state, out string? name) ? name : state.ToString();
     }
 
     public static string GetCurrentStateName(Player player) {
@@ -710,7 +707,7 @@ public struct Vector2Double {
         SubpixelRounding = subpixelRounding;
     }
 
-    public override bool Equals(object obj) =>
+    public override bool Equals(object? obj) =>
         obj is Vector2Double other && Position == other.Position && PositionRemainder == other.PositionRemainder;
 
     public override int GetHashCode() => ToString().GetHashCode();
