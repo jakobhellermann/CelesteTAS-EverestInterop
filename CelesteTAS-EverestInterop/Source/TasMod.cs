@@ -1,11 +1,12 @@
 using System;
 using BepInEx;
 using BepInEx.Configuration;
+using Cysharp.Threading.Tasks;
 using HarmonyLib;
 using JetBrains.Annotations;
-using PlayerLoopHelper;
+using NineSolsAPI;
 using TAS.Communication;
-using TAS.EverestInterop.Hitboxes;
+using TAS.EverestInterop;
 using TAS.Module;
 using TAS.Tracer;
 using TAS.Utils;
@@ -13,6 +14,7 @@ using UnityEngine;
 
 namespace TAS;
 
+[BepInDependency(NineSolsAPICore.PluginGUID)]
 [BepInPlugin("TasTools", "TasTools", "1.0.0")]
 public class TasMod : BaseUnityPlugin {
     public static TasMod Instance = null!;
@@ -23,10 +25,8 @@ public class TasMod : BaseUnityPlugin {
     internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
     internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
 
-    internal HitboxModule HitboxModule = null!;
+    internal ConfigEntry<DebugInfo.DebugFilter> ConfigDebugInfo = null!;
 
-    // private static readonly Type? AlsoTraceAround = typeof(UnityEngine.PlayerLoop.PreUpdate.Physics2DUpdate);
-    private static readonly Type? AlsoTraceAround = null;
 
     // private ConfigEntry<bool> configOpenStudioOnLaunch = null!;
     // private ConfigEntry<KeyboardShortcut> configOpenStudioShortcut = null!;
@@ -58,6 +58,10 @@ public class TasMod : BaseUnityPlugin {
                 TasTracerFilter.Random | TasTracerFilter.Movement
             );
 
+            ConfigDebugInfo = Config.Bind("Debug",
+                "Debug Info",
+                DebugInfo.DebugFilter.RapidlyChanging | DebugInfo.DebugFilter.Monsters | DebugInfo.DebugFilter.Random);
+
             /*
             configOpenStudioOnLaunch = Config.Bind("Studio", "Launch on start", true);
             configOpenStudioShortcut = Config.Bind("Studio", "Launch", new KeyboardShortcut());
@@ -69,8 +73,10 @@ public class TasMod : BaseUnityPlugin {
             // KeybindManager.Add(this, LaunchStudio, () => configOpenStudioShortcut.Value);
             KeybindManager.Add(this, LaunchStudio, () => configOpenStudioShortcut.Value);
             */
+            KeybindManager.Add(this, StudioHelper.LaunchStudio, () => StudioHelper.ConfigLaunchStudioShortcut.Value);
 
             TasSettings = new CelesteTasSettings(Config);
+            RCGLifeCycle.DontDestroyForever(gameObject);
 
             AttributeUtils.CollectAllMethods<UnloadAttribute>();
             AttributeUtils.CollectAllMethods<InitializeAttribute>();
@@ -81,54 +87,34 @@ public class TasMod : BaseUnityPlugin {
 
             harmony = Harmony.CreateAndPatchAll(typeof(TasMod).Assembly);
 
-            HitboxModule = new GameObject().AddComponent<HitboxModule>();
-            DontDestroyOnLoad(HitboxModule.gameObject);
+            if (!GameVersions.IsVersion(GameVersions.SpeedrunPatch)) {
+                harmony.PatchAll(typeof(InputHelper.PatchesNonSpeedrunpatch));
+            }
 
             if (TasSettings.AttemptConnectStudio) CommunicationWrapper.Start();
         } catch (Exception e) {
-            Log.Error($"Failed to load TasTools: {e}");
+            Log.Error($"Failed to load {MyPluginInfo.PLUGIN_GUID}: {e}");
         }
 
         // https://giannisakritidis.com/blog/Early-And-Super-Late-Update-In-Unity/
 
-        Logger.LogInfo($"Plugin TasTools is loaded!");
+        Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
     }
 
-    private struct EarlyUpdateSystem;
-
-    private struct PostLateUpdateSystem;
-
-    private struct FirstUpdateSystem;
-
-    private struct LastUpdateSystem;
-
     private void Start() {
-        PlayerLoopSystemHelper.Register(typeof(EarlyUpdateSystem),
-            InsertPosition.FirstChildOf,
-            typeof(UnityEngine.PlayerLoop.EarlyUpdate),
-            EarlyUpdate);
-        PlayerLoopSystemHelper.Register(typeof(FirstUpdateSystem),
-            InsertPosition.FirstChildOf,
-            typeof(UnityEngine.PlayerLoop.Update),
-            FirstUpdate);
-        PlayerLoopSystemHelper.Register(typeof(LastUpdateSystem),
-            InsertPosition.LastChildOf,
-            typeof(UnityEngine.PlayerLoop.Update),
-            LastUpdate);
-        PlayerLoopSystemHelper.Register(typeof(PostLateUpdateSystem),
-            InsertPosition.FirstChildOf,
-            typeof(UnityEngine.PlayerLoop.PostLateUpdate),
-            PostLateUpdate);
+        Cysharp.Threading.Tasks.PlayerLoopHelper.AddAction(PlayerLoopTiming.EarlyUpdate, new PlayerLoopItem(this, EarlyUpdate));
+        Cysharp.Threading.Tasks.PlayerLoopHelper.AddAction(PlayerLoopTiming.Update, new PlayerLoopItem(this, FirstUpdate));
+        Cysharp.Threading.Tasks.PlayerLoopHelper.AddAction(PlayerLoopTiming.LastUpdate, new PlayerLoopItem(this, LastUpdate));
+        Cysharp.Threading.Tasks.PlayerLoopHelper.AddAction(PlayerLoopTiming.PreUpdate, new PlayerLoopItem(this, PreUpdate));
+        Cysharp.Threading.Tasks.PlayerLoopHelper.AddAction(PlayerLoopTiming.PostLateUpdate, new PlayerLoopItem(this, PostLateUpdate));
+    }
 
-        if (AlsoTraceAround is { } system) {
-            PlayerLoopSystemHelper.Register(typeof(TasMod),
-                InsertPosition.Before,
-                system,
-                TraceBefore);
-            PlayerLoopSystemHelper.Register(typeof(TasMod),
-                InsertPosition.After,
-                system,
-                TraceAfter);
+    private class PlayerLoopItem(TasMod mb, Action action) : IPlayerLoopItem {
+        public bool MoveNext() {
+            if (!mb) return false;
+
+            action();
+            return true;
         }
     }
 
@@ -144,8 +130,15 @@ public class TasMod : BaseUnityPlugin {
         TasTracer.BeginStage("FixedUpdate");
     }
 
-    private static void TraceBefore() => TasTracer.BeginStage($"TraceBefore-{AlsoTraceAround}");
-    private static void TraceAfter() => TasTracer.BeginStage($"TraceAfter-{AlsoTraceAround}");
+    private static void PreUpdate() {
+        if (Physics2D.simulationMode != SimulationMode2D.Script) return;
+
+        if (Manager.CurrState != Manager.State.Paused) {
+            Physics2D.Simulate(Time.deltaTime);
+        }
+
+        TasTracer.BeginStage("PreUpdate-aftersim");
+    }
 
     
     private static void FirstUpdate() {
@@ -194,16 +187,9 @@ public class TasMod : BaseUnityPlugin {
     }
 
     private void OnDestroy() {
-        PlayerLoopSystemHelper.Unregister(typeof(EarlyUpdateSystem));
-        PlayerLoopSystemHelper.Unregister(typeof(FirstUpdateSystem));
-        PlayerLoopSystemHelper.Unregister(typeof(LastUpdateSystem));
-        PlayerLoopSystemHelper.Unregister(typeof(PostLateUpdateSystem));
-
         AttributeUtils.Invoke<UnloadAttribute>();
         if (Manager.Running) Manager.DisableRun();
         harmony?.UnpatchSelf();
-
-        if (HitboxModule?.gameObject) Destroy(HitboxModule!.gameObject);
 
         CommunicationWrapper.SendReset();
         CommunicationWrapper.Stop();

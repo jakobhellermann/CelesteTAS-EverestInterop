@@ -1,7 +1,6 @@
 using BepInEx.Configuration;
 using System;
 using TAS.Communication;
-using TAS.EverestInterop.Hitboxes;
 
 namespace TAS.Module;
 
@@ -9,21 +8,6 @@ using GameSettings = StudioCommunication.GameSettings;
 
 public class CelesteTasSettings {
     public CelesteTasSettings(ConfigFile config) {
-        ShowHitboxes = config.Bind("Hitboxes", "Visible", false);
-        ShowHitboxes.SettingChanged += (_, _) => {
-            _studioShared.Hitboxes = ShowHitboxes.Value;
-            SyncSettings();
-        };
-        ShowHitboxes.SettingChanged += (_, _) => TasMod.Instance.HitboxModule.Reload();
-        HitboxFilter = config.Bind("Hitboxes", "Hitbox Filter", HitboxType.Default);
-        HitboxFilter.SettingChanged += (_, _) => ShowHitboxes.Value = true;
-        ShowRaycasts = config.Bind("Hitboxes", "Show Raycasts", false);
-        CenterCamera = config.Bind("More options", "Center Camera", false);
-        CenterCamera.SettingChanged += (_, _) => {
-            _studioShared.CenterCamera = CenterCamera.Value;
-            SyncSettings();
-        };
-        infoCustomTemplate = config.Bind("Info HUD", "Custom Info Template", string.Empty);
     }
 
     // Settings which are shared / controllable from Studio
@@ -34,8 +18,6 @@ public class CelesteTasSettings {
         set {
             _studioShared = value;
             updating = true;
-            ShowHitboxes.Value = value.Hitboxes;
-            CenterCamera.Value = value.CenterCamera;
             updating = false;
         }
     }
@@ -47,14 +29,6 @@ public class CelesteTasSettings {
 
         CommunicationWrapper.SendSettings(StudioShared);
     }
-
-    #region Hitboxes
-
-    public readonly ConfigEntry<bool> ShowHitboxes;
-    public readonly ConfigEntry<HitboxType> HitboxFilter;
-    public readonly ConfigEntry<bool> ShowRaycasts;
-
-    #endregion
 
     #region Round Values
 
@@ -96,14 +70,7 @@ public class CelesteTasSettings {
 
     #endregion
 
-    // Persisted like upstream (which calls SaveSettings after a Studio edit); BepInEx's ConfigEntry writes the .cfg on
-    // set, so assigning InfoCustomTemplate survives a restart. Backed by a config entry rather than a plain property
-    // because BepInEx only persists bound entries.
-    private readonly ConfigEntry<string> infoCustomTemplate;
-    public string InfoCustomTemplate {
-        get => infoCustomTemplate.Value;
-        set => infoCustomTemplate.Value = value;
-    }
+    public string InfoCustomTemplate { get; set; } = string.Empty;
 
     #region Fast Forward
 
@@ -126,8 +93,6 @@ public class CelesteTasSettings {
     #endregion
 
     #region More Options
-
-    public readonly ConfigEntry<bool> CenterCamera;
 
     public bool AutoPauseDraft { get; set; } = true;
     public bool AttemptConnectStudio { get; set; } = true;

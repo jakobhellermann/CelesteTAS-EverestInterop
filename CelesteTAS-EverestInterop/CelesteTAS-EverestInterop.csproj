@@ -12,8 +12,8 @@
         <NoWarn>MSB3277</NoWarn>
 
         <!-- todo macOS -->
-        <GamePath Condition="'$(OS)' == 'Windows_NT'">C:/Program Files (x86)/Steam/steamapps/common/Nine Sols</GamePath>
-        <GamePath Condition="'$(OS)' != 'Windows_NT'">$(HOME)/.local/share/Steam/steamapps/common/Nine Sols</GamePath>
+        <GamePath Condition="'$(GamePath)' == '' And '$(OS)' == 'Windows_NT'">C:/Program Files (x86)/Steam/steamapps/common/Nine Sols</GamePath>
+        <GamePath Condition="'$(GamePath)' == '' And '$(OS)' != 'Windows_NT'">$(HOME)/.local/share/Steam/steamapps/common/Nine Sols</GamePath>
         <ManagedDir Condition="'$(ManagedDir)' == ''">$(GamePath)/NineSols_Data/Managed</ManagedDir>
 
         <!-- If you're not using R2Modman/Thunderstore, this can be GamePath as well. Only used in CopyDir -->
@@ -24,28 +24,66 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <!--
         <Reference Include="Assembly-CSharp">
             <HintPath>$(ManagedDir)/Assembly-CSharp.dll</HintPath>
             <Private>false</Private>
         </Reference>
-        -->
-        <Reference Include="Unity.InputSystem" Condition="Exists('$(DllPath)/Unity.InputSystem.dll')">
-            <HintPath>$(DllPath)/Unity.InputSystem.dll</HintPath>
+        <Reference Include="Unity.InputSystem" Condition="Exists('$(ManagedDir)/Unity.InputSystem.dll')">
+            <HintPath>$(ManagedDir)/Unity.InputSystem.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="rcg.rcgmakercore.Runtime">
+            <HintPath>$(ManagedDir)/rcg.rcgmakercore.Runtime.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="RCG_General">
+            <HintPath>$(ManagedDir)/RCG_General.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="InControl">
+            <HintPath>$(ManagedDir)/InControl.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="UniTask">
+            <HintPath>$(ManagedDir)/UniTask.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="I2">
+            <HintPath>$(ManagedDir)/I2.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="PrimeTween.Runtime">
+            <HintPath>$(ManagedDir)/PrimeTween.Runtime.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="DOTween">
+            <HintPath>$(ManagedDir)/DOTween.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Newtonsoft.Json">
+            <HintPath>$(ManagedDir)/Newtonsoft.Json.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="2dFX">
+            <HintPath>$(ManagedDir)/2dFX.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="AK.Wwise.Unity.MonoBehaviour">
+            <HintPath>$(ManagedDir)/AK.Wwise.Unity.MonoBehaviour.dll</HintPath>
             <Private>false</Private>
         </Reference>
     </ItemGroup>
 
-    <PropertyGroup Condition="Exists('$(DllPath)/Unity.InputSystem.dll')">
+    <PropertyGroup Condition="Exists('$(ManagedDir)/Unity.InputSystem.dll')">
         <DefineConstants>$(DefineConstants);UNITY_NEW_INPUT_SYSTEM</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="BepInEx.Analyzers" Version="1.*" />
         <PackageReference Include="BepInEx.Core" Version="5.*" IncludeAssets="compile" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="UnityEngine.Modules" Version="2022.3.18" IncludeAssets="compile" />
 
+        <PackageReference Include="NineSolsAPI" Version="1.2.3" IncludeAssets="compile" />
         <ProjectReference Include="../StudioCommunication/StudioCommunication.csproj" />
     </ItemGroup>
 
