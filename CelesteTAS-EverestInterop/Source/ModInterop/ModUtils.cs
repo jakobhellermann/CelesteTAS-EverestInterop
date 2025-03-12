@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 namespace TAS.ModInterop;
 
 internal static class ModUtils {
-    private static readonly Assembly VanillaAssembly = null!; // TODO(game): specify main Assembly
+    private static readonly Assembly VanillaAssembly = typeof(Player).Assembly;
 
     public static Type[] GetTypes() {
         return new[] {

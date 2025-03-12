@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Reflection;
 using TAS.Utils;
 using UnityEngine;
 
@@ -328,3 +329,25 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
     }
 }
 
+internal class SingletonBehaviourResolver : TargetQuery.Handler {
+    public override bool CanResolveInstances(Type type) {
+        for (var ty = type; ty != null && ty != typeof(object); ty = ty.BaseType) {
+            if (ty.IsGenericType && ty.GetGenericTypeDefinition() == typeof(SingletonBehaviour<>)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public override object[] ResolveInstances(Type type) {
+        for (var ty = type.BaseType; ty != null; ty = ty.BaseType) {
+            var field = ty.GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static);
+            if (field == null) continue;
+
+            return [field.GetValue(null)];
+        }
+
+        throw new Exception("Could not find `_instance` field on SingletonBehaviour");
+    }
+}
