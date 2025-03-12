@@ -310,14 +310,14 @@ public static class LibTasHelper {
         }
     }
 
-    private static TarEntry CreateTarEntry(string fileName, Func<string, string> contentsSelector = null) {
+    private static TarEntry CreateTarEntry(string fileName, Func<string, string>? contentsSelector = null) {
         CreateResourceFile(fileName, contentsSelector, out string filePath);
         TarEntry tarEntry = TarEntry.CreateEntryFromFile(filePath);
         tarEntry.Name = fileName;
         return tarEntry;
     }
 
-    private static void CreateResourceFile(string fileName, Func<string, string> contentsSelector, out string filePath) {
+    private static void CreateResourceFile(string fileName, Func<string, string>? contentsSelector, out string filePath) {
         string directory = Path.GetDirectoryName(ltmFilePath);
         filePath = Path.Combine(directory, fileName);
         string contents = GetResourceFile(fileName);
@@ -325,7 +325,7 @@ public static class LibTasHelper {
     }
 
     private static string GetResourceFile(string name) {
-        using Stream stream = typeof(LibTasHelper).Assembly.GetManifestResourceStream($"TAS.libTAS.{name}");
+        using Stream stream = typeof(LibTasHelper).Assembly.GetManifestResourceStream($"TAS.libTAS.{name}")!;
         using StreamReader reader = new(stream);
         return reader.ReadToEnd();
     }

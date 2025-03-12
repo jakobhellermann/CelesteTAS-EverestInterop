@@ -716,21 +716,21 @@ internal static class Vector2Extensions {
 internal static class SceneExtensions {
     public static Player GetPlayer(this Scene scene) => scene.Tracker.GetEntity<Player>();
 
-    public static Level GetLevel(this Scene scene) {
+    public static Level? GetLevel(this Scene scene) {
         return scene switch {
             Level level => level,
             LevelLoader levelLoader => levelLoader.Level,
-            _ => null
+            _ => null,
         };
     }
 
-    public static Session GetSession(this Scene scene) {
+    public static Session? GetSession(this Scene scene) {
         return scene switch {
             Level level => level.Session,
             LevelLoader levelLoader => levelLoader.session,
             LevelExit levelExit => levelExit.session,
             AreaComplete areaComplete => areaComplete.Session,
-            _ => null
+            _ => null,
         };
     }
 }
@@ -835,7 +835,7 @@ internal static class CloneUtil<T> {
     private static readonly Func<T, object> Clone;
 
     static CloneUtil() {
-        MethodInfo cloneMethod = typeof(T).GetMethodInfo("MemberwiseClone", parameterTypes: null, BindingFlags.Instance | BindingFlags.NonPublic);
+        MethodInfo cloneMethod = typeof(T).GetMethodInfo("MemberwiseClone", parameterTypes: null, BindingFlags.Instance | BindingFlags.NonPublic)!;
         Clone = (Func<T, object>) cloneMethod.CreateDelegate(typeof(Func<T, object>));
     }
 
@@ -851,7 +851,7 @@ internal static class CloneUtil {
         }
 
         foreach (FieldInfo fieldInfo in to.GetType().GetAllFieldInfos()) {
-            object fromValue = fieldInfo.GetValue(from);
+            object fromValue = fieldInfo.GetValue(from)!;
             if (onlyDifferent && fromValue == fieldInfo.GetValue(to)) {
                 continue;
             }
@@ -870,7 +870,7 @@ internal static class CloneUtil {
                 continue;
             }
 
-            object fromValue = propertyInfo.GetValue(from);
+            object fromValue = propertyInfo.GetValue(from)!;
             if (onlyDifferent && fromValue == propertyInfo.GetValue(to)) {
                continue;
             }

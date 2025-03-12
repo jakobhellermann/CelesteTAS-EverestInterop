@@ -34,7 +34,7 @@ public static class EvalLuaCommand {
     }
 
     private static void HookEverestDebugRc() {
-        var methods = typeof(Everest.DebugRC).GetNestedType("<>c", BindingFlags.NonPublic)
+        var methods = typeof(Everest.DebugRC).GetNestedType("<>c", BindingFlags.NonPublic)!
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic);
         foreach (var method in methods) {
             var methodBody = method.GetMethodBody();
@@ -66,7 +66,7 @@ public static class EvalLuaCommand {
         }
     }
 
-    private static string ReadContent(string assetPath) {
+    private static string? ReadContent(string assetPath) {
         ModAsset modAsset = Everest.Content.Get(assetPath, true);
         if (modAsset != null) {
             using StreamReader streamReader = new(modAsset.Stream);

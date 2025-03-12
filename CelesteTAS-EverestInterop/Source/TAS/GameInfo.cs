@@ -710,7 +710,7 @@ public struct Vector2Double {
         SubpixelRounding = subpixelRounding;
     }
 
-    public override bool Equals(object obj) =>
+    public override bool Equals(object? obj) =>
         obj is Vector2Double other && Position == other.Position && PositionRemainder == other.PositionRemainder;
 
     public override int GetHashCode() => ToString().GetHashCode();

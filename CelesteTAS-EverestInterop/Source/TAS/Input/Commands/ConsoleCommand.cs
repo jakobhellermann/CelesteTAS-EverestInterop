@@ -379,7 +379,7 @@ public static class ConsoleCommand {
         }
     }
 
-    private static void Load(AreaMode mode, int areaId, string screen = null, int? spawnPoint = null) {
+    private static void Load(AreaMode mode, int areaId, string? screen = null, int? spawnPoint = null) {
         AreaKey areaKey = new(areaId, mode);
         Session session = AreaData.GetCheckpoint(areaKey, screen) != null ? new Session(areaKey, screen) : new Session(areaKey);
 

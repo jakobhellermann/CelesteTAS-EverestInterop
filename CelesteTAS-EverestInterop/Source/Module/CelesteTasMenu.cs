@@ -238,10 +238,8 @@ internal static class CelesteTasMenu {
         }
     }
 
-    public static IEnumerable<KeyValuePair<int?, string>> CreateSliderOptions(int start, int end, Func<int, string> formatter = null) {
-        if (formatter == null) {
-            formatter = i => i.ToString();
-        }
+    public static IEnumerable<KeyValuePair<int?, string>> CreateSliderOptions(int start, int end, Func<int, string>? formatter = null) {
+        formatter ??= i => i.ToString();
 
         List<KeyValuePair<int?, string>> result = new();
 

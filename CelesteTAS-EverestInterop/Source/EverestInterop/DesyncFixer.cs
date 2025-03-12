@@ -78,11 +78,11 @@ public static class DesyncFixer {
 
     [Load]
     private static void Load() {
-        typeof(DreamMirror).GetMethodInfo("Added").HookAfter<DreamMirror>(FixDreamMirrorDesync);
+        typeof(DreamMirror).GetMethodInfo("Added")!.HookAfter<DreamMirror>(FixDreamMirrorDesync);
         typeof(CS03_Memo.MemoPage).GetConstructors()[0].HookAfter<CS03_Memo.MemoPage>(FixMemoPageCrash);
-        typeof(FinalBoss).GetMethodInfo("Added").HookAfter<FinalBoss>(FixFinalBossDesync);
-        typeof(Entity).GetMethodInfo("Update").HookAfter(AfterEntityUpdate);
-        typeof(AscendManager).GetMethodInfo("Routine").GetStateMachineTarget().IlHook(MakeRngConsistent);
+        typeof(FinalBoss).GetMethodInfo("Added")!.HookAfter<FinalBoss>(FixFinalBossDesync);
+        typeof(Entity).GetMethodInfo("Update")!.HookAfter(AfterEntityUpdate);
+        typeof(AscendManager).GetMethodInfo("Routine")!.GetStateMachineTarget()!.IlHook(MakeRngConsistent);
 
         // System.IndexOutOfRangeException: Index was outside the bounds of the array.
         // https://discord.com/channels/403698615446536203/1148931167983251466/1148931167983251466

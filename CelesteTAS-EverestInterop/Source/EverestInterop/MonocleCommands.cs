@@ -27,7 +27,7 @@ public static class MonocleCommands {
 
     [Monocle.Command("hearts",
         "sets the amount of obtained hearts for the specified level set to a given number (default all hearts and current level set) (support mini heart door via CelesteTAS)")]
-    private static void CmdHearts(int amount = int.MaxValue, string levelSet = null) {
+    private static void CmdHearts(int amount = int.MaxValue, string? levelSet = null) {
         SaveData saveData = SaveData.Instance;
         if (saveData == null) {
             return;

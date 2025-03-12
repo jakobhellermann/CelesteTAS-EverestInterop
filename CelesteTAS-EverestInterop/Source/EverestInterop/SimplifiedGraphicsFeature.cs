@@ -667,7 +667,7 @@ public static class SimplifiedGraphicsFeature {
         cursor.EmitDelegate(IsSimplifiedSpinnerColorNotNull);
         cursor.EmitBrfalse(start);
 
-        Type type = ModUtils.GetType("VivHelper", "VivHelper.Entities.CustomSpinner");
+        Type type = ModUtils.GetType("VivHelper", "VivHelper.Entities.CustomSpinner")!;
         if (type.GetFieldInfo("color") is { } colorField) {
             cursor.EmitLdarg0();
             cursor.EmitDelegate(GetSimplifiedSpinnerColor);
