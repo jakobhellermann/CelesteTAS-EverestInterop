@@ -104,6 +104,7 @@ public static class TargetQuery {
 
     private static readonly Handler[] Handlers = [
         new MonobehaviourQueryHandler(),
+        new SingletonBehaviourResolver(),
     ];
 
     [Initialize(ConsoleEnhancements.InitializePriority + 1)]
@@ -1114,7 +1115,7 @@ public static class TargetQuery {
             }
         }
         static void ProcessGetValue(ref object?[] values, int valueIdx, object? value) {
-            if (value is ICollection collection) {
+            if (value is System.Collections.ICollection collection) {
                 switch (collection.Count) {
                     case 0:
                         values[valueIdx] = InvalidValue;
@@ -1206,7 +1207,7 @@ public static class TargetQuery {
                     }
                     break;
 
-                case ICollection collection:
+                case System.Collections.ICollection collection:
                     switch (collection.Count) {
                         case 0:
                             values[valueIdx] = InvalidValue;
