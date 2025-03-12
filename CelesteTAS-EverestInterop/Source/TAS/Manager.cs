@@ -139,6 +139,8 @@ public static class Manager {
 
         FreezeScriptUpdates();
 
+        // TasTracerState.AddFrameHistoryPaused("EnablePause");
+
         try {
             if (Player.i?.animator is {} animator) {
                 prePauseAnimatorStates.Add((animator, AnimatorSnapshot.Snapshot(animator)));
@@ -224,7 +226,9 @@ public static class Manager {
             PlaybackSpeed = forward.Speed;
         }
 
+        var before = Controller.CurrentFrameInTas;
         Controller.AdvanceFrame(out bool couldPlayback);
+        // TasTracer.TraceEvent($"advanceframe {before}->{Controller.CurrentFrameInTas}");
 
         if (!couldPlayback) {
             DisableRun();
