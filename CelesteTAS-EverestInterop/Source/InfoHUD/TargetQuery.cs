@@ -103,6 +103,7 @@ public static class TargetQuery {
 
     private static readonly Handler[] Handlers = [
         new MonobehaviourQueryHandler(),
+        new SingletonBehaviourResolver(),
     ];
 
     [Initialize(ConsoleEnhancements.InitializePriority + 1)]

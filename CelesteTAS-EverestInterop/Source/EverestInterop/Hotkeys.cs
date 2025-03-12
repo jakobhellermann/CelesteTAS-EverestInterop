@@ -1,11 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using InControl;
+using MeshMorpher;
+using Microsoft.Xna.Framework.Input;
 using StudioCommunication;
 using TAS.Communication;
 using TAS.EverestInterop;
 using TAS.Utils;
 using UnityEngine;
+using UnityEngine.UIElements;
+using XInputDotNetPure;
+
 using InputKeys = UnityEngine.KeyCode;
 using InputButtons = int;
 
@@ -18,7 +24,7 @@ public static class Hotkeys {
     // private static readonly Lazy<PropertyInfo?> p_CelesteNetChatComponent_Active = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active"));
 
     // private static KeyboardState kbState;
-    // private static GamePadState padState;
+    private static GamePadState padState;
 
     public static Hotkey StartStop { get; private set; } = null!;
     public static Hotkey Restart { get; private set; } = null!;
@@ -146,7 +152,7 @@ public static class Hotkeys {
         }
     }
 
-    /*private static GamePadState GetGamePadState() {
+    private static GamePadState GetGamePadState() {
         for (int i = 0; i < 4; i++) {
             var state = GamePad.GetState((PlayerIndex) i);
             if (state.IsConnected) {
@@ -156,8 +162,7 @@ public static class Hotkeys {
 
         // No controller connected
         return default;
-    }*/
-    
+    }
     internal static void UpdateMeta() {
         // Only update if the keys aren't already used for something else
         bool updateKey = true, updateButton = true;
@@ -193,7 +198,7 @@ public static class Hotkeys {
         }
         */
 
-        // padState = GetGamePadState();
+        padState = GetGamePadState();
         foreach (var hotkey in AllHotkeys.Values) {
             if (hotkey == InfoHud) {
                 hotkey.Update(); // Always update Info HUD
@@ -209,15 +214,6 @@ public static class Hotkeys {
     }
 
     private static void AfterUpdate() {
-        if (GameInterop.IsInsideLevel()) {
-            if (Hitboxes.Pressed) {
-                TasSettings.ShowHitboxes.Value = !TasSettings.ShowHitboxes.Value;
-            }
-            
-            if (CenterCamera.Pressed) {
-                TasSettings.CenterCamera.Value = !TasSettings.CenterCamera.Value;
-            }
-        }
     }
 
     [DisableRun]
@@ -318,8 +314,8 @@ public static class Hotkeys {
 /// Cannot use MInput, since that isn't updated while paused and already used for TAS inputs
 internal static class MouseInput {
     public class Button {
-        // private DateTime doublePressTimeout;
-        // private DateTime repeatTimeout;
+        private DateTime doublePressTimeout;
+        private DateTime repeatTimeout;
 
         public bool Check { get; private set; }
         public bool Pressed => !LastCheck && Check;
@@ -330,7 +326,7 @@ internal static class MouseInput {
 
         public bool LastCheck { get; set; }
 
-        /*public void Update(ButtonState state) {
+        public void Update(ButtonState state) {
             LastCheck = Check;
             Check = state == ButtonState.Pressed;
 
@@ -349,7 +345,7 @@ internal static class MouseInput {
                 Repeated = false;
                 repeatTimeout = default;
             }
-        }*/
+        }
     }
 
     public static bool Updating { get; private set; }
@@ -370,9 +366,9 @@ internal static class MouseInput {
         // Avoid checking mouse inputs while fast forwarding for performance
         if (Manager.FastForwarding) {
             lastPosition = Position;
-            // Left.Update(ButtonState.Released);
-            // Middle.Update(ButtonState.Released);
-            // Right.Update(ButtonState.Released);
+            Left.Update(ButtonState.Released);
+            Middle.Update(ButtonState.Released);
+            Right.Update(ButtonState.Released);
             WheelDelta = 0;
 
             return;
@@ -388,8 +384,9 @@ internal static class MouseInput {
         WheelDelta = mouseDelta - lastWheel;
         lastWheel = mouseDelta;
 
-        // Left.Update(UnityEngine.Input.GetMouseButton(0) ? ButtonState.Pressed : ButtonState.Released);
-        // Middle.Update(UnityEngine.Input.GetMouseButton(2) ? ButtonState.Pressed : ButtonState.Released);
-        // Right.Update(UnityEngine.Input.GetMouseButton(1) ? ButtonState.Pressed : ButtonState.Released);
+        ;
+        Left.Update(UnityEngine.Input.GetMouseButton(0) ? ButtonState.Pressed : ButtonState.Released);
+        Middle.Update(UnityEngine.Input.GetMouseButton(2) ? ButtonState.Pressed : ButtonState.Released);
+        Right.Update(UnityEngine.Input.GetMouseButton(1) ? ButtonState.Pressed : ButtonState.Released);
     }
 }

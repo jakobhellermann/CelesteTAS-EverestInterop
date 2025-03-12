@@ -135,9 +135,18 @@ public static class Manager {
         TimeHelper.OverwriteTimeScale = 0;
 
         try {
-            // TODO(unity): pause animators
+            if (Player.i?.animator is {} animator) {
+                prePauseAnimatorStates.Add((animator, AnimatorSnapshot.Snapshot(animator)));
+                animator.enabled = false;
+            }
+
+            if (MonsterManager.Instance.ClosetMonster) {
+                var monsterAnim = MonsterManager.Instance.ClosetMonster.animator;
+                monsterAnim.enabled = false;
+                prePauseAnimatorStates.Add((monsterAnim, AnimatorSnapshot.Snapshot(monsterAnim)));
+            }
         } catch (Exception e) {
-            Log.Error($"Error trying to snapshot animator: {e}");
+            Log.Toast($"Error trying to snapshot animator: {e}");
         }
     }
 
