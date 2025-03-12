@@ -1,5 +1,3 @@
-using Celeste.Mod;
-using Celeste.Mod.Helpers;
 using JetBrains.Annotations;
 using StudioCommunication;
 using System;
@@ -7,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using BepInEx.Logging;
 using TAS.Communication;
 using TAS.Module;
 using TAS.Utils;
@@ -128,7 +127,7 @@ public readonly record struct Command(
     private static void CollectCommands() {
         // TODO: Re-collect commands if mod is loaded late (i.e. through installing dependencies)
         Commands.Clear();
-        Commands.AddRange(FakeAssembly.GetFakeEntryAssembly().GetTypesSafe()
+        Commands.AddRange(typeof(TasMod).Assembly.GetTypes()
             .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
             .Where(method => method.GetCustomAttribute<TasCommandAttribute>() != null)
             .Select(method => {

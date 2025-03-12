@@ -1,21 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Celeste.Mod;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using Monocle;
 using StudioCommunication;
 using TAS.Communication;
-using TAS.EverestInterop;
-using TAS.EverestInterop.Hitboxes;
-using TAS.Gameplay.Hitboxes;
-using TAS.ModInterop;
-using YamlDotNet.Serialization;
-using Camera = TAS.Gameplay.CenterCamera;
 
 namespace TAS.Module;
 
-public class CelesteTasSettings : EverestModuleSettings {
+public class CelesteTasSettings {
     public static CelesteTasSettings Instance { get; private set; } = null!;
 
     public CelesteTasSettings() {
@@ -28,15 +19,16 @@ public class CelesteTasSettings : EverestModuleSettings {
     internal GameSettings StudioShared = new();
     private void SyncSettings() => CommunicationWrapper.SendSettings(StudioShared);
 
+    /*
     #region Hitboxes
 
-    [YamlIgnore]
+    // [YamlIgnore]
     public bool ShowHitboxes {
         get => Enabled && _ShowHitboxes || !ShowGameplay;
         set => _ShowHitboxes = value;
     }
 
-    [YamlMember(Alias = "ShowHitboxes")]
+    // [YamlMember(Alias = "ShowHitboxes")]
     public bool _ShowHitboxes {
         get => StudioShared.Hitboxes;
         set {
@@ -72,9 +64,9 @@ public class CelesteTasSettings : EverestModuleSettings {
             StudioShared.SimplifiedHitboxes = value;
             SyncSettings();
 
-            if (value && Engine.Scene != null) {
-                TriggerHitbox.RecacheTriggers(Engine.Scene);
-            }
+            // if (value && Engine.Scene != null) {
+                // TriggerHitbox.RecacheTriggers(Engine.Scene);
+            // }
         }
     }
 
@@ -87,14 +79,14 @@ public class CelesteTasSettings : EverestModuleSettings {
     }
 
     public int UnCollidableHitboxesOpacity { get; set; } = 5;
-    public Color EntityHitboxColor { get; set; } = HitboxColor.DefaultEntityColor;
-    public Color TriggerHitboxColor { get; set; } = HitboxColor.DefaultTriggerColor;
-    public Color PlatformHitboxColor { get; set; } = HitboxColor.DefaultPlatformColor;
-    public bool ShowCycleHitboxColors { get; set; } = false;
-    public Color CycleHitboxColor1 { get; set; } = CycleHitboxColor.DefaultColor1;
-    public Color CycleHitboxColor2 { get; set; } = CycleHitboxColor.DefaultColor2;
-    public Color CycleHitboxColor3 { get; set; } = CycleHitboxColor.DefaultColor3;
-    public Color OtherCyclesHitboxColor { get; set; } = CycleHitboxColor.DefaultOthersColor;
+    // public Color EntityHitboxColor { get; set; } = HitboxColor.DefaultEntityColor;
+    // public Color TriggerHitboxColor { get; set; } = HitboxColor.DefaultTriggerColor;
+    // public Color PlatformHitboxColor { get; set; } = HitboxColor.DefaultPlatformColor;
+    // public bool ShowCycleHitboxColors { get; set; } = false;
+    // public Color CycleHitboxColor1 { get; set; } = CycleHitboxColor.DefaultColor1;
+    // public Color CycleHitboxColor2 { get; set; } = CycleHitboxColor.DefaultColor2;
+    // public Color CycleHitboxColor3 { get; set; } = CycleHitboxColor.DefaultColor3;
+    // public Color OtherCyclesHitboxColor { get; set; } = CycleHitboxColor.DefaultOthersColor;
 
     #endregion
 
@@ -257,6 +249,7 @@ public class CelesteTasSettings : EverestModuleSettings {
             SyncSettings();
         }
     }
+    */
     public bool InfoSubpixelIndicator {
         get => StudioShared.InfoSubpixelIndicator;
         set {
@@ -264,6 +257,7 @@ public class CelesteTasSettings : EverestModuleSettings {
             SyncSettings();
         }
     }
+    /*
     public HudOptions InfoCustom {
         get => StudioShared.InfoCustom;
         set {
@@ -383,6 +377,8 @@ public class CelesteTasSettings : EverestModuleSettings {
     }
 
     #endregion
+    
+    */
 
     #region Fast Forward
 
@@ -404,7 +400,7 @@ public class CelesteTasSettings : EverestModuleSettings {
     public int FastForwardSpeed {
         get => StudioShared.FastForwardSpeed;
         set {
-            StudioShared.FastForwardSpeed = Calc.Clamp(value, 2, 30);
+            StudioShared.FastForwardSpeed = Math.Clamp(value, 2, 30);
             SyncSettings();
         }
     }
@@ -412,13 +408,15 @@ public class CelesteTasSettings : EverestModuleSettings {
     public float SlowForwardSpeed {
         get => StudioShared.SlowForwardSpeed;
         set {
-            StudioShared.SlowForwardSpeed = Calc.Clamp(value, 0.01f, 0.9f);
+            StudioShared.SlowForwardSpeed = Math.Clamp(value, 0.01f, 0.9f);
             SyncSettings();
         }
     }
 
     #endregion
 
+    /*
+     
     #region More Options
 
     [YamlMember(Alias = "CenterCamera")]
@@ -456,16 +454,16 @@ public class CelesteTasSettings : EverestModuleSettings {
     public bool RestoreSettings { get; set; } = true;
     public bool LaunchStudioAtBoot { get; set; } = false;
     public bool ShowStudioUpdateBanner { get; set; } = true;
+    */
 
-    [YamlMember(Alias = "AttemptConnectStudio")]
     public bool _AttemptConnectStudio { get; set; } = true;
 
-    [YamlIgnore]
     public bool AttemptConnectStudio {
         get => Enabled && _AttemptConnectStudio;
         set => _AttemptConnectStudio = value;
     }
 
+    /*
     [YamlMember(Alias = "BetterInvincible")]
     public bool _BetterInvincible = true;
     [YamlIgnore]
@@ -478,4 +476,6 @@ public class CelesteTasSettings : EverestModuleSettings {
     public bool IgnoreGcCollect { get; set; } = true;
 
     #endregion
+    
+    */
 }

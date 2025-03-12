@@ -1,0 +1,179 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using BepInEx;
+using BepInEx.Configuration;
+using Cysharp.Threading.Tasks;
+using HarmonyLib;
+using JetBrains.Annotations;
+using NineSolsAPI;
+using TAS.Communication;
+using TAS.Module;
+using TAS.Utils;
+using UnityEngine;
+
+namespace TAS;
+
+[BepInDependency(NineSolsAPICore.PluginGUID)]
+[BepInPlugin("TasTools", "TasTools", "1.0.0")]
+public class TasMod : BaseUnityPlugin {
+    public static TasMod Instance = null!;
+    public CelesteTasSettings TasSettings = null!;
+
+    private Harmony harmony = null!;
+
+    private ConfigEntry<bool> configOpenStudioOnLaunch = null!;
+    private ConfigEntry<KeyboardShortcut> configOpenStudioShortcut = null!;
+
+    private static void LaunchStudio() {
+        var path = Assembly.GetAssembly(typeof(TasMod)).Location;
+        if (path == "") return;
+
+        var studioPath = Path.Join(Path.GetDirectoryName(path) ?? "", "CelesteStudio.exe");
+        Log.Info($"Studio path at {studioPath}");
+
+        if (File.Exists(studioPath)) {
+            var p = new Process();
+            p.StartInfo = new ProcessStartInfo(studioPath) { UseShellExecute = true };
+            Log.Info("Trying to start");
+            var success = p.Start();
+            Log.Info($"Trying to start: {success}");
+        }
+    }
+
+    private void Awake() {
+        Log.Init(Logger);
+        Instance = this;
+
+        try {
+            configOpenStudioOnLaunch = Config.Bind("Studio", "Launch on start", true);
+            configOpenStudioShortcut = Config.Bind("Studio", "Launch", new KeyboardShortcut());
+
+            if (configOpenStudioOnLaunch.Value) {
+                LaunchStudio();
+            }
+
+            KeybindManager.Add(this, LaunchStudio, () => configOpenStudioShortcut.Value);
+
+            TasSettings = new CelesteTasSettings();
+            RCGLifeCycle.DontDestroyForever(gameObject);
+
+            AttributeUtils.CollectAllMethods<LoadAttribute>();
+            AttributeUtils.CollectAllMethods<UnloadAttribute>();
+            AttributeUtils.CollectAllMethods<InitializeAttribute>();
+            AttributeUtils.CollectAllMethods<BeforeTasFrame>();
+            AttributeUtils.CollectAllMethods<AfterTasFrame>();
+
+            AttributeUtils.Invoke<InitializeAttribute>();
+            AttributeUtils.Invoke<LoadAttribute>();
+
+            harmony = Harmony.CreateAndPatchAll(typeof(TasMod).Assembly);
+
+            if (TasSettings.AttemptConnectStudio) CommunicationWrapper.Start();
+        } catch (Exception e) {
+            Log.Error($"Failed to load {MyPluginInfo.PLUGIN_GUID}: {e}");
+        }
+
+        // https://giannisakritidis.com/blog/Early-And-Super-Late-Update-In-Unity/
+
+        Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
+    }
+
+    private void Start() {
+        PlayerLoopHelper.AddAction(PlayerLoopTiming.EarlyUpdate, new PlayerLoopItem(this, EarlyUpdate));
+        PlayerLoopHelper.AddAction(PlayerLoopTiming.PostLateUpdate, new PlayerLoopItem(this, PostLateUpdate));
+    }
+
+    private class PlayerLoopItem(TasMod mb, Action action) : IPlayerLoopItem {
+        public bool MoveNext() {
+            if (!mb) return false;
+
+            action();
+            return true;
+        }
+    }
+
+    
+    private void EarlyUpdate() {
+        Log.TasTrace("-- FRAME BEGIN --");
+    }
+    
+    private void FixedUpdate() {
+        Log.TasTrace($"-- FixedUpdate dt={Time.fixedDeltaTime}--");
+    }
+    private void Update() {
+        if (Manager.CurrState == Manager.State.Paused) {
+            Manager.UpdateMeta();
+            if (Manager.CurrState == Manager.State.Paused && Manager.NextState != Manager.State.Paused) {
+                Manager.DisablePause();
+            }
+        }
+    }
+
+    private void LateUpdate() {
+        // TasTracerState.AddFrameHistory("count", Time.frameCount);
+        if (Manager.Running) {
+            // TODO normalize isengaging
+            var closest = MonsterManager.Instance.ClosetMonster;
+            if (closest) {
+                var state = (StealthPreAttackState)closest.fsm.FindMappingState(MonsterBase.States.PreAttack);
+            }
+        }
+    }
+
+    private void PostLateUpdate() {
+        Log.TasTrace("-- FRAME END --");
+
+        try {
+            GameInfo.Update();
+
+            AttributeUtils.Invoke<AfterTasFrame>();
+            
+            AttributeUtils.Invoke<BeforeTasFrame>();
+                
+            if (Manager.CurrState != Manager.State.Paused) {
+                Manager.UpdateMeta();
+            }
+            if (Manager.Running) {
+                Manager.Update();
+            }
+            Log.TasTrace($"State: {Manager.CurrState} -> {Manager.NextState}");
+
+            // TODO: ensure consistent fixedupdate
+        } catch (Exception e) {
+            e.LogException("");
+            Manager.DisableRun();
+        }
+        
+    }
+
+    private void OnDestroy() {
+        AttributeUtils.Invoke<UnloadAttribute>();
+        if (Manager.Running) Manager.DisableRun();
+        harmony?.UnpatchSelf();
+
+        CommunicationWrapper.SendReset();
+        CommunicationWrapper.Stop();
+    }
+}
+
+[AttributeUsage(AttributeTargets.Method)]
+[MeansImplicitUse]
+internal class LoadAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Method)]
+[MeansImplicitUse]
+internal class UnloadAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Method)]
+[MeansImplicitUse]
+internal class InitializeAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Method)]
+[MeansImplicitUse]
+internal class BeforeTasFrame : Attribute;
+
+[AttributeUsage(AttributeTargets.Method)]
+[MeansImplicitUse]
+internal class AfterTasFrame : Attribute;

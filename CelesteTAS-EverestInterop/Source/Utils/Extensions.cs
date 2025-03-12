@@ -6,17 +6,10 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using Celeste;
-using Celeste.Mod;
+using BepInEx.Logging;
 using JetBrains.Annotations;
-using Microsoft.Xna.Framework;
-using Monocle;
-using MonoMod.Utils;
-using StudioCommunication;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using TAS.ModInterop;
-using Platform = Celeste.Platform;
+using UnityEngine;
 
 namespace TAS.Utils;
 
@@ -604,6 +597,15 @@ internal static class EnumerableExtensions {
     // }
 }
 
+internal static class CollectionExtension {
+    /// Adds all items from the collection to the HashSet
+    public static void AddRange<T>(this HashSet<T> hashSet, params T[] items) {
+        foreach (var item in items) {
+            hashSet.Add(item);
+        }
+    }
+}
+
 internal static class ListExtensions {
     public static T? GetValueOrDefault<T>(this IList<T> list, int index, T? defaultValue = default) {
         return index >= 0 && index < list.Count ? list[index] : defaultValue;
@@ -614,7 +616,7 @@ internal static class DictionaryExtensions {
     public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue defaultValue) {
         return dict.TryGetValue(key, out var value) ? value : defaultValue;
     }
-
+    
     public static TKey? LastKeyOrDefault<TKey, TValue>(this SortedDictionary<TKey, TValue> dict) where TKey : notnull {
         return dict.Count > 0 ? dict.Last().Key : default;
     }
@@ -632,47 +634,13 @@ internal static class DictionaryExtensions {
     }
 }
 
-internal static class DynamicDataExtensions {
+/*internal static class DynamicDataExtensions {
     private static readonly ConditionalWeakTable<object, DynamicData> cached = new();
 
     public static DynamicData GetDynamicDataInstance(this object obj) {
         return cached.GetValue(obj, key => new DynamicData(key));
     }
-}
-
-internal static class EntityExtensions {
-    public static float DistanceSquared(this Entity entity, Entity otherEntity) {
-        return Vector2.DistanceSquared(entity.Center, otherEntity.Center);
-    }
-
-    public static string ToSimplePositionString(this Entity entity, int decimals) {
-        if (entity is Actor actor) {
-            return ToSimplePositionString(actor, decimals);
-        } else if (entity is Platform platform) {
-            return ToSimplePositionString(platform, decimals);
-        } else {
-            return entity.Position.ToSimpleString(decimals);
-        }
-    }
-
-    private static string ToSimplePositionString(Actor actor, int decimals) {
-        return actor.GetMoreExactPosition(true).ToSimpleString(decimals);
-    }
-
-    private static string ToSimplePositionString(Platform platform, int decimals) {
-        return platform.GetMoreExactPosition(true).ToSimpleString(decimals);
-    }
-}
-
-internal static class Vector2DoubleExtension {
-    public static Vector2Double GetMoreExactPosition(this Actor actor, bool subpixelRounding) {
-        return new(actor.Position, actor.movementCounter, subpixelRounding);
-    }
-
-    public static Vector2Double GetMoreExactPosition(this Platform platform, bool subpixelRounding) {
-        return new(platform.Position, platform.movementCounter, subpixelRounding);
-    }
-}
+}*/
 
 internal static class NumberExtensions {
     private static readonly string format = "0.".PadRight(339, '#');
@@ -698,140 +666,6 @@ internal static class NumberExtensions {
         // See: https://github.com/EverestAPI/Everest/blob/dev/NETCoreifier/Patches/TimeSpan.cs
         double millis = seconds * 1000 + (seconds >= 0 ? +0.5: -0.5);
         return (long)millis * TimeSpan.TicksPerMillisecond;
-    }
-}
-
-internal static class TrackerExtensions {
-    public static List<T> GetCastEntities<T>(this Tracker tracker) where T : Entity {
-        return tracker.GetEntities<T>().Where(entity => entity is T).Cast<T>().ToList();
-    }
-
-    public static List<T> GetCastComponents<T>(this Tracker tracker) where T : Component {
-        return tracker.GetComponents<T>().Where(component => component is T).Cast<T>().ToList();
-    }
-}
-
-internal static class Vector2Extensions {
-    public static string ToSimpleString(this Vector2 vector2, int decimals) {
-        return $"{vector2.X.ToFormattedString(decimals)}, {vector2.Y.ToFormattedString(decimals)}";
-    }
-}
-
-internal static class SceneExtensions {
-    public static Player GetPlayer(this Scene scene) => scene.Tracker.GetEntity<Player>();
-
-    public static Level? GetLevel(this Scene scene) {
-        return scene switch {
-            Level level => level,
-            LevelLoader levelLoader => levelLoader.Level,
-            _ => null,
-        };
-    }
-
-    public static Session? GetSession(this Scene scene) {
-        return scene switch {
-            Level level => level.Session,
-            LevelLoader levelLoader => levelLoader.session,
-            LevelExit levelExit => levelExit.session,
-            AreaComplete areaComplete => areaComplete.Session,
-            _ => null,
-        };
-    }
-}
-
-internal static class LevelExtensions {
-    public static Vector2 ScreenToWorld(this Level level, Vector2 position) {
-        Vector2 size = new Vector2(320f, 180f);
-        Vector2 scaledSize = size / level.ZoomTarget;
-        Vector2 offset = level.ZoomTarget != 1f ? (level.ZoomFocusPoint - scaledSize / 2f) / (size - scaledSize) * size : Vector2.Zero;
-        float scale = level.Zoom * ((320f - level.ScreenPadding * 2f) / 320f);
-        Vector2 paddingOffset = new Vector2(level.ScreenPadding, level.ScreenPadding * 9f / 16f);
-
-        if (SaveData.Instance?.Assists.MirrorMode ?? false) {
-            position.X = 1920f - position.X;
-        }
-
-        if (ExtendedVariantsInterop.UpsideDown) {
-            position.Y = 1080f - position.Y;
-        }
-
-        position /= 1920f / 320f;
-        position -= paddingOffset;
-        position = (position - offset) / scale + offset;
-        position = level.Camera.ScreenToCamera(position);
-        return position;
-    }
-
-    public static Vector2 WorldToScreen(this Level level, Vector2 position) {
-        Vector2 size = new Vector2(320f, 180f);
-        Vector2 scaledSize = size / level.ZoomTarget;
-        Vector2 offset = level.ZoomTarget != 1f ? (level.ZoomFocusPoint - scaledSize / 2f) / (size - scaledSize) * size : Vector2.Zero;
-        float scale = level.Zoom * ((320f - level.ScreenPadding * 2f) / 320f);
-        Vector2 paddingOffset = new Vector2(level.ScreenPadding, level.ScreenPadding * 9f / 16f);
-
-        position = level.Camera.CameraToScreen(position);
-        position = (position - offset) * scale + offset;
-        position += paddingOffset;
-        position *= 1920f / 320f;
-
-        if (SaveData.Instance?.Assists.MirrorMode ?? false) {
-            position.X = 1920f - position.X;
-        }
-
-        if (ExtendedVariantsInterop.UpsideDown) {
-            position.Y = 1080f - position.Y;
-        }
-
-        return position;
-    }
-
-    public static Vector2 MouseToWorld(this Level level, Vector2 mousePosition) {
-        float viewScale = (float) Engine.ViewWidth / Engine.Width;
-        return level.ScreenToWorld(mousePosition / viewScale).Floor();
-    }
-}
-
-internal static class GridExtensions {
-    public static List<Tuple<Vector2, bool>> GetCheckedTilesInLineCollision(this Grid grid, Vector2 from, Vector2 to) {
-        from -= grid.AbsolutePosition;
-        to -= grid.AbsolutePosition;
-        from /= new Vector2(grid.CellWidth, grid.CellHeight);
-        to /= new Vector2(grid.CellWidth, grid.CellHeight);
-
-        bool needsSwapXY = Math.Abs(to.Y - from.Y) > Math.Abs(to.X - from.X);
-        if (needsSwapXY) {
-            float temp = from.X;
-            from.X = from.Y;
-            from.Y = temp;
-            temp = to.X;
-            to.X = to.Y;
-            to.Y = temp;
-        }
-
-        if (from.X > to.X) {
-            Vector2 temp = from;
-            from = to;
-            to = temp;
-        }
-
-        List<Tuple<Vector2, bool>> positions = new();
-
-        float offset = 0f;
-        int y = (int) from.Y;
-        for (int i = (int) from.X; i <= (int) to.X; i++) {
-            Vector2 position = needsSwapXY ? new Vector2(y, i) : new Vector2(i, y);
-            Vector2 absolutePosition = position * new Vector2(grid.CellWidth, grid.CellHeight) + grid.AbsolutePosition;
-            bool hasTile = grid[(int) position.X, (int) position.Y];
-            positions.Add(new(absolutePosition, hasTile));
-
-            offset += Math.Abs(to.Y - from.Y) / (to.X - from.X);
-            if (offset >= 0.5f) {
-                y += from.Y < to.Y ? 1 : -1;
-                offset -= 1f;
-            }
-        }
-
-        return positions;
     }
 }
 
@@ -882,75 +716,4 @@ internal static class CloneUtil {
             propertyInfo.SetValue(to, fromValue);
         }
     }
-}
-
-internal static class EnumerableExtension {
-    /// Iterates each entry of the IEnumerable and invokes the callback Action
-    public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action) {
-        foreach (var item in enumerable) {
-            action(item);
-        }
-    }
-
-    /// Returns the first matching element; otherwise null
-    public static T? FirstOrNull<T>(this IEnumerable<T> enumerable, Func<T, bool> predicate) where T : struct {
-        foreach (var item in enumerable) {
-            if (predicate(item)) {
-                return item;
-            }
-        }
-
-        return null;
-    }
-
-    private readonly struct DynamicComparer<T>(Func<T, T, int> compare) : IComparer<T> {
-        public int Compare(T? x, T? y) => compare(x!, y!);
-    }
-
-    /// Sorts the elements according to the comparision function
-    public static IEnumerable<T> Sort<T>(this IEnumerable<T> enumerable, Func<T, T, int> compare) {
-        return enumerable.Order(new DynamicComparer<T>(compare));
-    }
-}
-
-internal static class CollectionExtension {
-    /// Adds all items from the collection to the HashSet
-    public static void AddRange<T>(this HashSet<T> hashSet, params IEnumerable<T> items) {
-        foreach (var item in items) {
-            hashSet.Add(item);
-        }
-    }
-}
-
-internal static class GameStateExtension {
-    public static GameState.Vec2 ToGameStateVec2(this Vector2 vec) => new(vec.X, vec.Y);
-    public static GameState.RectI ToGameStateRectI(this Rectangle rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
-    public static GameState.RectF ToGameStateRectF(this Entity entity) => new(entity.X, entity.Y, entity.Width, entity.Height);
-
-    public static GameState.Direction ToGameStateDirection(this Spikes.Directions dir) => dir switch {
-        Spikes.Directions.Up => GameState.Direction.Up,
-        Spikes.Directions.Down => GameState.Direction.Down,
-        Spikes.Directions.Left => GameState.Direction.Left,
-        Spikes.Directions.Right => GameState.Direction.Right,
-        _ => throw new UnreachableException()
-    };
-
-    public static GameState.WindPattern ToGameStatePattern(this WindController.Patterns pattern) => pattern switch {
-        WindController.Patterns.None => GameState.WindPattern.None,
-        WindController.Patterns.Left => GameState.WindPattern.Left,
-        WindController.Patterns.Right => GameState.WindPattern.Right,
-        WindController.Patterns.LeftStrong => GameState.WindPattern.LeftStrong,
-        WindController.Patterns.RightStrong => GameState.WindPattern.RightStrong,
-        WindController.Patterns.LeftOnOff => GameState.WindPattern.LeftOnOff,
-        WindController.Patterns.RightOnOff => GameState.WindPattern.RightOnOff,
-        WindController.Patterns.LeftOnOffFast => GameState.WindPattern.LeftOnOffFast,
-        WindController.Patterns.RightOnOffFast => GameState.WindPattern.RightOnOffFast,
-        WindController.Patterns.Alternating => GameState.WindPattern.Alternating,
-        WindController.Patterns.LeftGemsOnly => GameState.WindPattern.LeftGemsOnly,
-        WindController.Patterns.RightCrazy => GameState.WindPattern.RightCrazy,
-        WindController.Patterns.Down => GameState.WindPattern.Down,
-        WindController.Patterns.Up => GameState.WindPattern.Up,
-        WindController.Patterns.Space => GameState.WindPattern.Space,
-        _ => throw new UnreachableException()
-    };
 }
