@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using NineSolsAPI;
 using TAS.Input;
 using TAS.ModInterop;
+using TAS.Tracer;
 using TAS.UnityInterop;
 using TAS.Utils;
 
@@ -11,8 +12,6 @@ namespace TAS;
 
 /// Handles saving / loading game state with DebugMosPlus
 public static class Savestates {
-    private const string SavestateSlot = "main";
-    
     private static bool savedByBreakpoint;
     private static int savedChecksum;
     private static InputController? savedController;
