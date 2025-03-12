@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using NineSolsAPI;
 using TAS.Communication;
 using TAS.Module;
+using TAS.Tracer;
 using TAS.Utils;
 using UnityEngine;
 
@@ -101,6 +102,8 @@ public class TasMod : BaseUnityPlugin {
         PlayerLoopHelper.AddAction(PlayerLoopTiming.EarlyUpdate, new PlayerLoopItem(this, EarlyUpdate));
         PlayerLoopHelper.AddAction(PlayerLoopTiming.PostLateUpdate, new PlayerLoopItem(this, PostLateUpdate));
 
+        PlayerLoopHelper.AddAction(PlayerLoopTiming.LastPreUpdate, new PlayerLoopItem(this, LastPreUpdate));
+        
         PlayerLoopHelper.AddAction(PlayerLoopTiming.LastUpdate, new PlayerLoopItem(this, AfterUpdate));
         PlayerLoopHelper.AddAction(PlayerLoopTiming.PreUpdate, new PlayerLoopItem(this, PreUpdate));
     }
@@ -121,27 +124,51 @@ public class TasMod : BaseUnityPlugin {
         if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
             AttributeUtils.Invoke<BeforeActiveTasFrame>();
         }
+
+        // TasTracerState.TraceVarsThroughFrame("EarlyUpdate");
     }
 
     private void FixedUpdate() {
         Log.TasTrace($"-- FixedUpdate dt={Time.fixedDeltaTime}--");
+        
+        // TasTracerState.TraceVarsThroughFrame("FixedUpdate");
     }
 
     private static void PreUpdate() {
+        // TasTracerState.TraceVarsThroughFrame("PreUpdate");
+    }
+    
+    private static void LastPreUpdate() {
         if (Physics2D.simulationMode != SimulationMode2D.Script) return;
-
+        
         if (Manager.CurrState != Manager.State.Paused) {
             Physics2D.Simulate(Time.deltaTime);
         }
+
+        TasTracerState.TraceVarsThroughFrame("PreUpdate-aftersim");
     }
 
     private static void AfterUpdate() {
         Log.TasTrace($"-- Update dt={Time.deltaTime}-- ");
 
         // CameraManager.Instance.cameraCore.dockObj.localPosition = Vector3.zero;
+        TasTracerState.TraceVarsThroughFrame("Update");
+    }
+
+    private void LateUpdate() {
+        // TasTracerState.AddFrameHistory("count", Time.frameCount);
+        TasTracerState.TraceVarsThroughFrame("LateUpdate");
+
+        // TasTracerState.AddFrameHistory("count", Time.frameCount);
+        if (Manager.Running) {
+        }
+
+        TasTracerState.LateUpdate();
     }
 
     private void PostLateUpdate() {
+        TasTracerState.TraceVarsThroughFrame("PostLateUpdate");
+
         Log.TasTrace("-- FRAME END --");
 
         try {
@@ -149,14 +176,30 @@ public class TasMod : BaseUnityPlugin {
 
             AttributeUtils.Invoke<AfterTasFrame>();
 
+            if (Manager.Running) {
+                try {
+                    if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
+                        TasTracer.TraceFrame();
+                    } else {
+                        if (TasTracer.TracePauseMode == TracePauseMode.Reduced) {
+                            TasTracer.TraceFramePause();
+                        } else if (TasTracer.TracePauseMode == TracePauseMode.Full) {
+                            TasTracer.TraceFrame();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.LogException("Error trying to collect trace data");
+                }
+            }
+
             AttributeUtils.Invoke<BeforeTasFrame>();
 
             Manager.UpdateMeta();
             Manager.Update();
 
             Log.TasTrace($"State: {Manager.CurrState} -> {Manager.NextState}");
-
-            // TODO: ensure consistent fixedupdate
+            /*TasTracerState.AddFrameHistory("StateAfter",
+                new TracerIrrelevantState($"{Manager.CurrState} -> {Manager.NextState}"));*/
         } catch (Exception e) {
             e.LogException("");
             Manager.DisableRun();
