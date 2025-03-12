@@ -1,4 +1,5 @@
 using BepInEx.Logging;
+using NineSolsAPI;
 
 namespace TAS;
 
@@ -30,7 +31,6 @@ internal static class Log {
     internal static void LogMessage(object? data, LogLevel level) => logSource.Log(level, data);
 
     internal static void Toast(object message) {
-        // TODO: on screen toast
-        Log.Info(message);
+        ToastManager.Toast(message);
     }
 }

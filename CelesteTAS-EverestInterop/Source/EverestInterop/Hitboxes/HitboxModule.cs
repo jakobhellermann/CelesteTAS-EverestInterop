@@ -26,9 +26,10 @@ public enum HitboxType : uint {
 }
 // ReSharper restore InconsistentNaming
 
-public class HitboxModule : MonoBehaviour {
-    private static bool HitboxesVisible => TasSettings.ShowHitboxes.Value;
-    private static HitboxType Filter => TasSettings.HitboxFilter.Value;
+public class HitboxModule : MonoBehaviour
+{
+    private static bool HitboxesVisible => false; // TODO TasSettings.ShowHitboxes.Value;
+    private static HitboxType Filter => HitboxType.All; // TODO TasSettings.HitboxFilter.Value;
 
     private void Awake() {
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoad;
