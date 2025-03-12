@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using JetBrains.Annotations;
+using NineSolsAPI;
 using StudioCommunication;
 using System.Collections.Generic;
 using TAS.Communication;
@@ -143,9 +144,20 @@ public static class Manager {
         TimeHelper.OverwriteTimeScale = 0;
 
         try {
-            // TODO(unity): pause animators
+            if (Player.i?.animator is {} animator) {
+                prePauseAnimatorStates.Add((animator, AnimatorSnapshot.Snapshot(animator)));
+                var snap = AnimatorSnapshot.Snapshot(animator);
+                prePauseAnimatorStates.Add((animator, snap));
+                animator.enabled = false;
+            }
+
+            if (MonsterManager.Instance.ClosetMonster) {
+                var monsterAnim = MonsterManager.Instance.ClosetMonster.animator;
+                monsterAnim.enabled = false;
+                prePauseAnimatorStates.Add((monsterAnim, AnimatorSnapshot.Snapshot(monsterAnim)));
+            }
         } catch (Exception e) {
-            Log.Error($"Error trying to snapshot animator: {e}");
+            Log.Toast($"Error trying to snapshot animator: {e}");
         }
     }
 
@@ -359,8 +371,10 @@ public static class Manager {
 
     /// TAS-execution is paused during loading screens
     public static bool IsLoading() {
-        // TODO(unity)
-        return false;
+        if (!GameCore.IsAvailable()) return true;
+
+        return GameCore.Instance.currentCoreState == GameCore.GameCoreState.ChangingScene ||
+               GameCore.Instance.currentCutScene != null;
         
         /*return Engine.Scene switch {
             Level level => level.IsAutoSaving() && level.Session.Level == "end-cinematic",
@@ -411,8 +425,8 @@ public static class Manager {
             ChapterTime = GameInfo.ChapterTime,
 
             // ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator && Engine.Scene is Level or Emulator,
-            PlayerPosition = (0, 0), // TODO(unity)
-            PlayerSpeed = (0, 0),
+            PlayerPosition = Vec(Player.i?.transform.position),
+            PlayerSpeed = Vec(Player.i?.Velocity),
         };
 
         /*if (Engine.Scene is Level level && level.GetPlayer() is { } player) {
@@ -427,6 +441,8 @@ public static class Manager {
 
         CommunicationWrapper.SendState(state);
     }
+
+    private static (float X, float Y) Vec(Vector2? vec) => (vec?.x ?? 0, vec?.y ?? 0);
 
     /*
     [Monocle.Command("dump_tas", "Dumps the parsed TAS file into the console (CelesteTAS)"), UsedImplicitly]

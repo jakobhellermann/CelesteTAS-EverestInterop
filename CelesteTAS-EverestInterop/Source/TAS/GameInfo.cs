@@ -1,5 +1,4 @@
 using System;
-using UnityEngine.SceneManagement;
 using static TAS.DebugInfo;
 
 namespace TAS;
@@ -9,7 +8,14 @@ public class GameInfo {
     public static string LevelName = "";
     public static string ChapterTime = "";
 
-    public const DebugFilter Filter = DebugFilter.Base;
+    public const DebugFilter Filter =
+            DebugFilter.RapidlyChanging
+            | DebugFilter.Monsters
+            | DebugFilter.Random
+            // | DebugFilter.AttackSensors
+            // | DebugFilter.AnimationClips
+            // | DebugFilter.Tweens
+        ;
 
     public static void Update() {
         try {
@@ -20,6 +26,7 @@ public class GameInfo {
             Log.Error($"Failed to get game info text: {e}");
         }
 
-        LevelName = SceneManager.GetActiveScene().name;
+        LevelName =
+            (GameCore.IsAvailable() && GameCore.Instance.gameLevel ? GameCore.Instance.gameLevel?.name : null) ?? "";
     }
 }

@@ -123,7 +123,7 @@ public sealed class Settings {
                 return EtoEnvironment.GetFolderPath(EtoSpecialFolder.ApplicationSettings);
             }
 
-            return Path.Combine(EtoEnvironment.GetFolderPath(EtoSpecialFolder.ApplicationSettings), "CelesteStudio");
+            return Path.Combine(EtoEnvironment.GetFolderPath(EtoSpecialFolder.ApplicationSettings), "NineSolsStudio");
         }
     }
 
