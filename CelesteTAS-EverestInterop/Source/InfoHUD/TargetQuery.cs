@@ -126,6 +126,7 @@ public static class TargetQuery {
 
     internal static readonly Handler[] Handlers = [
         new MonobehaviourQueryHandler(),
+        new SingletonBehaviourResolver(),
         new CollectionQueryHandler(),
     ];
 
