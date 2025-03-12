@@ -10,6 +10,7 @@ using JetBrains.Annotations;
 using NineSolsAPI;
 using TAS.Communication;
 using TAS.Module;
+using TAS.Tracer;
 using TAS.Utils;
 using UnityEngine;
 
@@ -103,6 +104,8 @@ public class TasMod : BaseUnityPlugin {
 
     private void EarlyUpdate() {
         Log.TasTrace("-- FRAME BEGIN --");
+
+        TasTracerState.TraceVarsThroughFrame("EarlyUpdate");
     }
 
     private void FixedUpdate() {
@@ -112,15 +115,19 @@ public class TasMod : BaseUnityPlugin {
     private static void PreUpdate() {
         if (Physics2D.simulationMode != SimulationMode2D.Script) return;
 
+        TasTracerState.TraceVarsThroughFrame("PreUpdate");
         if (Manager.CurrState != Manager.State.Paused) {
             Physics2D.Simulate(Time.deltaTime);
         }
+
+        TasTracerState.TraceVarsThroughFrame("PreUpdate-aftersim");
     }
 
     private static void AfterUpdate() {
         Log.TasTrace($"-- Update dt={Time.deltaTime}-- ");
 
         // CameraManager.Instance.cameraCore.dockObj.localPosition = Vector3.zero;
+        TasTracerState.TraceVarsThroughFrame("Update");
 
         if (Manager.CurrState == Manager.State.Paused) {
             Manager.UpdateMeta();
@@ -130,7 +137,46 @@ public class TasMod : BaseUnityPlugin {
         }
     }
 
+    private void LateUpdate() {
+        // TasTracerState.AddFrameHistory("count", Time.frameCount);
+        TasTracerState.TraceVarsThroughFrame("LateUpdate");
+
+        // TasTracerState.AddFrameHistory("count", Time.frameCount);
+        if (Manager.Running) {
+            var monsters = GameVersions.Select<MonsterBase[]>(GameVersions.SpeedrunPatch,
+                [],
+                [MonsterManager.Instance.ClosetMonster]);
+            foreach (var monster in monsters) {
+                var state = (StealthPreAttackState)monster.fsm.FindMappingState(MonsterBase.States.PreAttack);
+                TasTracerState.AddFrameHistory(
+                    "ClosestMonster",
+                    // monster.fsm.State.ToString(),
+                    // AnimatorSnapshot.Snapshot(monster.animator).StateHash,
+                    // AnimatorSnapshot.Snapshot(monster.animator).NormalizedTime,
+                    monster.transform.position,
+                    monster.pathFindAgent.IsSameAreaWithTarget,
+                    state.SchemesIndex,
+                    state.ApproachingSchemes.Count
+                    // monster.pathFindAgent.target?.currentArea?.gameObject is {} obj ? ObjectUtils.ObjectPath(obj) : null,
+                    // monster.pathFindAgent.currentArea?.gameObject is {} obj2 ? ObjectUtils.ObjectPath(obj2) : null,
+                    // state.ApproachingSchemes.Count,
+                    // state.SchemesIndex,
+                    // state.IsFollowingSomeone,
+                    // monster.transform.position,
+                    // monster.AnimationVelocity,
+                    // monster.fsm.isPaused,
+                    // monster.finalOffset,
+                    // monster.fsm.IsInTransition,
+                    // ReflectionExtensions.GetFieldValue<bool>(monster, "__isEngaging"),
+                    // monster.GetDistanceToPlayer()
+                );
+            }
+        }
+    }
+
     private void PostLateUpdate() {
+        TasTracerState.TraceVarsThroughFrame("PostLateUpdate");
+
         Log.TasTrace("-- FRAME END --");
 
         try {
@@ -138,14 +184,30 @@ public class TasMod : BaseUnityPlugin {
 
             AttributeUtils.Invoke<AfterTasFrame>();
 
+            if (Manager.Running) {
+                try {
+                    if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
+                        TasTracer.TraceFrame();
+                    } else {
+                        if (TasTracer.TracePauseMode == TracePauseMode.Reduced) {
+                            TasTracer.TraceFramePause();
+                        } else if (TasTracer.TracePauseMode == TracePauseMode.Full) {
+                            TasTracer.TraceFrame();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.LogException("Error trying to collect trace data");
+                }
+            }
+
             AttributeUtils.Invoke<BeforeTasFrame>();
 
             Manager.UpdateMeta();
             Manager.Update();
 
             Log.TasTrace($"State: {Manager.CurrState} -> {Manager.NextState}");
-
-            // TODO: ensure consistent fixedupdate
+            /*TasTracerState.AddFrameHistory("StateAfter",
+                new TracerIrrelevantState($"{Manager.CurrState} -> {Manager.NextState}"));*/
         } catch (Exception e) {
             e.LogException("");
             Manager.DisableRun();
