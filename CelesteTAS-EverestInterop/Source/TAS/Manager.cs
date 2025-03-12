@@ -143,6 +143,8 @@ public static class Manager {
     public static void EnablePause() {
         TimeHelper.OverwriteTimeScale = 0;
 
+        // TasTracerState.AddFrameHistoryPaused("EnablePause");
+
         try {
             if (Player.i?.animator is {} animator) {
                 prePauseAnimatorStates.Add((animator, AnimatorSnapshot.Snapshot(animator)));
@@ -211,7 +213,9 @@ public static class Manager {
             NextState = State.Running;
         }
 
+        var before = Controller.CurrentFrameInTas;
         Controller.AdvanceFrame(out bool couldPlayback);
+        // TasTracer.TraceEvent($"advanceframe {before}->{Controller.CurrentFrameInTas}");
 
         if (!couldPlayback) {
             DisableRun();

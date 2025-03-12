@@ -1,9 +1,11 @@
-﻿using System;
+using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using StudioCommunication;
 using StudioCommunication.Util;
 using TAS.InfoHUD;
+using TAS.Tracer;
 using TAS.Utils;
 
 namespace TAS.Input.Commands;
@@ -91,5 +93,7 @@ public static class InvokeCommand {
         if (result.Failure) {
             ReportError(result.Error.ToString());
         }
+        
+        TasTracer.TraceEvent($"Invoke Command: {args.Join()}");
     }
 }
