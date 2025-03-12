@@ -163,6 +163,8 @@ public static class Manager {
 
         FreezeScriptUpdates();
 
+        // TasTracerState.AddFrameHistoryPaused("EnablePause");
+
         try {
             if (Player.i?.animator is {} animator) {
                 prePauseAnimatorStates.Add((animator, AnimatorSnapshot.Snapshot(animator)));
@@ -256,7 +258,9 @@ public static class Manager {
             PlaybackSpeed = forward.Speed;
         }
 
+        var before = Controller.CurrentFrameInTas;
         Controller.AdvanceFrame(out bool couldPlayback);
+        // TasTracer.TraceEvent($"advanceframe {before}->{Controller.CurrentFrameInTas}");
 
         // couldPlayback is false once AdvanceFrame is called at the end frame — after it has run that frame's
         // commands (e.g. trailing asserts / FileTime). Reaching here completes the run: auto-pause a draft to keep
