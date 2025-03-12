@@ -5,6 +5,7 @@ using Celeste;
 using Celeste.Mod;
 using Microsoft.Xna.Framework;
 using Monocle;
+using System.Diagnostics.CodeAnalysis;
 using TAS.Communication;
 using TAS.InfoHUD;
 using TAS.Module;
@@ -115,14 +116,14 @@ internal class SelectedAreaEntity : Entity {
 
     private static void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro, bool isFromLoader) {
         orig(self, playerIntro, isFromLoader);
-        if (self.Tracker.Entities.TryGetValue(typeof(SelectedAreaEntity), out List<Entity> entities) && entities.IsEmpty()) {
+        if (self.Tracker.Entities.TryGetValue(typeof(SelectedAreaEntity), out var entities) && entities.IsEmpty()) {
             self.Add(new SelectedAreaEntity());
         } else if (self.Entities.FindFirst<SelectedAreaEntity>() == null) {
             self.Add(new SelectedAreaEntity());
         }
     }
 
-    private static SelectedAreaEntity Instance => Engine.Scene.Tracker.GetEntity<SelectedAreaEntity>();
+    private static SelectedAreaEntity? Instance => Engine.Scene.Tracker.GetEntity<SelectedAreaEntity>();
 
     public static string Rect {
         get {
@@ -164,6 +165,7 @@ internal class SelectedAreaEntity : Entity {
         }
     }
 
+    [MemberNotNullWhen(true)]
     private static bool IsDragging => Instance?.start != null && (Instance.width > 1 || Instance.height > 1);
 
     private Vector2? start;

@@ -54,7 +54,8 @@ public static class StunPauseCommand {
     }
 
     private static Dictionary<string, AutoInputCommand.Arguments> AutoInputArgs => AutoInputCommand.AutoInputArgs;
-    private static readonly GetDelegate<Level, float> unpauseTimer = FastReflection.CreateGetDelegate<Level, float>("unpauseTimer");
+
+    private static readonly GetDelegate<Level, float>? unpauseTimer = FastReflection.CreateGetDelegate<Level, float>("unpauseTimer");
     private static readonly float unpauseTime = unpauseTimer != null ? 0.15f : 0f;
     public static bool SimulatePauses;
     public static bool PauseOnCurrentFrame;

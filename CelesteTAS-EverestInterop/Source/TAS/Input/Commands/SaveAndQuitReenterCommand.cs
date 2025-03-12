@@ -27,19 +27,19 @@ public static class SaveAndQuitReenterCommand {
 
     [Load]
     private static void Load() {
-        var f_justPressedSnQ = typeof(SaveAndQuitReenterCommand).GetFieldInfo(nameof(justPressedSnQ));
+        var f_justPressedSnQ = typeof(SaveAndQuitReenterCommand).GetFieldInfo(nameof(justPressedSnQ))!;
 
         // Set justPressedSnQ to true when button is pressed
         typeof(Level)
             .GetNestedType("<>c__DisplayClass149_0", BindingFlags.NonPublic)!
-            .GetMethodInfo("<Pause>b__8")
+            .GetMethodInfo("<Pause>b__8")!
             .IlHook((cursor, _) => cursor
                 .EmitLdcI4(/*true*/ 1)
                 .EmitStsfld(f_justPressedSnQ));
 
         // Reset justPressedSnQ back to false
         typeof(Level)
-            .GetMethodInfo("Update")
+            .GetMethodInfo("Update")!
             .IlHook((cursor, _) => cursor
                 .EmitLdcI4(/*false*/ 0)
                 .EmitStsfld(f_justPressedSnQ));
