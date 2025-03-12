@@ -10,6 +10,7 @@ using JetBrains.Annotations;
 using NineSolsAPI;
 using TAS.Communication;
 using TAS.Module;
+using TAS.Tracer;
 using TAS.Utils;
 using UnityEngine;
 
@@ -97,12 +98,20 @@ public class TasMod : BaseUnityPlugin {
     
     private void EarlyUpdate() {
         Log.TasTrace("-- FRAME BEGIN --");
+        
+        TasTracerState.TraceVarsThroughFrame("EarlyUpdate");
     }
     
     private void FixedUpdate() {
         Log.TasTrace($"-- FixedUpdate dt={Time.fixedDeltaTime}--");
+        
+        // TasTracerState.TraceVarsThroughFrame("FixedUpdate");
     }
     private void Update() {
+        Log.TasTrace($"-- Update dt={Time.deltaTime}-- ");
+        
+        TasTracerState.TraceVarsThroughFrame("Update");
+
         if (Manager.CurrState == Manager.State.Paused) {
             Manager.UpdateMeta();
             if (Manager.CurrState == Manager.State.Paused && Manager.NextState != Manager.State.Paused) {
@@ -112,9 +121,12 @@ public class TasMod : BaseUnityPlugin {
     }
 
     private void LateUpdate() {
+        TasTracerState.TraceVarsThroughFrame("LateUpdate");
     }
 
     private void PostLateUpdate() {
+        TasTracerState.TraceVarsThroughFrame("PostLateUpdate");
+        
         Log.TasTrace("-- FRAME END --");
         
         try {
@@ -122,15 +134,38 @@ public class TasMod : BaseUnityPlugin {
 
             AttributeUtils.Invoke<AfterTasFrame>();
             
+            if (Manager.Running) {
+                try {
+                    if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
+                        TasTracer.TraceFrame();
+                    } else {
+                        if (TasTracer.TracePauseMode == TracePauseMode.Reduced) {
+                            TasTracer.TraceFramePause();
+                        } else if (TasTracer.TracePauseMode == TracePauseMode.Full) {
+                            TasTracer.TraceFrame();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.LogException("Error trying to collect trace data");
+                }
+
+            }
+            
             AttributeUtils.Invoke<BeforeTasFrame>();
                 
+            // TasTracerState.AddFrameHistory("StateBefore", new TracerIrrelevantState($"{Manager.CurrState} -> {Manager.NextState}"));
+            // TasTracerState.AddFrameHistory("UpdateMeta");
             if (Manager.CurrState != Manager.State.Paused) {
                 Manager.UpdateMeta();
             }
             if (Manager.Running) {
+                // TasTracerState.AddFrameHistory("Update");
                 Manager.Update();
             }
             Log.TasTrace($"State: {Manager.CurrState} -> {Manager.NextState}");
+            TasTracerState.AddFrameHistory("StateAfter", new TracerIrrelevantState($"{Manager.CurrState} -> {Manager.NextState}"));
+            
+            // TasTracerState.AddFrameHistory("ADM End", $"{Player.i?.AnimationDeltaMove}");
 
             // TODO: ensure consistent fixedupdate
         } catch (Exception e) {
