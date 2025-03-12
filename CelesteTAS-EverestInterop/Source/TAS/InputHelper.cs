@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using HarmonyLib;
+using InControl;
+using RCGMaker.Core;
 using StudioCommunication;
 using System;
 using System.Reflection;
 using TAS.Input;
+using TAS.Utils;
 using UnityEngine;
 
 // ReSharper disable InconsistentNaming
@@ -20,12 +23,48 @@ public static class InputHelper {
         Prevent = false;
     }
 
-    /*[HarmonyPrefix]
+    [HarmonyPatch(typeof(Actor), nameof(Actor.OnRebindAnimatorMove))]
+    [HarmonyPatch(typeof(Player), nameof(Player.OnRebindAnimatorMove))]
+    [HarmonyPatch(typeof(Actor), nameof(Actor.Move))]
+    [HarmonyPatch(typeof(Player), "Update")]
+    [HarmonyPatch(typeof(Health), nameof(Health.InvincibleForDuration))]
+    [HarmonyPatch(typeof(SelectableNavigationRemapping), "RemapAfterAFrame")]
+    [HarmonyPatch(typeof(PushAwayWall), "Update")]
+    [HarmonyPatch(typeof(BackgroundTaskExecutor), "Update")]
+    [HarmonyPatch(typeof(BackgroundTaskExecutor), "Update")]
+    [HarmonyPatch(typeof(AbstractEmitter), "Update")]
+    [HarmonyPatch(typeof(TimePauseManager), "Update")] // TODO: patch Time.timeScale
+    [HarmonyPatch(typeof(ConditionTimer), "Update")]
+    [HarmonyPatch(typeof(InputManager), "UpdateInternal")]
+    [HarmonyPatch(typeof(PlayerInputCommandQueue), "Update")]
+    // [HarmonyPatch(typeof(UpdateLoopManager), "Update")]
+    [HarmonyPrefix]
     public static bool DontRunWhenPaused(MethodBase __originalMethod) =>
         Manager.CurrState != Manager.State.Paused && !Prevent;
 
+    [HarmonyPatch(typeof(LoadingLoopIcon), nameof(LoadingLoopIcon.ShowLoadingLoopIcon))]
+    [HarmonyPatch(typeof(LoadingLoopIcon), nameof(LoadingLoopIcon.HideLoadingLoopIcon))]
     [HarmonyPrefix]
-    public static bool DontRunInTAS(MethodBase __originalMethod) => !Manager.Running;*/
+    public static bool DontRunInTAS(MethodBase __originalMethod) => !Manager.Running;
+
+    public static class PatchesNonSpeedrunpatch {
+        [HarmonyPatch(typeof(UpdateLoopManager), "Update")]
+        [HarmonyPatch(typeof(UpdateLoopManager), "LateUpdate")]
+        [HarmonyPrefix]
+        public static bool DontRunWhenPaused(MethodBase __originalMethod) =>
+            Manager.CurrState != Manager.State.Paused && !Prevent;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(CameraManager), nameof(CameraManager.CameraBackToFollowPlayer))]
+    public static bool CameraInstant(ref float duration, CameraManager __instance) {
+        var run = Manager.CurrState != Manager.State.Paused && !Prevent;
+        if (run) return true;
+
+        __instance.cameraCore.dockObj.transform.localPosition = Vector3.zero;
+        duration = 0;
+        return false;
+    }
 
     private const int DefaultTasFramerate = 60;
     public static int CurrentTasFramerate = DefaultTasFramerate;
@@ -58,9 +97,17 @@ public static class InputHelper {
 
     [EnableRun]
     private static void EnableRun() {
+        InputManager.SuspendInBackground = false;
+        InputManager.Enabled = true;
+        ClearInputState();
+        // typeof(InputManager).SetFieldValue("initialTime", Time.realtimeSinceStartup);
+        // typeof(InputManager).SetFieldValue("currentTick", 0U);
+        // typeof(InputManager).SetFieldValue("currentTime", 0f);
+
         framerateState = FramerateState.Save();
 
         Time.timeScale = 1;
+        RCGTime.GlobalSimulationSpeed = 1;
 
         SetTasFramerate(DefaultTasFramerate);
         QualitySettings.vSyncCount = 0;
@@ -71,8 +118,21 @@ public static class InputHelper {
         Physics2D.simulationMode = SimulationMode2D.Script;
     }
 
+    public static void ClearInputState() {
+        typeof(InputManager).InvokeMethod("SetZeroTickOnAllControls");
+        InputManager.ClearInputState();
+        foreach (var actionSet in typeof(InputManager).GetFieldValue<List<PlayerActionSet>>("playerActionSets")!) {
+            foreach (var action in actionSet.Actions) {
+                action.SetFieldValue("clearInputState", false);
+            }
+        }
+    }
+
     [DisableRun]
     private static void DisableRun() {
+        InputManager.SuspendInBackground = true;
+        ClearInputState();
+
         framerateState.Restore();
         Time.captureFramerate = 0;
 
@@ -86,45 +146,27 @@ public static class InputHelper {
         currentFeed = inputFrame;
     }
 
+    private static Dictionary<Actions, Key> actionKeyMap = new() {
+        { Actions.Up, Key.W },
+        { Actions.Down, Key.S },
+        { Actions.Left, Key.A },
+        { Actions.Right, Key.D },
 
-    private static Dictionary<Actions, KeyCode> actionKeyMap = new() {
-        { Actions.Up, KeyCode.W },
-        { Actions.Down, KeyCode.S },
-        { Actions.Left, KeyCode.A },
-        { Actions.Right, KeyCode.D },
-
-        { Actions.Jump, KeyCode.Space },
-        { Actions.Dash, KeyCode.LeftShift },
+        { Actions.Jump, Key.Space },
+        { Actions.Dash, Key.LeftShift },
     };
 
-    [HarmonyPatch(typeof(UnityEngine.Input), nameof(UnityEngine.Input.GetKey), [typeof(KeyCode)])]
+    [HarmonyPatch(typeof(UnityKeyboardProvider), nameof(UnityKeyboardProvider.GetKeyIsPressed))]
     [HarmonyPrefix]
-    public static bool GetKey(KeyCode key, ref bool __result) {
+    public static bool GetKeyIsPressed(Key control, ref bool __result) {
         if (!Manager.Running || currentFeed is null) return true;
 
         foreach (var (action, actionKey) in actionKeyMap) {
-            if ((currentFeed.Actions & action) != 0 && actionKey == key) {
+            if ((currentFeed.Actions & action) != 0 && actionKey == control) {
                 __result = true;
             }
         }
 
         return false;
     }
-    
-    [HarmonyPatch(typeof(UnityEngine.Input), nameof(UnityEngine.Input.GetKeyDown), [typeof(KeyCode)])]
-    [HarmonyPrefix]
-    public static bool GetKeyDown(KeyCode key, ref bool __result) {
-        if (!Manager.Running || currentFeed is null) return true;
-
-        foreach (var (action, actionKey) in actionKeyMap) {
-            if ((currentFeed.Actions & action) != 0 && actionKey == key) {
-                // TODO: only true for a frame
-                __result = true;
-            }
-        }
-
-        return false;
-    }
-    
-    // TODO: GetKeyUp
 }

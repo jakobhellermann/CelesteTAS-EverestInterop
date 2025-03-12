@@ -6,7 +6,7 @@ using System.Reflection;
 namespace TAS.ModInterop;
 
 internal static class ModUtils {
-    // public static readonly Assembly VanillaAssembly = typeof(Player).Assembly;
+    public static readonly Assembly VanillaAssembly = typeof(Player).Assembly;
 
     /// Returns all specified type from the given mod, if the mod is present
     /*public static Type? GetType(string modName, string fullTypeName) {
@@ -87,11 +87,8 @@ internal static class ModUtils {
     }
     */
     
-    public static Type[] GetTypes() {
-        return new[] {
-            // VanillaAssembly, TODO(unity)
-            typeof(UnityEngine.Random).Assembly,
-        }.SelectMany(x => x.GetTypes()).ToArray();
+    public static IEnumerable<Type> GetTypes() {
+        return new[] { VanillaAssembly, typeof(UnityEngine.Random).Assembly }.SelectMany(x => x.GetTypes());
     }
 
     /*public static EverestModule? GetModule(string modName) {

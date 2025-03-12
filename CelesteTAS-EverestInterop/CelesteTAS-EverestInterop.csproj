@@ -28,14 +28,54 @@
             <HintPath>$(DllPath)/Assembly-CSharp.dll</HintPath>
             <Private>false</Private>
         </Reference>
+        <Reference Include="rcg.rcgmakercore.Runtime">
+            <HintPath>$(DllPath)/rcg.rcgmakercore.Runtime.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="RCG_General">
+            <HintPath>$(DllPath)/RCG_General.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="InControl">
+            <HintPath>$(DllPath)/InControl.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="UniTask">
+            <HintPath>$(DllPath)/UniTask.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="I2">
+            <HintPath>$(DllPath)/I2.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="PrimeTween.Runtime">
+            <HintPath>$(DllPath)/PrimeTween.Runtime.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="DOTween">
+            <HintPath>$(DllPath)/DOTween.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Newtonsoft.Json">
+            <HintPath>$(DllPath)/Newtonsoft.Json.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="2dFX">
+            <HintPath>$(DllPath)/2dFX.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="AK.Wwise.Unity.MonoBehaviour">
+            <HintPath>$(DllPath)/AK.Wwise.Unity.MonoBehaviour.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="BepInEx.Analyzers" Version="1.*" />
         <PackageReference Include="BepInEx.Core" Version="5.*" IncludeAssets="compile" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="UnityEngine.Modules" Version="2022.3.18" IncludeAssets="compile" />
 
+        <PackageReference Include="NineSolsAPI" Version="1.2.3" IncludeAssets="compile" />
         <ProjectReference Include="../StudioCommunication/StudioCommunication.csproj" />
     </ItemGroup>
 

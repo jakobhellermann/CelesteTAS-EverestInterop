@@ -1,3 +1,5 @@
+using NineSolsAPI;
+
 namespace TAS;
 
 using System.Collections.Generic;
@@ -32,7 +34,7 @@ public class AnimatorSnapshot {
                 case AnimatorControllerParameterType.Trigger:
                     continue;
                 default:
-                    Log.Warn($"Unsnapshotted param {param.type}");
+                    ToastManager.Toast($"Unsnapshotted param {param.type}");
                     break;
             }
         }
