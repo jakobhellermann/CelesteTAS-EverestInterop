@@ -1,19 +1,14 @@
-using Celeste;
-using Celeste.Mod;
-using JetBrains.Annotations;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using TAS.EverestInterop;
-using TAS.Input.Commands;
+using NineSolsAPI;
 using TAS.ModInterop;
-using TAS.Module;
 using TAS.Utils;
+using UnityEngine;
+using Random = System.Random;
 
 namespace TAS.InfoHUD;
 
@@ -24,10 +19,13 @@ internal interface IInstanceResolver {
     List<object>? Resolve(Type type, List<Type> componentTypes, EntityID? entityId);
 }
 
+public record EntityID {}
+
 /// Contains all the logic for getting data from a target-query
 public static class TargetQuery {
     /// Prevents invocations of methods / execution of Lua code in the Custom Info
-    public static bool PreventCodeExecution => EnforceLegalCommand.EnabledWhenRunning;
+    // public static bool PreventCodeExecution => EnforceLegalCommand.EnabledWhenRunning;
+    public static bool PreventCodeExecution => false;
 
     private static readonly Dictionary<string, List<Type>> allTypes = new();
     private static readonly Dictionary<string, (List<Type> Types, List<Type> ComponentTypes, EntityID? EntityID)> baseTypeCache = [];
@@ -37,13 +35,9 @@ public static class TargetQuery {
     private static readonly Regex BaseTypeRegex = new(@"^([\w.]+)(@(?:[^.:\[\]\n]*))?(?::(\w+))?(@(?:[^.:\[\]\n]*))?(?:\[(.+):(\d+)\])?$", RegexOptions.Compiled);
 
     private static IInstanceResolver[] typeInstanceResolvers = [
-        new GlobalInstanceResolver<Settings>(Settings.Instance),
-        new GlobalInstanceResolver<SaveData>(SaveData.Instance),
-        new GlobalInstanceResolver<Assists>(Assists.Default),
-        new EverestSettingsInstanceResolver(),
-        new ComponentInstanceResolver(),
-        new EntityInstanceResolver(),
-        new SceneInstanceResolver(),
+        // new GlobalInstanceResolver<GameCore>(GameCore.Instance),
+        new SingletonBehaviourResolver(),
+        new MonobehaviourInstanceResolver(),
     ];
 
     [Initialize]
@@ -54,7 +48,7 @@ public static class TargetQuery {
         foreach (var type in ModUtils.GetTypes()) {
             if (type.FullName is { } fullName) {
                 string assemblyName = type.Assembly.GetName().Name!;
-                string modName = ConsoleEnhancements.GetModName(type);
+                // string modName = ConsoleEnhancements.GetModName(type);
 
                 // Strip namespace
                 int namespaceLen = type.Namespace != null
@@ -68,16 +62,16 @@ public static class TargetQuery {
 
                 allTypes.AddToKey(fullName, type);
                 allTypes.AddToKey($"{fullName}@{assemblyName}", type);
-                allTypes.AddToKey($"{fullName}@{modName}", type);
+                // allTypes.AddToKey($"{fullName}@{modName}", type);
 
                 allTypes.AddToKey(shortName, type);
                 allTypes.AddToKey($"{shortName}@{assemblyName}", type);
-                allTypes.AddToKey($"{shortName}@{modName}", type);
+                // allTypes.AddToKey($"{shortName}@{modName}", type);
             }
         }
     }
 
-    [MonocleCommand("get", "'get Type.fieldOrProperty' -> value | Example: 'get Player.Position', 'get Level.Wind' (CelesteTAS)"), UsedImplicitly]
+    /*[MonocleCommand("get", "'get Type.fieldOrProperty' -> value | Example: 'get Player.Position', 'get Level.Wind' (CelesteTAS)"), UsedImplicitly]
     private static void GetCommand(string? query) {
         if (query == null) {
             "No target-query specified".ConsoleLog(LogLevel.Error);
@@ -105,7 +99,7 @@ public static class TargetQuery {
                 }
             }
         }
-    }
+    }*/
 
     /// Parses a target-query and returns the results for that
     /// A single BaseInstance == null entry is returned for static contexts
@@ -140,7 +134,7 @@ public static class TargetQuery {
             VoidResult<string> ProcessType(Type type) {
                 var result = ResolveMemberValues(type, instances, memberArgs, forceAllowCodeExecution);
                 if (result.Failure) {
-                    return VoidResult<string>.Fail(result.Error);
+                    return VoidResult<string>.Fail(result.Error!);
                 }
 
                 if (instances == null) {
@@ -162,7 +156,7 @@ public static class TargetQuery {
         entityId = null;
 
         // Vanilla settings don't need a prefix
-        if (typeof(Settings).GetFields().FirstOrDefault(f => f.Name == queryArgs[0]) != null) {
+        /*if (typeof(Settings).GetFields().FirstOrDefault(f => f.Name == queryArgs[0]) != null) {
             memberArgs = queryArgs;
             return [typeof(Settings)];
         }
@@ -173,13 +167,13 @@ public static class TargetQuery {
         if (typeof(Assists).GetFields().FirstOrDefault(f => f.Name == queryArgs[0]) != null) {
             memberArgs = queryArgs;
             return [typeof(Assists)];
-        }
+        }*/
 
         // Check for mod settings
-        if (Everest.Modules.FirstOrDefault(mod => mod.SettingsType != null && mod.Metadata.Name == queryArgs[0]) is { } module) {
+        /*if (Everest.Modules.FirstOrDefault(mod => mod.SettingsType != null && mod.Metadata.Name == queryArgs[0]) is { } module) {
             memberArgs = queryArgs[1..];
             return [module.SettingsType];
-        }
+        }*/
 
         // Greedily increase amount of tested arguments
         string currentType = string.Empty;
@@ -203,9 +197,9 @@ public static class TargetQuery {
             string checkTypeName = $"{match.Groups[1].Value}{match.Groups[2].Value}";
             string componentTypeName = $"{match.Groups[3].Value}{match.Groups[4].Value}";
 
-            if (int.TryParse(match.Groups[6].Value, out int id)) {
+            /*if (int.TryParse(match.Groups[6].Value, out int id)) {
                 entityId = new EntityID(match.Groups[5].Value, id);
-            }
+            }*/
 
             if (!allTypes.TryGetValue(checkTypeName, out var types)) {
                 break; // No further existing types
@@ -262,7 +256,7 @@ public static class TargetQuery {
         }
 
         // Special case for Actor / Platform positions, since they use subpixels
-        if (memberArgs[^1] is nameof(Entity.X) or nameof(Entity.Y)) {
+        /*if (memberArgs[^1] is nameof(Entity.X) or nameof(Entity.Y)) {
             var entityType = typeof(Entity);
             if (typeStack.Count >= 2 && memberArgs[^2] is nameof(Entity.Position)) {
                 // "Entity.Position.X"
@@ -283,7 +277,7 @@ public static class TargetQuery {
             if (entityType.IsSameOrSubclassOf(typeof(Actor)) || entityType.IsSameOrSubclassOf(typeof(Platform))) {
                 return Result<Type, string>.Ok(typeof(SubpixelPosition));
             }
-        }
+        }*/
 
         return Result<Type, string>.Ok(currentType);
     }
@@ -468,7 +462,7 @@ public static class TargetQuery {
         // Set the value
         try {
             // Special case for Actor / Platform positions, since they use subpixels
-            if (memberArgs[^1] is nameof(Entity.X) or nameof(Entity.Y)) {
+            /*if (memberArgs[^1] is nameof(Entity.X) or nameof(Entity.Y)) {
                 object? entityObject = null;
                 if (objectStack.Count == 0) {
                     // "Entity.X"
@@ -519,7 +513,7 @@ public static class TargetQuery {
                     platform.movementCounter = new(subpixelValue.X.Remainder, subpixelValue.Y.Remainder);
                     return VoidResult<string>.Ok;
                 }
-            }
+            }*/
 
             if (currentType.GetFieldInfo(memberArgs[^1], logFailure: false) is { } field) {
                 if (field.IsStatic) {
@@ -536,9 +530,9 @@ public static class TargetQuery {
 
                     field.SetValue(currentObject, value);
                 }
-            } else if (currentType.GetPropertyInfo(memberArgs[^1], logFailure: false) is { } property && property.SetMethod != null) {
+            }  else if (currentType.GetPropertyInfo(memberArgs[^1], logFailure: false) is { } property && property.SetMethod != null) {
                 // Special case to support binding custom keys
-                if (property.PropertyType == typeof(ButtonBinding) && !PreventCodeExecution && property.GetValue(currentObject) is ButtonBinding binding) {
+                /*if (property.PropertyType == typeof(ButtonBinding) && !PreventCodeExecution && property.GetValue(currentObject) is ButtonBinding binding) {
                     var nodes = binding.Button.Nodes;
                     var mouseButtons = binding.Button.Binding.Mouse;
                     var data = (ButtonBindingData)value!;
@@ -589,7 +583,7 @@ public static class TargetQuery {
                         }
                     }
                     return VoidResult<string>.Ok;
-                }
+                }*/
 
                 if (PreventCodeExecution) {
                     return VoidResult<string>.Fail($"Cannot safely set property '{memberArgs[^1]}' during EnforceLegal");
@@ -609,7 +603,7 @@ public static class TargetQuery {
 
                     property.SetValue(currentObject, value);
                 }
-            } else {
+            }  else {
                 return VoidResult<string>.Fail($"Cannot find field / property '{memberArgs[^1]}' on type {currentType}");
             }
         } catch (Exception ex) {
@@ -764,7 +758,7 @@ public static class TargetQuery {
     /// Data-class to hold parsed ButtonBinding data, before it being set
     private class ButtonBindingData {
         public readonly HashSet<Keys> KeyboardKeys = [];
-        public readonly HashSet<MInput.MouseData.MouseButtons> MouseButtons = [];
+        // public readonly HashSet<MInput.MouseData.MouseButtons> MouseButtons = [];
     }
 
     /// Resolves the value arguments into the specified types if possible
@@ -774,6 +768,11 @@ public static class TargetQuery {
 
         for (int i = 0; i < valueArgs.Length; i++) {
             var arg = valueArgs[i];
+            
+            if (index >= targetTypes.Length) {
+                return Result<object?[], string>.Fail("Got more arguments than expected");
+            }
+            
             var targetType = targetTypes[index];
             targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
 
@@ -803,7 +802,7 @@ public static class TargetQuery {
                     continue;
                 }
 
-                if (targetType == typeof(SubpixelComponent)) {
+                /*if (targetType == typeof(SubpixelComponent)) {
                     double doubleValue = double.Parse(valueArgs[i]);
 
                     int position = (int) Math.Round(doubleValue);
@@ -811,8 +810,8 @@ public static class TargetQuery {
 
                     values[index++] = new SubpixelComponent(position, remainder);
                     continue;
-                }
-                if (targetType == typeof(SubpixelPosition)) {
+                }*/
+                /*if (targetType == typeof(SubpixelPosition)) {
                     double doubleValueX = double.Parse(valueArgs[i + 0]);
                     double doubleValueY = double.Parse(valueArgs[i + 1]);
 
@@ -826,14 +825,14 @@ public static class TargetQuery {
                         new SubpixelComponent(positionY, remainderY));
                     i++; // Account for second argument
                     continue;
-                }
+                }*/
 
                 if (targetType == typeof(Random)) {
                     values[index++] = new Random(int.Parse(arg));
                     continue;
                 }
 
-                if (targetType == typeof(ButtonBinding)) {
+                /*if (targetType == typeof(ButtonBinding)) {
                     var data = new ButtonBindingData();
                     // Parse mouse first, so Mouse.Left is not parsed as Keys.Left
                     if (Enum.TryParse<MInput.MouseData.MouseButtons>(arg, ignoreCase: true, out var button)) {
@@ -846,7 +845,7 @@ public static class TargetQuery {
 
                     values[index++] = data;
                     continue;
-                }
+                }*/
 
                 if (targetType.IsEnum) {
                     if (Enum.TryParse(targetType, arg, ignoreCase: true, out var value) && (int) value < Enum.GetNames(targetType).Length) {

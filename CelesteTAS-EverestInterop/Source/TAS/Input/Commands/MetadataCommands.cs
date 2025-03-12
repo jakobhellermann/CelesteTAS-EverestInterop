@@ -1,12 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Celeste;
-using Celeste.Mod;
-using Monocle;
 using StudioCommunication;
 using TAS.Communication;
-using TAS.Module;
 using TAS.Utils;
 
 namespace TAS.Input.Commands;
@@ -16,8 +13,10 @@ internal static class MetadataCommands {
     // Track starting conditions for TAS to properly calculate (Midway)FileTime
     public static (long FileTimeTicks, int FileSlot)? TasStartInfo;
 
-    [Load]
+    /*[Load]
     private static void Load() {
+        On.Celeste.Level.Begin += LevelOnBegin;
+        On.Celeste.Level.UpdateTime += LevelOnUpdateTime;
         Everest.Events.Level.OnComplete += UpdateChapterTime;
 
         typeof(Level)
@@ -59,13 +58,7 @@ internal static class MetadataCommands {
 
         UpdateAllMetadata("ChapterTime", _ => GameInfo.GetChapterTime(level));
     }
-
-    public static void UpdateRecordCount(InputController inputController) {
-        UpdateAllMetadata(
-            "RecordCount",
-            command => (int.Parse(command.Args.FirstOrDefault() ?? "0") + 1).ToString(),
-            command => int.TryParse(command.Args.FirstOrDefault() ?? "0", out int _));
-    }
+*/
 
     private class RecordCountMeta : ITasCommandMeta {
         public string Insert => "RecordCount: 1";
@@ -87,6 +80,7 @@ internal static class MetadataCommands {
         // dummy
     }
 
+    /*
     [TasCommand("MidwayFileTime", Aliases = ["MidwayFileTime:", "MidwayFileTime："], CalcChecksum = false)]
     private static void MidwayFileTimeCommand(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
         if (TasStartInfo == null || SaveData.Instance == null) {
@@ -108,6 +102,7 @@ internal static class MetadataCommands {
             _ => GameInfo.GetChapterTime(level),
             command => Manager.Controller.CurrentCommands.Contains(command));
     }
+    */
 
     private static void UpdateAllMetadata(string commandName, Func<Command, string> getMetadata, Func<Command, bool>? predicate = null) {
         string tasFilePath = Manager.Controller.FilePath;
@@ -149,5 +144,12 @@ internal static class MetadataCommands {
         Manager.Controller.NeedsReload = needsReload;
 
         CommunicationWrapper.SendUpdateLines(updateLines);
+    }
+    
+    public static void UpdateRecordCount(InputController inputController) {
+        UpdateAllMetadata(
+            "RecordCount",
+            command => (int.Parse(command.Args.FirstOrDefault() ?? "0") + 1).ToString(),
+            command => int.TryParse(command.Args.FirstOrDefault() ?? "0", out _));
     }
 }

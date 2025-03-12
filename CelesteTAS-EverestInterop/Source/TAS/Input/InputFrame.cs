@@ -1,26 +1,23 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 using StudioCommunication;
-using TAS.Utils;
+using Keys = UnityEngine.KeyCode;
 
 namespace TAS.Input;
 
-/// Represents a fully parsed input-line in a TAS file
 public record InputFrame {
     // Controller state
     public readonly Actions Actions;
-    public readonly Vector2 StickPosition;
-    public readonly Vector2 DashOnlyStickPosition;
-    public readonly Vector2 MoveOnlyStickPosition;
+    // public readonly Vector2 StickPosition;
+    // public readonly Vector2 DashOnlyStickPosition;
+    // public readonly Vector2 MoveOnlyStickPosition;
     public readonly HashSet<Keys> PressedKeys = [];
 
     // libTAS state
-    public readonly Vector2Short StickPositionShort;
-    public readonly Vector2Short DashOnlyStickPositionShort;
-    public readonly Vector2Short MoveOnlyStickPositionShort;
+    // public readonly Vector2Short StickPositionShort;
+    // public readonly Vector2Short DashOnlyStickPositionShort;
+    // public readonly Vector2Short MoveOnlyStickPositionShort;
 
     // Metadata
     public int Frames;
@@ -51,7 +48,7 @@ public record InputFrame {
         actionLineString = actionLine.ToString();
         checksum = actionLineString.GetHashCode();
 
-        if (Actions.Has(Actions.Feather)) {
+        /*if (Actions.Has(Actions.Feather)) {
             if (float.TryParse(actionLine.FeatherAngle, out float angle)) {
                 float magnitude = float.TryParse(actionLine.FeatherMagnitude, out float m) ? m : 1.0f;
                 (StickPosition, StickPositionShort) = AnalogHelper.ComputeAngleVector(angle, magnitude);
@@ -59,9 +56,9 @@ public record InputFrame {
                 // Fallback to 0°
                 (StickPosition, StickPositionShort) = AnalogHelper.ComputeAngleVector(0.0f, 1.0f);
             }
-        }
+        }*/
 
-        if (Actions.Has(Actions.LeftDashOnly)) {
+        /*if (Actions.Has(Actions.LeftDashOnly)) {
             DashOnlyStickPosition.X = -1.0f;
         } else if (Actions.Has(Actions.RightDashOnly)) {
             DashOnlyStickPosition.X = 1.0f;
@@ -83,7 +80,7 @@ public record InputFrame {
         } else if (Actions.Has(Actions.UpMoveOnly)) {
             MoveOnlyStickPosition.Y = 1.0f;
         }
-        MoveOnlyStickPositionShort = new Vector2Short((short) (MoveOnlyStickPosition.X * 32767), (short) (MoveOnlyStickPosition.Y * 32767));
+        MoveOnlyStickPositionShort = new Vector2Short((short) (MoveOnlyStickPosition.X * 32767), (short) (MoveOnlyStickPosition.Y * 32767));*/
     }
 
     public static bool TryParse(string line, int studioLine, InputFrame? prevInputFrame, [NotNullWhen(true)] out InputFrame? inputFrame, int repeatIndex = 0, int repeatCount = 0, int frameOffset = 0) {
