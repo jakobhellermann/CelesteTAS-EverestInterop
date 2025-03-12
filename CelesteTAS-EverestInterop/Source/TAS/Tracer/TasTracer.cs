@@ -85,6 +85,9 @@ public enum TasTracerFilter {
     Movement = 1 << 4,
     TraceVarsThroughFrame = 1 << 6,
     Collision = 1 << 7,
+    Wip = 1 << 8,
+    MBEnabled = 1 << 9,
+    Trigger = 1 << 10,
 }
 
 internal static class TasTracer {
@@ -398,6 +401,8 @@ internal static class TasTracer {
         CallStack.Add(currentStage.Events);
     }
 
+    internal static bool HasFilter(TasTracerFilter filter) => Filter.HasFlag(filter);
+
     private static readonly Dictionary<string, object?> traceVarsState = [];
 
     // Skip trace while our instrumentation (e.g. debuginfo) reads the game state.
@@ -461,6 +466,8 @@ internal static class TasTracer {
 
     public static void LateUpdate() {
         if (!ShouldTrace()) return;
+
+        GameTrace.LateUpdate();
     }
 
     [UsedImplicitly]
