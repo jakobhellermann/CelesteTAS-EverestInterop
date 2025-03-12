@@ -1,4 +1,5 @@
-﻿using System;
+using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -8,6 +9,7 @@ using System.Runtime.CompilerServices;
 using NineSolsAPI;
 using TAS.InfoHUD;
 using TAS.ModInterop;
+using TAS.Tracer;
 using TAS.Utils;
 using UnityEngine;
 
@@ -187,6 +189,8 @@ public static class InvokeCommand {
             ReportError("No members specified");
             return;
         }
+
+        TasTracer.TraceEvent($"Invoke Command: {args.Join()}");
 
         foreach (var type in baseTypes) {
             if (componentTypes.IsNotEmpty()) {

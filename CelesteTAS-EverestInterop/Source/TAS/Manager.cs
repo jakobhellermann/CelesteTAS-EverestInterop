@@ -7,6 +7,7 @@ using StudioCommunication;
 using System.Collections.Generic;
 using TAS.Communication;
 using TAS.Input;
+using TAS.Tracer;
 using TAS.UnityInterop;
 using TAS.Utils;
 using UnityEngine;
@@ -140,6 +141,8 @@ public static class Manager {
     public static void EnablePause() {
         TimeHelper.OverwriteTimeScale = 0;
 
+        TasTracerState.AddFrameHistoryPaused("EnablePause");
+
         try {
             if (Player.i?.animator is {} animator) {
                 prePauseAnimatorStates.Add((animator, AnimatorSnapshot.Snapshot(animator)));
@@ -158,6 +161,8 @@ public static class Manager {
     private static List<(Animator, AnimatorSnapshot)> prePauseAnimatorStates = [];
     
     public static void DisablePause() {
+        TasTracerState.AddFrameHistoryPaused("DisablePause");
+
         foreach (var (anim, snapshot) in prePauseAnimatorStates) {
             snapshot.Restore(anim);
         }
@@ -192,7 +197,9 @@ public static class Manager {
             NextState = State.Running;
         }
 
+        var before = Controller.CurrentFrameInTas;
         Controller.AdvanceFrame(out bool couldPlayback);
+        // TasTracer.TraceEvent($"advanceframe {before}->{Controller.CurrentFrameInTas}");
 
         if (!couldPlayback) {
             DisableRun();
