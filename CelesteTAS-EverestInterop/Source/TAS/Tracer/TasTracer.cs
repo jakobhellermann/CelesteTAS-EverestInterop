@@ -11,6 +11,7 @@ using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using NineSolsAPI.Utils;
 using Snapshots;
 using System.Collections;
 using TAS.Input;
@@ -123,6 +124,19 @@ internal static class TasTracer {
         trace.FilePath = Manager.Controller.FilePath.Replace(@"\", "/");
     }
 
+    public static void SavestateCreate() {
+        // trace.Trace.Clear();
+        TasTracerState.AddFrameHistory("savestate created");
+        TasTracerState.AddFrameHistoryPaused("savestate created");
+    }
+
+    public static void SavestateLoad() {
+        // trace.Trace.Clear();
+        TasTracerState.AddFrameHistory("savestate loaded");
+        TasTracerState.AddFrameHistoryPaused("savestate loaded", Player.i.AnimationVelocity);
+    }
+
+
     [DisableRun]
     private static void EndTrace() {
         if (!Manager.DidComplete) {
@@ -217,6 +231,7 @@ internal static class TasTracer {
                         $"({vec.x:0.0000}, {vec.y:0.0000}" + (vec.z != 0 ? $" ,{vec.z:0.0000}" : "") + ")"),
                     new FuncConverter<TraceData>(data => data.Data),
                     new FuncConverter<TracerIrrelevantState>(data => data.Data),
+                    new FuncConverter<Collider2D>(ObjectUtils.ObjectComponentPath),
                     new FuncConverter<Func<bool>>(func => {
                         var method = func.Method;
                         return $"{method.DeclaringType}.{method.Name}";
