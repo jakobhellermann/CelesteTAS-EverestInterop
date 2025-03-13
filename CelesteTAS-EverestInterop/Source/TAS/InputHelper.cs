@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using InControl;
+using NineSolsAPI;
 using StudioCommunication;
+using System;
 using TAS.Input;
 using UnityEngine;
 
@@ -9,11 +11,24 @@ namespace TAS;
 
 [HarmonyPatch]
 public static class InputHelper {
+    public static bool Prevent = false;
+
+    public static void WithPrevent(Action a) {
+        Prevent = true;
+        a();
+        Prevent = false;
+    }
+    
     [HarmonyPatch(typeof(Actor), nameof(Actor.OnRebindAnimatorMove))]
     [HarmonyPatch(typeof(Actor), nameof(Actor.Move))]
+    // [HarmonyPatch(typeof(Actor), nameof(Actor.PlayAnimation))]
     [HarmonyPatch(typeof(Player), "Update")]
     [HarmonyPrefix]
-    public static bool DontRunWhenPaused() => Manager.CurrState != Manager.State.Paused;
+    public static bool DontRunWhenPaused() {
+        var run = Manager.CurrState != Manager.State.Paused && !Prevent;
+
+        return run;
+    }
 
     /*
     private static Action inputManagerUpdateInternal =

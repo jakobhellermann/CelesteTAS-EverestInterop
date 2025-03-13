@@ -48,7 +48,18 @@ public static class TasTracerState {
     [HarmonyPrefix]
     private static void PlayerUpdate() {
         frameHistory.Add(["Player.Update", Time.deltaTime]);
+        
+        // TODO move
+        var closest = MonsterManager.Instance.ClosetMonster;
+        frameHistory.Add(["ClosestMonster", closest?.transform?.position]);
     }
+    
+    [HarmonyPatch(typeof(MonsterState), nameof(MonsterState.AnimationEvent))]
+    [HarmonyPrefix]
+    private static void BossAnimationEvent(MonsterState __instance, AnimationEvents.AnimationEvent e) {
+        frameHistory.Add([$"BossAnimationEvent {__instance}", e.ToString()]);
+    }
+    
 
     [HarmonyPatch(typeof(PlayerAnimatorEvents), nameof(PlayerAnimatorEvents.AnimationDone))]
     [HarmonyPrefix]

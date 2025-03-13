@@ -62,7 +62,9 @@ public static class LoadCommand {
                 },
                 false);
         }
-        // gameCore.ResetLevel();
+        
+        UIManager.Instance.PausePanelUI.HideUIEasy();
+        gameCore.ResetLevel();
 
         Normalize(new Vector2(x, y));
     }
@@ -76,7 +78,7 @@ public static class LoadCommand {
         player.transform.position = player.transform.position with { x = position.x, y = position.y };
         player.movementCounter = Vector2.zero;
 
-        player.ChangeState(PlayerStateType.Normal);
+        player.ChangeState(PlayerStateType.Normal, true);
         var snapshot = new AnimatorSnapshot {
             StateHash = 1432961145,
             NormalizedTime = 0,
@@ -85,7 +87,9 @@ public static class LoadCommand {
             ParamsBool = new Dictionary<int, bool>(),
         };
         snapshot.Restore(Player.i.animator);
-        Player.i.animator.Update(0);
+        InputHelper.WithPrevent(() => {
+            Player.i.animator.Update(0);
+        });
 
         player.Velocity = Vector2.zero;
         player.AnimationVelocity = Vector3.zero;
@@ -93,6 +97,11 @@ public static class LoadCommand {
         player.jumpState = Player.PlayerJumpState.None;
         player.varJumpSpeed = 0;
         player.dashCooldownTimer = 0;
+        player.rollCooldownTimer = 0;
+        player.parryCoolDownTimer = 0;
+        player.meleeAttackCooldownTimer = 0;
+        player.fooAttackInputLockTimer = 0;
+        player.SetFieldValue("_onGround", true);
 
         player.GroundCheck();
         Physics2D.SyncTransforms();
@@ -101,9 +110,28 @@ public static class LoadCommand {
             condition.SetFieldValue("_isFalseTimer", float.PositiveInfinity);
         }
 
+        foreach (var monster in MonsterManager.Instance.monsterDict.Values) {
+            NormalizeMonster(monster);
+        }
+
+        var attack = player.fsm.FindMappingState(PlayerStateType.Attack);
+        if (attack is PlayerAttackState) {
+            attack.SetFieldValue("count", 0);
+            attack.SetFieldValue("inAir", false);
+        }
+        UnityEngine.Random.InitState(1337);
+
         // CameraManager.Instance.ResetCamera2DDockerToPlayer();
         // CameraManager.Instance.camera2D.CenterOnTargets();
         // CameraManager.Instance.dummyOffset = Vector2.SmoothDamp(
         // SingletonBehaviour<CameraManager>.Instance.dummyOffset, direction, ref this.currentV, 0.25f);
+    }
+
+    static void NormalizeMonster(MonsterBase monsterBase) {
+        foreach (var state in monsterBase.fsm._stateMapping.getAllStates) {
+            if (state.stateBehavior is BossGeneralState generalState) {
+                generalState.damageOnTimeList.Clear();
+            }
+        }
     }
 }
