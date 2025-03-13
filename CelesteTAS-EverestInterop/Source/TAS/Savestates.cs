@@ -1,10 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using NineSolsAPI;
 using TAS.Input;
 using TAS.ModInterop;
-using TAS.Tracer;
 using TAS.UnityInterop;
 using TAS.Utils;
 
@@ -12,6 +9,8 @@ namespace TAS;
 
 /// Handles saving / loading game state with DebugMosPlus
 public static class Savestates {
+    private const string SavestateSlot = "tas-main";
+    
     private static bool savedByBreakpoint;
     private static int savedChecksum;
     private static InputController? savedController;
@@ -36,6 +35,14 @@ public static class Savestates {
                                    savedController != null &&
                                    savedController.FilePath == Manager.Controller.FilePath;
 
+    private static DebugModPlusInterop? interop;
+    
+    [Initialize]
+    private static void Initialized() {
+        interop = DebugModPlusInterop.Load();
+    }
+    
+
     [Unload]
     private static void Unload() {
         if (IsSaved_Safe) {
@@ -45,7 +52,7 @@ public static class Savestates {
 
     /// Update for each TAS frame
     public static void Update() {
-        if (!SpeedrunToolInterop.Installed) {
+        if (interop == null) {
             return;
         }
 
@@ -70,7 +77,7 @@ public static class Savestates {
 
     /// Update for checking hotkeys
     internal static void UpdateMeta() {
-        if (!SpeedrunToolInterop.Installed) {
+        if (interop == null) {
             return;
         }
 
@@ -104,7 +111,8 @@ public static class Savestates {
             return; // Already saved
         }
 
-        // TODO save state
+        interop!.CreateSavestateDisk(SavestateSlot, null, SavestateFilter.All);
+        TasTracerState.AddFrameHistory("SavestateCreated");
 
         savedByBreakpoint = byBreakpoint;
         savedChecksum = Manager.Controller.CalcChecksum(Manager.Controller.CurrentFrameInTas);
@@ -128,7 +136,8 @@ public static class Savestates {
                 }
 
                 if (/*Engine.Scene is Level*/ true) {
-                    // TODO
+                    interop!.LoadSavestateDisk(SavestateSlot, null);
+                    TasTracerState.AddFrameHistory("SavestateLoaded");
                     
                     Manager.Controller.CopyProgressFrom(savedController);
 
