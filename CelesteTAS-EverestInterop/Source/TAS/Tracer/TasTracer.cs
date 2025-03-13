@@ -169,6 +169,13 @@ internal static class TasTracer {
         SaveTrace(trace);
     }
 
+    public static void TraceEvent(string evt) {
+        TasTracerState.AddFrameHistory($"event", evt);
+        var data = new TraceData();
+        data.Add("event", evt);
+        trace.Trace.Add(data);
+    }
+
     public static void TraceFrame() {
         Log.TasTrace("Collect trace data");
 

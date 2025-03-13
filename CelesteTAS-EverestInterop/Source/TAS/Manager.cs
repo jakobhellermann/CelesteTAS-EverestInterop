@@ -5,6 +5,7 @@ using JetBrains.Annotations;
 using StudioCommunication;
 using TAS.Communication;
 using TAS.Input;
+using TAS.Tracer;
 using TAS.UnityInterop;
 using TAS.Utils;
 
@@ -22,7 +23,7 @@ public class UpdateMetaAttribute : Attribute;
 
 /// Main controller, which manages how the TAS is played back
 public static class Manager {
-    private const bool PauseOnEndDraft = false;
+    private const bool PauseOnEndDraft = true;
     
     public enum State {
         /// No TAS is currently active
@@ -159,7 +160,9 @@ public static class Manager {
             NextState = State.Running;
         }
 
+        var before = Controller.CurrentFrameInTas;
         Controller.AdvanceFrame(out bool couldPlayback);
+        TasTracer.TraceEvent($"advanceframe {before}->{Controller.CurrentFrameInTas}");
 
         if (!couldPlayback) {
             DisableRun();
@@ -364,7 +367,7 @@ public static class Manager {
             LevelName = GameInfo.LevelName,
             ChapterTime = GameInfo.ChapterTime,
             // ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator && Engine.Scene is Level or Emulator,
-            ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator,
+            ShowSubpixelIndicator = false,
         };
 
         /*if (Engine.Scene is Level level && level.GetPlayer() is { } player) {

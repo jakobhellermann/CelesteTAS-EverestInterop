@@ -109,6 +109,8 @@ public static class Hotkeys {
         AllHotkeys[HotkeyID.CameraRight] = CameraRight = Unbound();
         AllHotkeys[HotkeyID.CameraZoomIn] = CameraZoomIn = Unbound();
         AllHotkeys[HotkeyID.CameraZoomOut] = CameraZoomOut = Unbound();
+        
+        Log.Info(AllHotkeys.Count);
 
         /*var debugConsole = Celeste.Mod.Core.CoreModule.Settings.DebugConsole;
         var toggleDebugConsole = Celeste.Mod.Core.CoreModule.Settings.ToggleDebugConsole;*

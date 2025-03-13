@@ -135,6 +135,8 @@ public static class LoadCommand {
         player.meleeAttackCooldownTimer = 0;
         player.fooAttackInputLockTimer = 0;
         player.SetFieldValue("_onGround", true);
+        player.pathFindAgent.Clear();
+        TasTracerState.AddFrameHistory(player.pathFindAgent.target);
 
         player.GroundCheck();
         Physics2D.SyncTransforms();

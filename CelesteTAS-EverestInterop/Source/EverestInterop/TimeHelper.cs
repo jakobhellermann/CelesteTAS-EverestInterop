@@ -8,6 +8,18 @@ namespace TAS;
 
 [HarmonyPatch]
 public static class TimeHelper {
+    [HarmonyPatch(typeof(Time), nameof(Time.frameCount), MethodType.Getter)]
+    [HarmonyPrefix]
+    private static bool TimeScaleGet(ref int __result) {
+        if (Manager.Running) {
+            __result = Manager.Controller.CurrentFrameInTas;
+            return false;
+        }
+        return true;
+    }
+
+
+    #region RCG Override
     private static float rcgTimeScale = Time.timeScale;
     private static float? overwrittenTimeScale = null;
 
@@ -51,4 +63,5 @@ public static class TimeHelper {
 
         return false;
     }*/
+    #endregion
 }

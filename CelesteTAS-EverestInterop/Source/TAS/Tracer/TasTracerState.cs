@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using System.Diagnostics;
+using System.Reflection;
 using TAS.Tracer;
 using UnityEngine;
 
@@ -9,11 +11,11 @@ namespace TAS;
 
 [HarmonyPatch]
 public static class TasTracerState {
-    public static void AddFrameHistory(params object[] args) {
+    public static void AddFrameHistory(params object?[] args) {
         frameHistory.Add(args);
     }
 
-    public static void AddFrameHistoryPaused(params object[] args) {
+    public static void AddFrameHistoryPaused(params object?[] args) {
         FrameHistoryPaused.Add(args);
     }
 
@@ -25,6 +27,9 @@ public static class TasTracerState {
         }),
         ("playerPos", () => Player.i?.transform.position),
         ("animVel", () => Player.i?.AnimationVelocity),
+        ("TimeScaleRCG", () => RCGTime.timeScale),
+        ("TimeScaleRCGGlob", () => RCGTime.GlobalSimulationSpeed),
+        ("TimeScale", () => Time.timeScale),
     ];
 
     public static void TraceVarsThroughFrame(string phase) {
@@ -40,18 +45,34 @@ public static class TasTracerState {
     private static List<object?[]> frameHistory = [];
     internal static List<object?[]> FrameHistoryPaused = [];
 
-    // [HarmonyPrefix]
-    // private static void FrameHistory(MethodBase __originalMethod, object[] __args)
-    // => AddFrameHistory([$"{__originalMethod.DeclaringType?.Name}.{__originalMethod.Name}", ..__args, new StackTrace()]);
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Actor), nameof(Actor.PlayAnimation), [typeof(int), typeof(bool), typeof(float)])]
+    [HarmonyPatch(typeof(Actor), nameof(Actor.PlayAnimation), [typeof(string), typeof(bool), typeof(float)])]
+    [HarmonyPatch(typeof(RCGTime), nameof(RCGTime.GlobalSimulationSpeed), MethodType.Setter)]
+    [HarmonyPatch(typeof(RCGTime), nameof(RCGTime.SetTimeScaleUnsafe))]
+    [HarmonyPatch(typeof(StealthEngaging), "PreAttackCheck")]
+    [HarmonyPatch(typeof(StealthPreAttackState), "EnterSchemeCheck")]
+    // [HarmonyPatch(typeof(TimePauseManager), nameof(TimePauseManager.TimePause))]
+    [HarmonyPatch(typeof(TimePauseManager), nameof(TimePauseManager.SetSimulationSpeed))]
+    private static void FrameHistory(Actor __instance, MethodBase __originalMethod, object[] __args)
+    => AddFrameHistory([$"{__instance} {__originalMethod.DeclaringType?.Name}.{__originalMethod.Name}", ..__args, new StackTrace()]);
+    
+    /*[HarmonyPrefix]
+    [HarmonyPatch(typeof(Actor), nameof(Actor.PlayAnimation), [typeof(int), typeof(bool), typeof(float)])]
+    [HarmonyPatch(typeof(Actor), nameof(Actor.PlayAnimation), [typeof(string), typeof(bool), typeof(float)])]
+    private static void FrameHistory(MethodBase __originalMethod, object[] __args)
+    => AddFrameHistory([$"{__originalMethod.DeclaringType?.Name}.{__originalMethod.Name}", ..__args, new StackTrace()]);*/
+    /*[HarmonyPatch(typeof(Actor), "LogTestState")]
+    [HarmonyPrefix]
+    private static void PlayerUpdate() {
+        frameHistory.Add(["Player.Update", Time.deltaTime]);
+    }*/
+    
 
     [HarmonyPatch(typeof(Player), "Update")]
     [HarmonyPrefix]
     private static void PlayerUpdate() {
         frameHistory.Add(["Player.Update", Time.deltaTime]);
-        
-        // TODO move
-        var closest = MonsterManager.Instance.ClosetMonster;
-        frameHistory.Add(["ClosestMonster", closest?.transform?.position]);
     }
     
     [HarmonyPatch(typeof(MonsterState), nameof(MonsterState.AnimationEvent))]
@@ -65,6 +86,18 @@ public static class TasTracerState {
     [HarmonyPrefix]
     private static void HistoryAnimationDone(PlayerAnimationEventTag tag) =>
         frameHistory.Add(["PlayerAnimationDone", tag.ToString(), Player.i.AnimationVelocity]);
+
+    [EnableRun]
+    private static void EnableRun() {
+        TasTracer.TraceEvent("EnableRun");
+        TasTracerState.AddFrameHistory($"timescale {TimeHelper.OverwriteTimeScale}", Time.timeScale);
+        Time.timeScale = 1;
+        TasTracerState.AddFrameHistory("timescale", Time.timeScale);
+    }
+    [DisableRun]
+    private static void DisableRun() {
+        TasTracer.TraceEvent("DisableRun");
+    }
 
     [BeforeTasFrame]
     private static void BeforeTasFrame() {
@@ -89,6 +122,7 @@ public static class TasTracerState {
         data.Add("AnimationTime", player?.animator.GetCurrentAnimatorStateInfo(0).normalizedTime);
         // data.Add("PlayerState", playerState);
         data.Add("Info", GameInfo.StudioInfo);
+        data.Add("MonsterInfo", DebugInfo.GetMonsterInfotext());
 
         data.Add("FrameHistory", new List<object?[]>(frameHistory));
     }

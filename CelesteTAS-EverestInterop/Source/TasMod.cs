@@ -8,6 +8,7 @@ using Cysharp.Threading.Tasks;
 using HarmonyLib;
 using JetBrains.Annotations;
 using NineSolsAPI;
+using NineSolsAPI.Utils;
 using TAS.Communication;
 using TAS.Module;
 using TAS.Tracer;
@@ -98,6 +99,13 @@ public class TasMod : BaseUnityPlugin {
     
     private void EarlyUpdate() {
         Log.TasTrace("-- FRAME BEGIN --");
+
+        if (GameCore.IsAvailable()) {
+            if (GameCore.Instance.currentCutScene is SimpleCutsceneManager cutscene) {
+                cutscene.TrySkip();
+            }
+        }
+        
         
         TasTracerState.TraceVarsThroughFrame("EarlyUpdate");
     }
@@ -112,6 +120,10 @@ public class TasMod : BaseUnityPlugin {
         
         TasTracerState.TraceVarsThroughFrame("Update");
 
+        if (Player.i) {
+            Player.i.health.GainFull();
+        }
+
         if (Manager.CurrState == Manager.State.Paused) {
             Manager.UpdateMeta();
             if (Manager.CurrState == Manager.State.Paused && Manager.NextState != Manager.State.Paused) {
@@ -122,6 +134,24 @@ public class TasMod : BaseUnityPlugin {
 
     private void LateUpdate() {
         TasTracerState.TraceVarsThroughFrame("LateUpdate");
+
+        TasTracerState.AddFrameHistory("count", Time.frameCount);
+        
+        // TODO normalize isengaging
+        var closest = MonsterManager.Instance.ClosetMonster;
+        if (closest) {
+            var state = (StealthPreAttackState)closest.fsm.FindMappingState(MonsterBase.States.PreAttack);
+            TasTracerState.AddFrameHistory(
+                "ClosestMonster",
+                closest.canSeePlayerCondition.FalseTimer,
+                closest.pathFindAgent.IsSameAreaWithTarget,
+                // closest.pathFindAgent.target,
+                ObjectUtils.ObjectPath(closest.pathFindAgent.target?.currentArea?.gameObject),
+                ObjectUtils.ObjectPath(closest.pathFindAgent.currentArea?.gameObject),
+                state.ApproachingSchemes.Count,
+                 state.SchemesIndex, closest.transform.position, closest.fsm.State, ReflectionExtensions.GetFieldValue<bool>(closest, "__isEngaging"), closest.GetDistanceToPlayer()
+                );
+        }
     }
 
     private void PostLateUpdate() {
@@ -169,7 +199,7 @@ public class TasMod : BaseUnityPlugin {
                 Manager.Update();
             }
             Log.TasTrace($"State: {Manager.CurrState} -> {Manager.NextState}");
-            TasTracerState.AddFrameHistory("StateAfter", new TracerIrrelevantState($"{Manager.CurrState} -> {Manager.NextState}"));
+            // TasTracerState.AddFrameHistory("StateAfter", new TracerIrrelevantState($"{Manager.CurrState} -> {Manager.NextState}"));
             
             // TasTracerState.AddFrameHistory("ADM End", $"{Player.i?.AnimationDeltaMove}");
 
@@ -184,7 +214,7 @@ public class TasMod : BaseUnityPlugin {
     private void OnDestroy() {
         AttributeUtils.Invoke<UnloadAttribute>();
         if (Manager.Running) Manager.DisableRun();
-        harmony.UnpatchSelf();
+        harmony?.UnpatchSelf();
 
         CommunicationWrapper.SendReset();
         CommunicationWrapper.Stop();

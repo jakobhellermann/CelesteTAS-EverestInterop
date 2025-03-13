@@ -68,6 +68,10 @@ public static class InputHelper {
         // typeof(InputManager).SetFieldValue("currentTime", 0f);
 
         framerateState = FramerateState.Save();
+        
+        Time.timeScale = 1;
+        RCGTime.GlobalSimulationSpeed = 1;
+        
         Time.captureFramerate = DefaultTasFramerate;
         Application.targetFrameRate = DefaultTasFramerate;
         QualitySettings.vSyncCount = 0;
