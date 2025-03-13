@@ -9,6 +9,7 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using NineSolsAPI;
 using TAS.Communication;
+using TAS.ModInterop;
 using TAS.Module;
 using TAS.Tracer;
 using TAS.Utils;
@@ -29,6 +30,8 @@ public class TasMod : BaseUnityPlugin {
 
     // private ConfigEntry<bool> configOpenStudioOnLaunch = null!;
     // private ConfigEntry<KeyboardShortcut> configOpenStudioShortcut = null!;
+
+    public DebugModPlusInteropGlue? DebugModPlusInterop;
 
     /*private static void LaunchStudio() {
         var path = Assembly.GetAssembly(typeof(TasMod)).Location;
@@ -96,6 +99,8 @@ public class TasMod : BaseUnityPlugin {
     }
 
     private void Start() {
+        DebugModPlusInterop = DebugModPlusInteropGlue.Load();
+        
         PlayerLoopHelper.AddAction(PlayerLoopTiming.EarlyUpdate, new PlayerLoopItem(this, EarlyUpdate));
         PlayerLoopHelper.AddAction(PlayerLoopTiming.PostLateUpdate, new PlayerLoopItem(this, PostLateUpdate));
 
