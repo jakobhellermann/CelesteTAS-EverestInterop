@@ -1,15 +1,22 @@
+using DG.Tweening;
+using NineSolsAPI;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using TAS.Input;
+using TAS.Input.Commands;
 using TAS.ModInterop;
+using TAS.Tracer;
 using TAS.UnityInterop;
 using TAS.Utils;
+using UnityEngine;
 
 namespace TAS;
 
 /// Handles saving / loading game state with DebugMosPlus
 public static class Savestates {
+    private const string SavestateSlot = "tas-main";
+
     private static bool savedByBreakpoint;
     private static int savedChecksum;
     private static InputController? savedController;
@@ -44,7 +51,7 @@ public static class Savestates {
 
     /// Update for each TAS frame
     public static void Update() {
-        if (!SpeedrunToolInterop.Installed) {
+        if (DebugModPlusInterop == null) {
             return;
         }
 
@@ -70,7 +77,7 @@ public static class Savestates {
 
     /// Update for checking hotkeys
     internal static void UpdateMeta() {
-        if (!SpeedrunToolInterop.Installed) {
+        if (DebugModPlusInterop == null) {
             return;
         }
 
@@ -97,20 +104,64 @@ public static class Savestates {
         }
     }
 
+    private static void CheckGoodSavestate() {
+        List<Tween> tweens = [];
+        DOTween.PlayingTweens(tweens);
+        var tweenCount = tweens.Where(DebugInfo.IsGameplayRelevantTween).Count();
+        if (tweenCount > 0) {
+            ToastManager.Toast($"Warning: Savestate has {tweenCount} running tweens, which are not restored.\n" +
+                               "Enable Debug > DebugInfo > Tweens to find a better frame.");
+        }
+    }
+
     public static void SaveState(bool byBreakpoint) {
         if (IsSaved &&
-            Manager.Controller.CurrentFrameInTas == savedController!.CurrentFrameInTas &&
+            Manager.Controller.CurrentFrameInTas == savedController.CurrentFrameInTas &&
             savedChecksum == Manager.Controller.CalcChecksum(savedController.CurrentFrameInTas)) {
             return; // Already saved
         }
 
-        // TODO save state
+        CheckGoodSavestate();
+        DebugModPlusInterop!.CreateSavestateDisk(SavestateSlot,
+            null,
+            SavestateFilter.Player | SavestateFilter.Monsters | SavestateFilter.FSMs);
+        TasTracer.Clear();
+
+        TasTracer.TraceEvent("SavestateCreated");
+        DebugInfo.Reset();
 
         savedByBreakpoint = byBreakpoint;
         savedChecksum = Manager.Controller.CalcChecksum(Manager.Controller.CurrentFrameInTas);
         savedController = Manager.Controller.Clone();
         SaveGameInfo();
         SetTasState();
+    }
+
+    private static void LoadStateActually() {
+        if (UIManager.Instance.PausePanelUI.state != UIPanelState.Hide) {
+            // InputHelper.WithPrevent(() => UIManager.Instance.PausePanelUI.HideImmediately());
+            UIManager.Instance.PausePanelUI.HideUIEasy();
+            AbortTas("Aborting due to open menu");
+            return;
+        }
+
+        DebugModPlusInterop!.LoadSavestateDisk(SavestateSlot);
+
+        InputHelper.ClearInputState();
+        TasTracer.TraceEvent("SavestateLoaded");
+
+        LoadCommand.ClearFoo();
+        LoadCommand.StopTimers();
+        
+        // HACKS
+        Player.i.inputCommandQueue.RemoveAllBuffer(Player.i.actions.Parry);
+        Time.timeScale = 1;
+
+        // TODO: do this in DebugModPlus?
+        Player.i.transform.position = Player.i._rigidbody2D.position;
+        foreach (var monster in MonsterManager.Instance.monsterDict.Values) {
+            monster.transform.position = monster._rigidbody2D.position;
+        }
     }
 
     public static void LoadState() {
@@ -128,11 +179,10 @@ public static class Savestates {
                     return;
                 }
 
+
                 if ( /*Engine.Scene is Level*/ true) {
-                    // TODO
-
+                    LoadStateActually();
                     Manager.Controller.CopyProgressFrom(savedController);
-
                     LoadGameInfo();
                     UpdateStudio();
                     SetTasState();
