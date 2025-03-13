@@ -197,6 +197,11 @@ internal static class TasTracer {
 
     #endregion
 
+    internal static void Clear() {
+        trace.Trace.Clear();
+    }
+
+
     [EnableRun]
     private static void BeginTrace() {
         LastSavedTracePath = null;
