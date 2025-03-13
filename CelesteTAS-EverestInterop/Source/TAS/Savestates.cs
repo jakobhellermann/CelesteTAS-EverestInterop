@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TAS.Input;
 using TAS.ModInterop;
+using TAS.Tracer;
 using TAS.UnityInterop;
 using TAS.Utils;
 
@@ -9,7 +10,7 @@ namespace TAS;
 
 /// Handles saving / loading game state with DebugMosPlus
 public static class Savestates {
-    private const string SavestateSlot = "main";
+    private const string SavestateSlot = "tas-main";
 
     private static bool savedByBreakpoint;
     private static int savedChecksum;
@@ -45,7 +46,7 @@ public static class Savestates {
 
     /// Update for each TAS frame
     public static void Update() {
-        if (!SpeedrunToolInterop.Installed) {
+        if (DebugModPlusInterop == null) {
             return;
         }
 
@@ -71,7 +72,7 @@ public static class Savestates {
 
     /// Update for checking hotkeys
     internal static void UpdateMeta() {
-        if (!SpeedrunToolInterop.Installed) {
+        if (DebugModPlusInterop == null) {
             return;
         }
 
@@ -105,7 +106,9 @@ public static class Savestates {
             return; // Already saved
         }
 
-        // TODO save state
+        DebugModPlusInterop!.CreateSavestateDisk(SavestateSlot, null, SavestateFilter.Player|SavestateFilter.Monsters);
+        TasTracer.Clear();
+        TasTracer.TraceEvent("SavestateCreated");
 
         savedByBreakpoint = byBreakpoint;
         savedChecksum = Manager.Controller.CalcChecksum(Manager.Controller.CurrentFrameInTas);
@@ -129,9 +132,10 @@ public static class Savestates {
                     return;
                 }
 
-                if ( /*Engine.Scene is Level*/ true) {
-                    // TODO
 
+                if ( /*Engine.Scene is Level*/ true) {
+                    DebugModPlusInterop!.LoadSavestateDisk(SavestateSlot, null);
+                    TasTracerState.AddFrameHistory("SavestateLoaded");
                     Manager.Controller.CopyProgressFrom(savedController);
 
                     LoadGameInfo();
