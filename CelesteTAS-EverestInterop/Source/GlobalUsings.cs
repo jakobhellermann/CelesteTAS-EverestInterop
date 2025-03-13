@@ -1,5 +1,6 @@
 global using static TAS.GlobalVariables;
 using BepInEx.Logging;
+using TAS.ModInterop;
 using TAS.Module;
 using TAS.Playback;
 
@@ -7,6 +8,7 @@ namespace TAS;
 
 public static class GlobalVariables {
     public static CelesteTasSettings TasSettings => TasMod.Instance.TasSettings;
+    public static DebugModPlusInteropGlue? DebugModPlusInterop => TasMod.Instance.DebugModPlusInterop;
 
     public static void AbortTas(string message, bool log = false, float duration = PopupToast.DefaultDuration) {
 #if DEBUG
