@@ -195,9 +195,14 @@ public class TasMod : BaseUnityPlugin {
             
             AttributeUtils.Invoke<BeforeTasFrame>();
                 
-            if (Manager.CurrState != Manager.State.Paused) {
+            if (Manager.CurrState != Manager.State.Paused) { // pause updatemeta is called in Update
                 Manager.UpdateMeta();
             }
+            
+            if (!Manager.Running && Manager.NextState == Manager.State.Running) {
+                Manager.EnableRun();
+            }
+            
             if (Manager.Running) {
                 Manager.Update();
             }

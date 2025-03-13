@@ -177,10 +177,6 @@ public static class Manager {
         if (CurrState != State.Paused && NextState == State.Paused) {
             EnablePause();
         }
-        
-        if (!Running && NextState == State.Running) {
-            EnableRun();
-        }
         if (Running && NextState == State.Disabled) {
             DisableRun();
         }
@@ -268,14 +264,14 @@ public static class Manager {
             if (Running) {
                 DisableRun();
             } else {
-                EnableRun();
+                EnableRunLater();
             }
             return;
         }
 
         if (Hotkeys.Restart.Pressed) {
             DisableRun();
-            EnableRun();
+            EnableRunLater();
             return;
         }
 
