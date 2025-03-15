@@ -1,5 +1,7 @@
+using HarmonyLib;
 using NineSolsAPI;
 using NineSolsAPI.Utils;
+using RCGMaker.Core;
 using System.Collections.Generic;
 using StudioCommunication;
 using TAS.ModInterop;
@@ -7,6 +9,7 @@ using UnityEngine;
 
 namespace TAS.Input.Commands;
 
+[HarmonyPatch]
 public static class LoadCommand {
     private class LoadMeta : ITasCommandMeta {
         public string Insert =>
@@ -26,7 +29,28 @@ public static class LoadCommand {
         }
     }
 
+    private static DebugModPlusInterop? interop;
     private static Dictionary<string, Savestate> loadCommandSavestates = new();
+
+    private static string? justFinishedLoad = null;
+
+    [HarmonyPatch(typeof(ResetManager), nameof(ResetManager.GameLevelStart))]
+    [HarmonyPostfix]
+    public static void GameLevelStart() {
+        ToastManager.Toast("gamelevelstart");
+        if (justFinishedLoad is not {} key) return;
+        justFinishedLoad = null;
+
+        if (GameCore.Instance.currentCutScene is SimpleCutsceneManager cutScene) {
+            // cutScene.TrySkip();
+            ToastManager.Toast($"cutscene {cutScene.CanSkip}");
+        }
+
+        var savestate = interop!.CreateSavestateDisk("lastload", "TAS", SavestateFilter.All & ~SavestateFilter.Flags);
+        loadCommandSavestates.Add(key, savestate);
+        
+        Manager.EnableRun();
+    }
 
     [TasCommand("load", MetaDataProvider = typeof(LoadMeta))]
     private static void Load(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
@@ -54,7 +78,7 @@ public static class LoadCommand {
             return;
         }
 
-        var interop = DebugModPlusInterop.Load();
+        interop ??= DebugModPlusInterop.Load();
         if (interop == null) {
             AbortTas("DebugModPlus is not installed");
             return;
@@ -63,25 +87,25 @@ public static class LoadCommand {
         var key = $"{scene}-{x}-{y}";
 
         if (loadCommandSavestates.TryGetValue(key, out var loadSavestate)) {
-            var result = interop.LoadSavestate(loadSavestate);
-            if (!result) {
-                AbortTas("Did not load savestate in a single frame, aborting.");
-                return;
-            }
+            // var didLoadImmediately = interop.LoadSavestate(loadSavestate);
+            // if (!didLoadImmediately) {
+                // AbortTas("Did not load savestate in a single frame, aborting.");
+                // return;
+            // }
+
+            return;
         }
 
+        // AbortTas("Loading scene, please restart TAS when finished");
+        UIManager.Instance.PausePanelUI.HideUIEasy();
         GameCore.Instance.ChangeSceneCompat(new SceneConnectionPoint.ChangeSceneData {
                 sceneName = scene,
                 playerSpawnPosition = () => new Vector3(x, y, 0),
                 changeSceneMode = SceneConnectionPoint.ChangeSceneMode.Teleport,
                 findMode = SceneConnectionPoint.FindConnectionMode.ID,
-                ChangedDoneEvent = () => {
-                    var savestate = interop.CreateSavestate(SavestateFilter.All  & ~SavestateFilter.Flags);
-                    loadCommandSavestates.Add(key, savestate);
-                },
+                ChangedDoneEvent = () => justFinishedLoad = key,
             },
-            false);
-        AbortTas("Loading scene, please restart TAS when finished");
+            true);
 
 
         /*var gameCore = GameCore.Instance;
@@ -98,7 +122,6 @@ public static class LoadCommand {
             return;
         }
 
-        UIManager.Instance.PausePanelUI.HideUIEasy();
         gameCore.ResetLevel();
 
         Normalize(new Vector2(x, y));*/

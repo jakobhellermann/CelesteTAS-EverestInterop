@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using UnityEngine.Animations;
+using UnityEngine.Playables;
 
 // ReSharper disable CompareOfFloatsByEqualityOperator
 
@@ -23,6 +25,7 @@ public static class DebugInfo {
         Base = 0,
         RapidlyChanging = 1 << 0,
         Tweens = 1 << 1,
+        Monsters = 1 << 2,
     }
 
     public static string GetInfoText(DebugFilter filter = DebugFilter.Base) {
@@ -146,7 +149,31 @@ public static class DebugInfo {
             text += "\n";
         }
 
-        if (core.currentCutScene) text += $"{core.currentCutScene}";
+        if (core.currentCutScene) {
+            text += $"{core.currentCutScene}";
+            if (core.currentCutScene is SimpleCutsceneManager cutscene) {
+                var currentTime = cutscene.GetFieldValue<float>("currentTime");
+                var duration = cutscene.playableDirector.duration;
+                text += $" {currentTime:0.00}/{duration:0.00}";
+                text += $"{cutscene.BindingTeleportPoint}";
+                /*var graph = cutscene.playableDirector.;
+                text += $"{graph}\n";
+                for (int i = 0; i < graph.GetOutputCount(); i++) {
+                    var output = graph.GetOutput(i);
+                    text += $"{output} {output.GetPlayableOutputType()} {output.GetWeight()}\n";
+                }
+
+                /*var asset = cutscene.playableDirector.playableAsset;
+                text += $"{asset.duration}\n";
+                foreach (var output in asset.outputs) {
+                    text += $"- {output.streamName} {output.sourceObject} {output.outputTargetType} {output.m_CreateOutputMethod} {output.m_SourceBindingType}\n";
+                }*/
+            }
+
+            text += "\n";
+        }
+
+        if(filter.HasFlag(DebugFilter.Monsters)) text += "\n" + GetMonsterInfotext();
 
         return text;
     }
@@ -173,7 +200,7 @@ public static class DebugInfo {
     public static string GetMonsterInfotext() {
         var text = "";
         foreach (var monster in MonsterManager.Instance.monsterDict.Values) {
-            if (!monster.isActiveAndEnabled) continue;
+            if (!monster.isActiveAndEnabled) text += "(disabled) ";
 
             text += GetMonsterInfotext(monster) + "\n";
         }

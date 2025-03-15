@@ -10,7 +10,7 @@ public class GameInfo {
 
     public static void Update() {
         try {
-            StudioInfo = GetInfoText(DebugFilter.Tweens | DebugFilter.RapidlyChanging);
+            StudioInfo = GetInfoText(DebugFilter.Tweens | DebugFilter.RapidlyChanging|DebugFilter.Monsters);
             ChapterTime = $"{Manager.Controller.CurrentFrameInTas}";
         } catch (Exception e) {
             Log.Error($"Failed to get game info text: {e}");

@@ -41,8 +41,8 @@ public class DebugModPlusInterop(Type interop) {
     }
     
 
-    public void CreateSavestateDisk(string name, string? layer, SavestateFilter savestateFilter) {
-        interop.InvokeMethod<object>("CreateSavestateDisk", [name, layer, (int)savestateFilter]);
+    public Savestate CreateSavestateDisk(string name, string? layer, SavestateFilter savestateFilter) {
+        return new Savestate(interop.InvokeMethod<object>("CreateSavestateDisk", [name, layer, (int)savestateFilter])!);
     }
     public void LoadSavestateDisk(string name, string? layer = null) {
         interop.InvokeMethod<object>("LoadSavestateDisk", [name, layer]);

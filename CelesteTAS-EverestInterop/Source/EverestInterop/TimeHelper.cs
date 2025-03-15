@@ -12,8 +12,9 @@ public static class TimeHelper {
     [HarmonyPrefix]
     private static bool TimeScaleGet(ref int __result) {
         if (Manager.Running) {
-            __result = Manager.Controller.CurrentFrameInTas;
-            return false;
+            // __result = Manager.Controller.CurrentFrameInTas;
+            // return false;
+            return true;
         }
         return true;
     }

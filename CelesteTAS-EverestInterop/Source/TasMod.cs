@@ -1,4 +1,5 @@
-﻿using System;
+﻿using _3_Script.UI.SaveUI;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -10,6 +11,7 @@ using JetBrains.Annotations;
 using NineSolsAPI;
 using NineSolsAPI.Utils;
 using TAS.Communication;
+using TAS.Input.Commands;
 using TAS.Module;
 using TAS.Tracer;
 using TAS.Utils;
@@ -84,6 +86,7 @@ public class TasMod : BaseUnityPlugin {
 
     private void Start() {
         PlayerLoopHelper.AddAction(PlayerLoopTiming.EarlyUpdate, new PlayerLoopItem(this, EarlyUpdate));
+        // PlayerLoopHelper.AddAction(PlayerLoopTiming.PreUpdate, new PlayerLoopItem(this, PreUpdate));
         PlayerLoopHelper.AddAction(PlayerLoopTiming.PostLateUpdate, new PlayerLoopItem(this, PostLateUpdate));
     }
 
@@ -102,10 +105,14 @@ public class TasMod : BaseUnityPlugin {
 
         if (GameCore.IsAvailable()) {
             if (GameCore.Instance.currentCutScene is SimpleCutsceneManager cutscene) {
-                cutscene.TrySkip();
+                // cutscene.TrySkip();
             }
         }
-        
+
+        try {
+        } catch (Exception e) {
+            ToastManager.Toast(e);
+        }
         
         TasTracerState.TraceVarsThroughFrame("EarlyUpdate");
     }
@@ -136,21 +143,26 @@ public class TasMod : BaseUnityPlugin {
         TasTracerState.TraceVarsThroughFrame("LateUpdate");
 
         TasTracerState.AddFrameHistory("count", Time.frameCount);
-        
-        // TODO normalize isengaging
-        var closest = MonsterManager.Instance.ClosetMonster;
-        if (closest) {
-            var state = (StealthPreAttackState)closest.fsm.FindMappingState(MonsterBase.States.PreAttack);
-            TasTracerState.AddFrameHistory(
-                "ClosestMonster",
-                closest.canSeePlayerCondition.FalseTimer,
-                closest.pathFindAgent.IsSameAreaWithTarget,
-                // closest.pathFindAgent.target,
-                ObjectUtils.ObjectPath(closest.pathFindAgent.target?.currentArea?.gameObject),
-                ObjectUtils.ObjectPath(closest.pathFindAgent.currentArea?.gameObject),
-                state.ApproachingSchemes.Count,
-                 state.SchemesIndex, closest.transform.position, closest.fsm.State, ReflectionExtensions.GetFieldValue<bool>(closest, "__isEngaging"), closest.GetDistanceToPlayer()
+        if (Manager.Running) {
+            // TODO normalize isengaging
+            var closest = MonsterManager.Instance.ClosetMonster;
+            if (closest) {
+                var state = (StealthPreAttackState)closest.fsm.FindMappingState(MonsterBase.States.PreAttack);
+                TasTracerState.AddFrameHistory(
+                    "ClosestMonster",
+                    closest.canSeePlayerCondition.FalseTimer,
+                    closest.pathFindAgent.IsSameAreaWithTarget,
+                    // closest.pathFindAgent.target,
+                    ObjectUtils.ObjectPath(closest.pathFindAgent.target?.currentArea?.gameObject),
+                    ObjectUtils.ObjectPath(closest.pathFindAgent.currentArea?.gameObject),
+                    state.ApproachingSchemes.Count,
+                    state.SchemesIndex,
+                    closest.transform.position,
+                    closest.fsm.State,
+                    ReflectionExtensions.GetFieldValue<bool>(closest, "__isEngaging"),
+                    closest.GetDistanceToPlayer()
                 );
+            }
         }
     }
 
