@@ -2,6 +2,7 @@ using NineSolsAPI;
 using NineSolsAPI.Utils;
 using System.Collections.Generic;
 using StudioCommunication;
+using TAS.ModInterop;
 using UnityEngine;
 
 namespace TAS.Input.Commands;
@@ -24,6 +25,8 @@ public static class LoadCommand {
             }
         }
     }
+
+    private static Dictionary<string, Savestate> loadCommandSavestates = new();
 
     [TasCommand("load", MetaDataProvider = typeof(LoadMeta))]
     private static void Load(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
@@ -51,7 +54,37 @@ public static class LoadCommand {
             return;
         }
 
-        var gameCore = GameCore.Instance;
+        var interop = DebugModPlusInterop.Load();
+        if (interop == null) {
+            AbortTas("DebugModPlus is not installed");
+            return;
+        }
+
+        var key = $"{scene}-{x}-{y}";
+
+        if (loadCommandSavestates.TryGetValue(key, out var loadSavestate)) {
+            var result = interop.LoadSavestate(loadSavestate);
+            if (!result) {
+                AbortTas("Did not load savestate in a single frame, aborting.");
+                return;
+            }
+        }
+
+        GameCore.Instance.ChangeSceneCompat(new SceneConnectionPoint.ChangeSceneData {
+                sceneName = scene,
+                playerSpawnPosition = () => new Vector3(x, y, 0),
+                changeSceneMode = SceneConnectionPoint.ChangeSceneMode.Teleport,
+                findMode = SceneConnectionPoint.FindConnectionMode.ID,
+                ChangedDoneEvent = () => {
+                    var savestate = interop.CreateSavestate(SavestateFilter.All  & ~SavestateFilter.Flags);
+                    loadCommandSavestates.Add(key, savestate);
+                },
+            },
+            false);
+        AbortTas("Loading scene, please restart TAS when finished");
+
+
+        /*var gameCore = GameCore.Instance;
 
         if (gameCore.gameLevel?.SceneName != scene) {
             gameCore.ChangeSceneCompat(new SceneConnectionPoint.ChangeSceneData {
@@ -64,11 +97,11 @@ public static class LoadCommand {
             AbortTas("Restart TAS when in scene");
             return;
         }
-        
+
         UIManager.Instance.PausePanelUI.HideUIEasy();
         gameCore.ResetLevel();
 
-        Normalize(new Vector2(x, y));
+        Normalize(new Vector2(x, y));*/
     }
 
     public static void Normalize(Vector2 position) {
@@ -89,9 +122,7 @@ public static class LoadCommand {
             ParamsBool = new Dictionary<int, bool>(),
         };
         snapshot.Restore(Player.i.animator);
-        InputHelper.WithPrevent(() => {
-            Player.i.animator.Update(0);
-        });
+        InputHelper.WithPrevent(() => { Player.i.animator.Update(0); });
 
         player.Velocity = Vector2.zero;
         player.AnimationVelocity = Vector3.zero;
@@ -121,7 +152,10 @@ public static class LoadCommand {
             attack.SetFieldValue("count", 0);
             attack.SetFieldValue("inAir", false);
         }
-        UnityEngine.Random.InitState(1337);
+        Random.InitState(1337);
+        
+        TimePauseManager.Instance.gamePlayTimeScaleModifier.Resume();
+        TimePauseManager.Instance.uiTimeScaleModifier.Resume();
 
         // CameraManager.Instance.ResetCamera2DDockerToPlayer();
         // CameraManager.Instance.camera2D.CenterOnTargets();
@@ -129,7 +163,9 @@ public static class LoadCommand {
         // SingletonBehaviour<CameraManager>.Instance.dummyOffset, direction, ref this.currentV, 0.25f);
     }
 
-    static void NormalizeMonster(MonsterBase monsterBase) {
+    private static void NormalizeMonster(MonsterBase monsterBase) {
+        monsterBase.canSeePlayerCondition.ExtendFalseTime();
+        monsterBase.pathFindAgent.Clear();
         foreach (var state in monsterBase.fsm._stateMapping.getAllStates) {
             if (state.stateBehavior is BossGeneralState generalState) {
                 generalState.damageOnTimeList.Clear();
