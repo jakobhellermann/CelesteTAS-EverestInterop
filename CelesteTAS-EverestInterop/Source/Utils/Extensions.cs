@@ -437,8 +437,12 @@ internal static class ReflectionExtensions {
         if (obj.GetType().GetFieldInfo(name, InstanceAnyVisibility) is not { } field) {
             return default;
         }
+        var value = field.GetValue(obj);
+        if (value is not T val) {
+            throw new Exception($"GetFieldValue for {name}: Expected {typeof(T)} but got {value.GetType()}");
+        }
 
-        return (T?) field.GetValue(obj);
+        return val;
     }
 
     /// Gets the value of the static field on the type
@@ -759,40 +763,11 @@ internal static class EnumerableExtensions {
 
         return true;
     }
-
-    // public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int n = 1) {
-    //     var it = source.GetEnumerator();
-    //     bool hasRemainingItems = false;
-    //     var cache = new Queue<T>(n + 1);
-    //
-    //     do {
-    //         if (hasRemainingItems = it.MoveNext()) {
-    //             cache.Enqueue(it.Current);
-    //             if (cache.Count > n)
-    //                 yield return cache.Dequeue();
-    //         }
-    //     } while (hasRemainingItems);
-    // }
 }
 
 internal static class ListExtensions {
     public static T? GetValueOrDefault<T>(this IList<T> list, int index, T? defaultValue = default) {
         return index >= 0 && index < list.Count ? list[index] : defaultValue;
-    }
-}
-
-internal static class DictionaryExtensions {
-    /// Returns the value of the key from the dictionary. Falls back to the default value if it doesn't exist
-    public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue defaultValue) {
-        return dict.TryGetValue(key, out var value) ? value : defaultValue;
-    }
-
-    public static TKey? LastKeyOrDefault<TKey, TValue>(this SortedDictionary<TKey, TValue> dict) where TKey : notnull {
-        return dict.Count > 0 ? dict.Last().Key : default;
-    }
-
-    public static TValue? LastValueOrDefault<TKey, TValue>(this SortedDictionary<TKey, TValue> dict) where TKey : notnull {
-        return dict.Count > 0 ? dict.Last().Value : default;
     }
 }
 
