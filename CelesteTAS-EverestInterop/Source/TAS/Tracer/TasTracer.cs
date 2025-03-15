@@ -131,6 +131,7 @@ internal static class TasTracer {
     [DisableRun]
     private static void EndTrace() {
         if (!Manager.DidComplete) {
+            ToastManager.Toast("TAS Trace not saved");
             trace.Trace.Clear();
             trace.Checksum = 0;
             trace.FilePath = null;

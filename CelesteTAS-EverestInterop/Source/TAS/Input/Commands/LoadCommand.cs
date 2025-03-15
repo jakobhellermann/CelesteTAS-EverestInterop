@@ -61,6 +61,8 @@ public static class LoadCommand {
                     findMode = SceneConnectionPoint.FindConnectionMode.ID,
                 },
                 false);
+            AbortTas("Restart TAS when in scene");
+            return;
         }
         
         UIManager.Instance.PausePanelUI.HideUIEasy();
