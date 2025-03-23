@@ -52,6 +52,10 @@
             <HintPath>$(DllPath)/PrimeTween.Runtime.dll</HintPath>
             <Private>false</Private>
         </Reference>
+        <Reference Include="DOTween">
+            <HintPath>$(DllPath)/DoTween.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
         <Reference Include="Newtonsoft.Json">
             <HintPath>$(DllPath)/Newtonsoft.Json.dll</HintPath>
             <Private>false</Private>

@@ -10,9 +10,12 @@ public class GameInfo {
 
     public static void Update() {
         try {
-            StudioInfo = GetInfoText(DebugFilter.Tweens | DebugFilter.RapidlyChanging | DebugFilter.Monsters);
+            // var filter = DebugFilter.Tweens | DebugFilter.RapidlyChanging|DebugFilter.Monsters|DebugFilter.Camera;
+            var filter = DebugFilter.RapidlyChanging|DebugFilter.Monsters|DebugFilter.Tweens;
+            StudioInfo = GetInfoText(filter);
             ChapterTime = $"{Manager.Controller.CurrentFrameInTas}";
         } catch (Exception e) {
+            StudioInfo = "<error>";
             Log.Error($"Failed to get game info text: {e}");
         }
 

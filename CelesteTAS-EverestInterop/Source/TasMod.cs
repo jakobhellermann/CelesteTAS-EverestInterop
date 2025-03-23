@@ -8,7 +8,9 @@ using Cysharp.Threading.Tasks;
 using HarmonyLib;
 using JetBrains.Annotations;
 using NineSolsAPI;
+using NineSolsAPI.Utils;
 using TAS.Communication;
+using TAS.Input.Commands;
 using TAS.Module;
 using TAS.Tracer;
 using TAS.Utils;
@@ -83,7 +85,11 @@ public class TasMod : BaseUnityPlugin {
 
     private void Start() {
         PlayerLoopHelper.AddAction(PlayerLoopTiming.EarlyUpdate, new PlayerLoopItem(this, EarlyUpdate));
+        // PlayerLoopHelper.AddAction(PlayerLoopTiming.PreUpdate, new PlayerLoopItem(this, PreUpdate));
         PlayerLoopHelper.AddAction(PlayerLoopTiming.PostLateUpdate, new PlayerLoopItem(this, PostLateUpdate));
+        
+        PlayerLoopHelper.AddAction(PlayerLoopTiming.LastUpdate, new PlayerLoopItem(this, AfterUpdate));
+        
     }
 
     private class PlayerLoopItem(TasMod mb, Action action) : IPlayerLoopItem {
@@ -95,9 +101,15 @@ public class TasMod : BaseUnityPlugin {
         }
     }
 
-    
     private void EarlyUpdate() {
         Log.TasTrace("-- FRAME BEGIN --");
+        
+        LoadCommand.EarlyUpdate();
+
+        try {
+        } catch (Exception e) {
+            ToastManager.Toast(e);
+        }
         
         TasTracerState.TraceVarsThroughFrame("EarlyUpdate");
     }
@@ -107,10 +119,17 @@ public class TasMod : BaseUnityPlugin {
         
         // TasTracerState.TraceVarsThroughFrame("FixedUpdate");
     }
-    private void Update() {
+    
+    private static void AfterUpdate() {
         Log.TasTrace($"-- Update dt={Time.deltaTime}-- ");
-        
+
+        CameraManager.Instance.cameraCore.dockObj.localPosition = Vector3.zero;
         TasTracerState.TraceVarsThroughFrame("Update");
+
+        if (Player.i) {
+            // Log.Info("duh");
+            Player.i.health.GainFull();
+        }
 
         if (Manager.CurrState == Manager.State.Paused) {
             Manager.UpdateMeta();
@@ -122,10 +141,39 @@ public class TasMod : BaseUnityPlugin {
 
     private void LateUpdate() {
         TasTracerState.TraceVarsThroughFrame("LateUpdate");
+
+        // TasTracerState.AddFrameHistory("count", Time.frameCount);
+        if (Manager.Running) {
+            // TODO normalize isengaging
+            var closest = MonsterManager.Instance.ClosetMonster;
+            if (closest) {
+                var state = (StealthPreAttackState)closest.fsm.FindMappingState(MonsterBase.States.PreAttack);
+                TasTracerState.AddFrameHistory(
+                    "ClosestMonster",
+                    // closest.pathFindAgent.IsSameAreaWithTarget,
+                    // closest.pathFindAgent.target?.currentArea?.gameObject is {} obj ? ObjectUtils.ObjectPath(obj) : null,
+                    // closest.pathFindAgent.currentArea?.gameObject is {} obj2 ? ObjectUtils.ObjectPath(obj2) : null,
+                    // state.ApproachingSchemes.Count,
+                    // state.SchemesIndex,
+                    // state.IsFollowingSomeone,
+                    // closest.transform.position,
+                    closest.AnimationVelocity,
+                    closest.fsm.State.ToString(),
+                    closest.fsm.isPaused,
+                    closest.finalOffset,
+                    closest.fsm.IsInTransition,
+                    AnimatorSnapshot.Snapshot(closest.animator).StateHash,
+                    AnimatorSnapshot.Snapshot(closest.animator).NormalizedTime
+                    // ReflectionExtensions.GetFieldValue<bool>(closest, "__isEngaging"),
+                    // closest.GetDistanceToPlayer()
+                );
+            }
+        }
     }
 
     private void PostLateUpdate() {
         TasTracerState.TraceVarsThroughFrame("PostLateUpdate");
+        
         
         Log.TasTrace("-- FRAME END --");
         
@@ -169,7 +217,7 @@ public class TasMod : BaseUnityPlugin {
                 Manager.Update();
             }
             Log.TasTrace($"State: {Manager.CurrState} -> {Manager.NextState}");
-            TasTracerState.AddFrameHistory("StateAfter", new TracerIrrelevantState($"{Manager.CurrState} -> {Manager.NextState}"));
+            // TasTracerState.AddFrameHistory("StateAfter", new TracerIrrelevantState($"{Manager.CurrState} -> {Manager.NextState}"));
             
             // TasTracerState.AddFrameHistory("ADM End", $"{Player.i?.AnimationDeltaMove}");
 
@@ -178,6 +226,14 @@ public class TasMod : BaseUnityPlugin {
             e.LogException("");
             Manager.DisableRun();
         }
+        
+
+        if (GameCore.IsAvailable()) {
+            if (GameCore.Instance.currentCutScene is SimpleCutsceneManager cutscene) {
+                cutscene.TrySkip();
+            }
+        }
+        
         
     }
 

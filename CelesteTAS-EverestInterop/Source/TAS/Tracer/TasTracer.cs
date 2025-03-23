@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NineSolsAPI;
 using NineSolsAPI.Utils;
+using Snapshots;
 using TAS.Input;
 using TAS.Utils;
 using UnityEngine;
@@ -89,8 +90,8 @@ internal static class TasTracer {
     private static string TempPath() => IsWine() ? "/tmp" : Path.GetTempPath();
     
     private static string traceDirRoot = Path.Combine(TempPath(), "TAS-Traces");
-    public static TracePauseMode TracePauseMode = TracePauseMode.None;
-    private const bool CheckMismatches = true;
+    public static readonly TracePauseMode TracePauseMode = TracePauseMode.None;
+    private const bool CheckMismatches = false;
 
     [Initialize]
     private static void Initialize() {
@@ -108,6 +109,13 @@ internal static class TasTracer {
     private static TasTrace trace = new();
 
     private static Dictionary<int, List<TasTrace>> traceCache = new();
+    
+    public static void Clear() {
+        trace.Trace.Clear();
+    }
+
+
+    
 
     [EnableRun]
     private static void BeginTrace() {
@@ -131,7 +139,7 @@ internal static class TasTracer {
     [DisableRun]
     private static void EndTrace() {
         if (!Manager.DidComplete) {
-            ToastManager.Toast("TAS Trace not saved");
+            Log.Warn("TAS Trace not saved");
             trace.Trace.Clear();
             trace.Checksum = 0;
             trace.FilePath = null;
@@ -169,6 +177,13 @@ internal static class TasTracer {
         SaveTrace(trace);
     }
 
+    public static void TraceEvent(string evt) {
+        TasTracerState.AddFrameHistory($"event", evt);
+        var data = new TraceData();
+        data.Add("event", evt);
+        trace.Trace.Add(data);
+    }
+
     public static void TraceFrame() {
         Log.TasTrace("Collect trace data");
 
@@ -184,7 +199,7 @@ internal static class TasTracer {
     public static void TraceFramePause() {
         var data = new TraceData();
         if (TasTracerState.FrameHistoryPaused.Count > 0) {
-            data.Add("FrameHistory", new List<object?[]>(new List<object?[]>(TasTracerState.FrameHistoryPaused)));
+            data.Add("FrameHistoryPaused", new List<object?[]>(new List<object?[]>(TasTracerState.FrameHistoryPaused)));
         }
 
         trace.Trace.Add(data);
@@ -192,18 +207,33 @@ internal static class TasTracer {
 
     private static void SaveTrace(TasTrace newTrace) {
         var json = JsonConvert.SerializeObject(newTrace, Formatting.Indented, new JsonSerializerSettings {
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            Error = (_, args) => {
+                // args.ErrorContext.Handled = true;
+                Log.Error(
+                    $"Serialization error while creating snapshot: {args.CurrentObject?.GetType()}: {args.ErrorContext.Path}: {args.ErrorContext.Error.Message}");
+            },
+            // ContractResolver = SnapshotSerializer.CustomResolver,
             ContractResolver = new WritableOnlyResolver(),
-            Converters = new List<JsonConverter> {
+            Converters = [
                 new FuncConverter<Vector2>(vec => $"({vec.x:0.0000}, {vec.y:0.0000})"),
                 new FuncConverter<Vector3>(vec =>
                     $"({vec.x:0.0000}, {vec.y:0.0000}" + (vec.z != 0 ? $",{vec.z:0.0000} " : "") + ")"),
                 new FuncConverter<TraceData>(data => data.Data),
                 new FuncConverter<TracerIrrelevantState>(data => data.Data),
+                new FuncConverter<Collider2D>(ObjectUtils.ObjectComponentPath),
+                new FuncConverter<Func<bool>>(func => {
+                    var method = func.Method;
+                    return $"{method.DeclaringType}.{method.Name}";
+                }),
                 new FuncConverter<StackTrace>(st => {
                     var frames = new List<string>(st.FrameCount - 1);
                     for (var i = 1; i < st.FrameCount; i++) {
                         var frame = st.GetFrame(i);
                         var method = frame.GetMethod();
+                        if (method.DeclaringType?.Namespace is {} ns && (ns.StartsWith("System") || ns.StartsWith("MonoMod"))) {
+                            continue;
+                        }
                         var name = method.Name.TrimStartMatches("DMD<").TrimEndMatches(">").ToString();
                         frames.Add($"{method.DeclaringType}.{name}");
                     }
@@ -211,7 +241,10 @@ internal static class TasTracer {
                     return frames;
                 }),
                 new ToStringConverter<InputFrame>(),
-            },
+                new ToStringConverter<EffectReceiver>(),
+                new ToStringConverter<EffectHitData>(),
+                ..SnapshotSerializer.UnityConverters,
+            ],
         });
 
 

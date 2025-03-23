@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using InControl;
 using NineSolsAPI;
+using RCGMaker.Core;
 using StudioCommunication;
 using System;
 using TAS.Input;
@@ -20,14 +21,28 @@ public static class InputHelper {
     }
     
     [HarmonyPatch(typeof(Actor), nameof(Actor.OnRebindAnimatorMove))]
+    [HarmonyPatch(typeof(Player), nameof(Player.OnRebindAnimatorMove))]
     [HarmonyPatch(typeof(Actor), nameof(Actor.Move))]
-    // [HarmonyPatch(typeof(Actor), nameof(Actor.PlayAnimation))]
     [HarmonyPatch(typeof(Player), "Update")]
+    [HarmonyPatch(typeof(Health), nameof(Health.InvincibleForDuration))]
+    [HarmonyPatch(typeof(SelectableNavigationRemapping), "RemapAfterAFrame")]
+    [HarmonyPatch(typeof(UpdateLoopManager), "Update")]
     [HarmonyPrefix]
     public static bool DontRunWhenPaused() {
         var run = Manager.CurrState != Manager.State.Paused && !Prevent;
 
         return run;
+    }
+    
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(CameraManager), nameof(CameraManager.CameraBackToFollowPlayer))]
+    public static bool CameraInstant(ref float duration, CameraManager __instance) {
+        var run = Manager.CurrState != Manager.State.Paused && !Prevent;
+        if (run) return true;
+
+        __instance.cameraCore.dockObj.transform.localPosition = Vector3.zero;
+        duration = 0;
+        return false;
     }
 
     /*
@@ -35,7 +50,7 @@ public static class InputHelper {
         AccessTools.MethodDelegate<Action>(AccessTools.Method(typeof(InputManager), "UpdateInternal"));
     */
 
-    private const int DefaultTasFramerate = 60;
+    public const int DefaultTasFramerate = 60;
 
     private record FramerateState(int TargetFramerate, int VsyncCount) {
         public static FramerateState Save() => new(Application.targetFrameRate, QualitySettings.vSyncCount);
@@ -68,6 +83,10 @@ public static class InputHelper {
         // typeof(InputManager).SetFieldValue("currentTime", 0f);
 
         framerateState = FramerateState.Save();
+        
+        Time.timeScale = 1;
+        RCGTime.GlobalSimulationSpeed = 1;
+        
         Time.captureFramerate = DefaultTasFramerate;
         Application.targetFrameRate = DefaultTasFramerate;
         QualitySettings.vSyncCount = 0;

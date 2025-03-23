@@ -1,5 +1,9 @@
-﻿using System;
+﻿using NineSolsAPI;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using Unity.Properties;
 
 namespace TAS.ModInterop;
 
@@ -61,10 +65,8 @@ internal static class ModUtils {
 
         return method;
     }*/
-
-    public static Type[] GetTypes() {
-        // return FakeAssembly.GetFakeEntryAssembly().GetTypes();
-        return VanillaAssembly.GetTypes();
+    public static IEnumerable<Type> GetTypes() {
+        return new[] { VanillaAssembly, typeof(UnityEngine.Random).Assembly }.SelectMany(x => x.GetTypes());
     }
 
     /*public static EverestModule? GetModule(string modName) {

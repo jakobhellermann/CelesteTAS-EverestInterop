@@ -30,7 +30,7 @@ public abstract class CommunicationAdapterBase : IDisposable {
     // Interval for sending Ping messages. Must be greater than TimeoutDelay
     private static readonly TimeSpan PingInterval = TimeSpan.FromSeconds(1);
     // Amount of time to wait before disconnecting when not receiving messages.
-    private static readonly TimeSpan TimeoutDelay = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan TimeoutDelay = TimeSpan.FromSeconds(20);
 
     private DateTime lastPing = DateTime.UtcNow;
     private DateTime lastMessage = DateTime.UtcNow;

@@ -1,4 +1,4 @@
-﻿using NineSolsAPI;
+using NineSolsAPI;
 
 namespace TAS;
 
@@ -8,6 +8,8 @@ using UnityEngine;
 public class AnimatorSnapshot {
     public required int StateHash;
     public required float NormalizedTime;
+    public required float Time;
+    public required AnimatorUpdateMode UpdateMode;
     public required Dictionary<int, float> ParamsFloat;
     public required Dictionary<int, int> ParamsInt;
     public required Dictionary<int, bool> ParamsBool;
@@ -42,9 +44,11 @@ public class AnimatorSnapshot {
         return new AnimatorSnapshot {
             StateHash = currentState.fullPathHash,
             NormalizedTime = currentState.normalizedTime,
+            Time = currentState.normalizedTime * currentState.length,
             ParamsFloat = paramsFloat,
             ParamsInt = paramsInt,
             ParamsBool = paramsBool,
+            UpdateMode = animator.updateMode,
         };
     }
 

@@ -2,11 +2,15 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using JetBrains.Annotations;
+using NineSolsAPI;
 using StudioCommunication;
+using System.Collections.Generic;
 using TAS.Communication;
 using TAS.Input;
+using TAS.Tracer;
 using TAS.UnityInterop;
 using TAS.Utils;
+using UnityEngine;
 
 namespace TAS;
 
@@ -46,7 +50,15 @@ public static class Manager {
 
     public static bool Running => CurrState != State.Disabled;
     public static bool FastForwarding => Running && PlaybackSpeed >= 5.0f;
-    public static float PlaybackSpeed { get; private set; } = 1.0f;
+
+    private static float playbackSpeed = 1.0f;
+    public static float PlaybackSpeed {
+        get => playbackSpeed;
+        private set {
+            Application.targetFrameRate = (int)(InputHelper.DefaultTasFramerate * playbackSpeed);
+            playbackSpeed = value;
+        }
+    }
 
     public static State CurrState, NextState;
     public static readonly InputController Controller = new();
@@ -88,7 +100,7 @@ public static class Manager {
         PlaybackSpeed = 1.0f;
 
         Controller.Stop();
-        Controller.RefreshInputs();
+        Controller.RefreshInputs(forceRefresh: true);
 
         if (Controller.Inputs.Count == 0) {
             // Empty file
@@ -96,7 +108,6 @@ public static class Manager {
             return;
         }
 
-        Controller.RefreshInputs(forceRefresh: true);
         AttributeUtils.Invoke<EnableRunAttribute>();
 
         // This needs to happen after EnableRun, otherwise the input state will be reset in BindingHelper.SetTasBindings
@@ -130,17 +141,32 @@ public static class Manager {
     public static void EnablePause() {
         TimeHelper.OverwriteTimeScale = 0;
 
-        prePauseAnimatorState = Player.i != null ? AnimatorSnapshot.Snapshot(Player.i.animator) : null;
+        TasTracerState.AddFrameHistoryPaused("EnablePause");
+
+        try {
+            if (Player.i?.animator) {
+                prePauseAnimatorStates.Add((Player.i.animator, AnimatorSnapshot.Snapshot(Player.i.animator)));
+            }
+
+            if (MonsterManager.Instance.ClosetMonster) {
+                var monsterAnim = MonsterManager.Instance.ClosetMonster.animator;
+                prePauseAnimatorStates.Add((monsterAnim, AnimatorSnapshot.Snapshot(monsterAnim)));
+            }
+        } catch (Exception e) {
+            ToastManager.Toast($"Error tyring to snapshot animator: {e}");
+        }
         
     }
 
-    public static AnimatorSnapshot? prePauseAnimatorState = null;
+    private static List<(Animator, AnimatorSnapshot)> prePauseAnimatorStates = [];
     
     public static void DisablePause() {
-        if (Player.i && prePauseAnimatorState is {} snapshot) {
-            snapshot.Restore(Player.i.animator);
-            prePauseAnimatorState = null;
+        TasTracerState.AddFrameHistoryPaused("DisablePause");
+
+        foreach (var (anim, snapshot) in prePauseAnimatorStates) {
+            snapshot.Restore(anim);
         }
+        prePauseAnimatorStates.Clear();
 
         TimeHelper.OverwriteTimeScale = null;
     }
@@ -167,7 +193,9 @@ public static class Manager {
             NextState = State.Running;
         }
 
+        var before = Controller.CurrentFrameInTas;
         Controller.AdvanceFrame(out bool couldPlayback);
+        TasTracer.TraceEvent($"advanceframe {before}->{Controller.CurrentFrameInTas}");
 
         if (!couldPlayback) {
             DisableRun();
@@ -374,7 +402,7 @@ public static class Manager {
             ChapterTime = GameInfo.ChapterTime,
 
             // ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator && Engine.Scene is Level or Emulator,
-            ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator,
+            ShowSubpixelIndicator = false,
         };
 
         /*if (Engine.Scene is Level level && level.GetPlayer() is { } player) {
