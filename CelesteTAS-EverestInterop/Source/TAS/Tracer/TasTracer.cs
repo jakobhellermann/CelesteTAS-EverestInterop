@@ -10,8 +10,8 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using NineSolsAPI;
 using NineSolsAPI.Utils;
+using Snapshots;
 using TAS.Input;
 using TAS.Utils;
 using UnityEngine;
@@ -251,6 +251,7 @@ internal static class TasTracer {
                     new FuncConverter<EffectReceiver>(x => $"{x == null} {ObjectUtils.ObjectComponentPath(x)}"),
                     new ToStringConverter<EffectHitData>(),
                     new ToStringConverter<MonoBehaviour>(),
+                    ..SnapshotSerializer.UnityConverters,
                 ],
             });
 
@@ -302,8 +303,8 @@ internal static class TasTracer {
     }
 }
 
-file class ToStringConverter<T> : JsonConverter {
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) {
+file class ToStringConverter<T> : NullableJsonConverter<T> {
+    protected override void WriteJson(JsonWriter writer, T? value, JsonSerializer serializer) {
         if (value == null) {
             writer.WriteNull();
             return;
@@ -312,13 +313,9 @@ file class ToStringConverter<T> : JsonConverter {
         writer.WriteValue(value.ToString());
     }
 
-    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue,
-        JsonSerializer serializer) => throw new NotImplementedException();
 
-    public override bool CanConvert(Type objectType) {
-        var underlying = Nullable.GetUnderlyingType(objectType) ?? objectType;
-        return typeof(T).IsAssignableFrom(underlying);
-    }
+    protected override T? ReadJson(JsonReader reader, Type objectType, T? existingValue, bool hasExistingValue,
+        JsonSerializer serializer) => throw new NotImplementedException();
 }
 
 file class FuncConverter<T>(Func<T, object?> func) : JsonConverter {

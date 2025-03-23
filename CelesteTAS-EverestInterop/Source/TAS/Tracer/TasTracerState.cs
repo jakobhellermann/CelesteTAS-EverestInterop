@@ -14,6 +14,7 @@ using System.Reflection;
 using System.Threading;
 using TAS.Tracer;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
 
 // ReSharper disable InconsistentNaming
@@ -115,6 +116,12 @@ public static class TasTracerState {
     internal static List<object?[]> FrameHistoryPaused = [];
 
     #region Patches
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Debug), nameof(Debug.Log), [typeof(object)])]
+    private static void DebugLog(object message) {
+        Log.Info($"DebugLog: {message}");
+    }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(MonoBehaviour), nameof(MonoBehaviour.StartCoroutine), [typeof(string)])]

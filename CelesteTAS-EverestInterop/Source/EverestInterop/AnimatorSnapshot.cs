@@ -7,7 +7,9 @@ using UnityEngine;
 
 public class AnimatorSnapshot {
     public required int StateHash;
+    public string? StateName;
     public required float NormalizedTime;
+    public required float Time;
     public required Dictionary<int, float> ParamsFloat;
     public required Dictionary<int, int> ParamsInt;
     public required Dictionary<int, bool> ParamsBool;
@@ -41,7 +43,9 @@ public class AnimatorSnapshot {
 
         return new AnimatorSnapshot {
             StateHash = currentState.fullPathHash,
+            StateName = animator.ResolveHash(currentState.fullPathHash),
             NormalizedTime = currentState.normalizedTime,
+            Time = currentState.normalizedTime * currentState.length,
             ParamsFloat = paramsFloat,
             ParamsInt = paramsInt,
             ParamsBool = paramsBool,

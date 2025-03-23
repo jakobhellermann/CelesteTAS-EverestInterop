@@ -402,7 +402,7 @@ public static class Manager {
             ChapterTime = GameInfo.ChapterTime,
 
             // ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator && Engine.Scene is Level or Emulator,
-            ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator,
+            ShowSubpixelIndicator = false,
         };
 
         /*if (Engine.Scene is Level level && level.GetPlayer() is { } player) {

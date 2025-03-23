@@ -87,9 +87,13 @@ public class TasMod : BaseUnityPlugin {
 
     private void Start() {
         DebugModPlusInterop = DebugModPlusInteropGlue.Load();
-        
+
         PlayerLoopHelper.AddAction(PlayerLoopTiming.EarlyUpdate, new PlayerLoopItem(this, EarlyUpdate));
+        // PlayerLoopHelper.AddAction(PlayerLoopTiming.PreUpdate, new PlayerLoopItem(this, PreUpdate));
         PlayerLoopHelper.AddAction(PlayerLoopTiming.PostLateUpdate, new PlayerLoopItem(this, PostLateUpdate));
+
+        PlayerLoopHelper.AddAction(PlayerLoopTiming.LastUpdate, new PlayerLoopItem(this, AfterUpdate));
+        PlayerLoopHelper.AddAction(PlayerLoopTiming.PreUpdate, new PlayerLoopItem(this, PreUpdate));
     }
 
     private class PlayerLoopItem(TasMod mb, Action action) : IPlayerLoopItem {
@@ -101,22 +105,38 @@ public class TasMod : BaseUnityPlugin {
         }
     }
 
-    
     private void EarlyUpdate() {
         Log.TasTrace("-- FRAME BEGIN --");
-        
+
         TasTracerState.TraceVarsThroughFrame("EarlyUpdate");
     }
-    
+
     private void FixedUpdate() {
         Log.TasTrace($"-- FixedUpdate dt={Time.fixedDeltaTime}--");
-        
+
         // TasTracerState.TraceVarsThroughFrame("FixedUpdate");
     }
-    private void Update() {
+
+    private static void PreUpdate() {
+        if (Physics2D.simulationMode != SimulationMode2D.Script) return;
+
+        TasTracerState.TraceVarsThroughFrame("PreUpdate");
+        if (Manager.CurrState != Manager.State.Paused) {
+            Physics2D.Simulate(Time.deltaTime);
+        }
+
+        TasTracerState.TraceVarsThroughFrame("PreUpdate-aftersim");
+    }
+
+    private static void AfterUpdate() {
         Log.TasTrace($"-- Update dt={Time.deltaTime}-- ");
-        
+
+        // CameraManager.Instance.cameraCore.dockObj.localPosition = Vector3.zero;
         TasTracerState.TraceVarsThroughFrame("Update");
+
+        if (Player.i) {
+            Player.i.health.GainFull();
+        }
 
         if (Manager.CurrState == Manager.State.Paused) {
             Manager.UpdateMeta();
@@ -135,6 +155,7 @@ public class TasMod : BaseUnityPlugin {
                 var state = (StealthPreAttackState)closest.fsm.FindMappingState(MonsterBase.States.PreAttack);
             }
         }
+
         TasTracerState.TraceVarsThroughFrame("LateUpdate");
 
         // TasTracerState.AddFrameHistory("count", Time.frameCount);
@@ -168,14 +189,14 @@ public class TasMod : BaseUnityPlugin {
 
     private void PostLateUpdate() {
         TasTracerState.TraceVarsThroughFrame("PostLateUpdate");
-        
+
         Log.TasTrace("-- FRAME END --");
 
         try {
             GameInfo.Update();
 
             AttributeUtils.Invoke<AfterTasFrame>();
-            
+
             if (Manager.Running) {
                 try {
                     if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
@@ -190,22 +211,23 @@ public class TasMod : BaseUnityPlugin {
                 } catch (Exception e) {
                     e.LogException("Error trying to collect trace data");
                 }
-
             }
-            
+
             AttributeUtils.Invoke<BeforeTasFrame>();
-                
-            if (Manager.CurrState != Manager.State.Paused) { // pause updatemeta is called in Update
+
+            if (Manager.CurrState != Manager.State.Paused) {
+                // pause updatemeta is called in Update
                 Manager.UpdateMeta();
             }
-            
+
             if (!Manager.Running && Manager.NextState == Manager.State.Running) {
                 Manager.EnableRun();
             }
-            
+
             if (Manager.Running) {
                 Manager.Update();
             }
+
             Log.TasTrace($"State: {Manager.CurrState} -> {Manager.NextState}");
             /*TasTracerState.AddFrameHistory("StateAfter",
                 new TracerIrrelevantState($"{Manager.CurrState} -> {Manager.NextState}"));*/
@@ -213,7 +235,13 @@ public class TasMod : BaseUnityPlugin {
             e.LogException("");
             Manager.DisableRun();
         }
-        
+
+
+        if (GameCore.IsAvailable()) {
+            if (GameCore.Instance.currentCutScene is SimpleCutsceneManager cutscene) {
+                cutscene.TrySkip();
+            }
+        }
     }
 
     private void OnDestroy() {

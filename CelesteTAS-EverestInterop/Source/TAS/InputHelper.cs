@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using HarmonyLib;
 using InControl;
 using NineSolsAPI;
+using RCGMaker.Core;
 using StudioCommunication;
 using System;
+using System.Reflection;
 using TAS.Input;
 using UnityEngine;
 
@@ -18,16 +20,43 @@ public static class InputHelper {
         a();
         Prevent = false;
     }
-    
+
     [HarmonyPatch(typeof(Actor), nameof(Actor.OnRebindAnimatorMove))]
+    [HarmonyPatch(typeof(Player), nameof(Player.OnRebindAnimatorMove))]
     [HarmonyPatch(typeof(Actor), nameof(Actor.Move))]
-    // [HarmonyPatch(typeof(Actor), nameof(Actor.PlayAnimation))]
     [HarmonyPatch(typeof(Player), "Update")]
+    [HarmonyPatch(typeof(Health), nameof(Health.InvincibleForDuration))]
+    [HarmonyPatch(typeof(SelectableNavigationRemapping), "RemapAfterAFrame")]
+    [HarmonyPatch(typeof(UpdateLoopManager), "Update")]
+    [HarmonyPatch(typeof(PushAwayWall), "Update")]
+    [HarmonyPatch(typeof(BackgroundTaskExecutor), "Update")]
+    [HarmonyPatch(typeof(BackgroundTaskExecutor), "Update")]
+    [HarmonyPatch(typeof(AbstractEmitter), "Update")]
     [HarmonyPrefix]
-    public static bool DontRunWhenPaused() {
+    public static bool DontRunWhenPaused(MethodBase __originalMethod) {
         var run = Manager.CurrState != Manager.State.Paused && !Prevent;
 
         return run;
+    }
+
+    [HarmonyPatch(typeof(LoadingLoopIcon), nameof(LoadingLoopIcon.ShowLoadingLoopIcon))]
+    [HarmonyPatch(typeof(LoadingLoopIcon), nameof(LoadingLoopIcon.HideLoadingLoopIcon))]
+    [HarmonyPrefix]
+    public static bool DontRunInTAS(MethodBase __originalMethod) {
+        var run = !Manager.Running;
+        return run;
+    }
+
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(CameraManager), nameof(CameraManager.CameraBackToFollowPlayer))]
+    public static bool CameraInstant(ref float duration, CameraManager __instance) {
+        var run = Manager.CurrState != Manager.State.Paused && !Prevent;
+        if (run) return true;
+
+        __instance.cameraCore.dockObj.transform.localPosition = Vector3.zero;
+        duration = 0;
+        return false;
     }
 
     /*
@@ -77,6 +106,8 @@ public static class InputHelper {
         QualitySettings.vSyncCount = 0;
 
         Time.fixedDeltaTime = 1f / 60f;
+        // Physics.simulationMode = SimulationMode.FixedUpdate;
+
         Physics2D.simulationMode = SimulationMode2D.Script;
     }
 
@@ -112,15 +143,15 @@ public static class InputHelper {
         { Actions.Down, Key.S },
         { Actions.Left, Key.A },
         { Actions.Right, Key.D },
-        
+
         { Actions.Jump, Key.Space },
         { Actions.Dash, Key.LeftShift },
-        
+
         { Actions.Interact, Key.E },
         { Actions.Attack, Key.J },
         { Actions.Shoot, Key.C },
         { Actions.Parry, Key.K },
-        
+
         { Actions.Talisman, Key.F },
         { Actions.Nymph, Key.Q },
         { Actions.Heal, Key.R },
