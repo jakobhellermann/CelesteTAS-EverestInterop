@@ -26,6 +26,9 @@ public class TasMod : BaseUnityPlugin {
     internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
     internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
 
+    private ConfigEntry<bool> configAutoHeal = null!;
+    private ConfigEntry<bool> configAutoSkipCutscenes = null!;
+
     internal ConfigEntry<DebugInfo.DebugFilter> ConfigDebugInfo = null!;
 
     // private ConfigEntry<bool> configOpenStudioOnLaunch = null!;
@@ -59,6 +62,9 @@ public class TasMod : BaseUnityPlugin {
                 "Frame History Filter",
                 TasTracerFilter.Random | TasTracerFilter.Movement
             );
+
+            configAutoHeal = Config.Bind("Debug", "Invincible", false);
+            configAutoSkipCutscenes = Config.Bind("Debug", "Autoskip cutscenes", true);
 
             ConfigDebugInfo = Config.Bind("Debug",
                 "Debug Info",
@@ -104,7 +110,7 @@ public class TasMod : BaseUnityPlugin {
 
     private void Start() {
         DebugModPlusInterop = DebugModPlusInteropGlue.Load();
-        
+
         PlayerLoopHelper.AddAction(PlayerLoopTiming.EarlyUpdate, new PlayerLoopItem(this, EarlyUpdate));
         PlayerLoopHelper.AddAction(PlayerLoopTiming.Update, new PlayerLoopItem(this, FirstUpdate));
         PlayerLoopHelper.AddAction(PlayerLoopTiming.LastUpdate, new PlayerLoopItem(this, LastUpdate));
@@ -144,7 +150,14 @@ public class TasMod : BaseUnityPlugin {
     }
 
     private static void FirstUpdate() => TasTracerState.TraceVarsThroughFrame("FirstUpdate");
-    private static void LastUpdate() => TasTracerState.TraceVarsThroughFrame("LastUpdate");
+
+    private static void LastUpdate() {
+        TasTracerState.TraceVarsThroughFrame("Update");
+
+        if (Instance.configAutoHeal.Value && !Manager.Running) {
+            Player.i?.health?.GainFull();
+        }
+    }
 
     private void LateUpdate() {
         TasTracerState.TraceVarsThroughFrame("LateUpdate");
@@ -182,6 +195,14 @@ public class TasMod : BaseUnityPlugin {
         } catch (Exception e) {
             e.LogException("");
             Manager.DisableRun();
+        }
+
+        if (Instance.configAutoSkipCutscenes.Value) {
+            if (GameCore.IsAvailable()) {
+                if (GameCore.Instance.currentCutScene is SimpleCutsceneManager cutscene) {
+                    cutscene.TrySkip();
+                }
+            }
         }
     }
 
