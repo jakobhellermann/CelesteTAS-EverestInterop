@@ -26,6 +26,9 @@ public class TasMod : BaseUnityPlugin {
     internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
     internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
 
+    private ConfigEntry<bool> configAutoHeal = null!;
+    private ConfigEntry<bool> configAutoSkipCutscenes = null!;
+
     internal ConfigEntry<DebugInfo.DebugFilter> ConfigDebugInfo = null!;
 
 
@@ -60,6 +63,9 @@ public class TasMod : BaseUnityPlugin {
                 "Frame History Filter",
                 TasTracerFilter.Random | TasTracerFilter.Movement
             );
+
+            configAutoHeal = Config.Bind("Debug", "Invincible", false);
+            configAutoSkipCutscenes = Config.Bind("Debug", "Autoskip cutscenes", true);
 
             ConfigDebugInfo = Config.Bind("Debug",
                 "Debug Info",
@@ -188,6 +194,14 @@ public class TasMod : BaseUnityPlugin {
         } catch (Exception e) {
             e.LogException("");
             Manager.DisableRun();
+        }
+
+        if (Instance.configAutoSkipCutscenes.Value) {
+            if (GameCore.IsAvailable()) {
+                if (GameCore.Instance.currentCutScene is SimpleCutsceneManager cutscene) {
+                    cutscene.TrySkip();
+                }
+            }
         }
     }
 
