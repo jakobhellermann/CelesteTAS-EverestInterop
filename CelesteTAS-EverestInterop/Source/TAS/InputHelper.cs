@@ -138,6 +138,13 @@ public static class InputHelper {
 
         Time.fixedDeltaTime = 0.02f;
         Physics2D.simulationMode = SimulationMode2D.Update;
+
+        DialoguePlayer.Instance.TrySkip();
+        if (GameCore.Instance.currentCutScene is SimpleCutsceneManager cutScene) {
+            cutScene.TrySkip();
+        }
+
+        Player.i.playerInput.fsm.ChangeState(PlayerInputStateType.Action);
     }
 
     private static InputFrame? currentFeed;
