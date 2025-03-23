@@ -57,7 +57,6 @@ public static class LoadTeleportCommand {
 
     [TasCommand("load_teleport", MetaDataProvider = typeof(LoadTeleportMeta))]
     private static void Load(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
-        Log.TasTrace("Executing Load Command");
         if (commandLine.Arguments.Length != 2) {
             AbortTas($"Invalid number of arguments in load command: '{commandLine.OriginalText}'.");
             return;
