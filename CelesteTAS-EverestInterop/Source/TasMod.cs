@@ -28,6 +28,9 @@ public class TasMod : BaseUnityPlugin {
     internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
     internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
 
+    private ConfigEntry<bool> configAutoHeal = null!;
+    private ConfigEntry<bool> configAutoSkipCutscenes = null!;
+    
     // private ConfigEntry<bool> configOpenStudioOnLaunch = null!;
     // private ConfigEntry<KeyboardShortcut> configOpenStudioShortcut = null!;
 
@@ -60,6 +63,9 @@ public class TasMod : BaseUnityPlugin {
                 TasTracerFilter.Random | TasTracerFilter.Movement
             );
 
+            configAutoHeal = Config.Bind("Debug", "Invincible", false);
+            configAutoSkipCutscenes = Config.Bind("Debug", "Autoskip cutscenes", true);
+            
             /*
             configOpenStudioOnLaunch = Config.Bind("Studio", "Launch on start", true);
             configOpenStudioShortcut = Config.Bind("Studio", "Launch", new KeyboardShortcut());
@@ -148,6 +154,10 @@ public class TasMod : BaseUnityPlugin {
 
         // CameraManager.Instance.cameraCore.dockObj.localPosition = Vector3.zero;
         TasTracerState.TraceVarsThroughFrame("Update");
+
+        if (Instance.configAutoHeal.Value) {
+            Player.i?.health?.GainFull();
+        }
     }
 
     private void LateUpdate() {
@@ -198,6 +208,14 @@ public class TasMod : BaseUnityPlugin {
         } catch (Exception e) {
             e.LogException("");
             Manager.DisableRun();
+        }
+
+        if (Instance.configAutoSkipCutscenes.Value) {
+            if (GameCore.IsAvailable()) {
+                if (GameCore.Instance.currentCutScene is SimpleCutsceneManager cutscene) {
+                    cutscene.TrySkip();
+                }
+            }
         }
     }
 
