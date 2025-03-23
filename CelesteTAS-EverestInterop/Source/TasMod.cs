@@ -134,11 +134,8 @@ public class TasMod : BaseUnityPlugin {
         // CameraManager.Instance.cameraCore.dockObj.localPosition = Vector3.zero;
         TasTracerState.TraceVarsThroughFrame("Update");
 
-        if (Manager.CurrState == Manager.State.Paused) {
-            Manager.UpdateMeta();
-            if (Manager.CurrState == Manager.State.Paused && Manager.NextState != Manager.State.Paused) {
-                Manager.DisablePause();
-            }
+        if (Player.i) {
+            Player.i.health.GainFull();
         }
     }
 
@@ -216,6 +213,12 @@ public class TasMod : BaseUnityPlugin {
         } catch (Exception e) {
             e.LogException("");
             Manager.DisableRun();
+        }
+
+        if (GameCore.IsAvailable()) {
+            if (GameCore.Instance.currentCutScene is SimpleCutsceneManager cutscene) {
+                cutscene.TrySkip();
+            }
         }
     }
 

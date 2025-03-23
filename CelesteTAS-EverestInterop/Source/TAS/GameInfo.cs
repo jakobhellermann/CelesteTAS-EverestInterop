@@ -10,7 +10,7 @@ public class GameInfo {
 
     public const DebugFilter Filter =
             DebugFilter.RapidlyChanging
-            | DebugFilter.Monsters
+            // | DebugFilter.Monsters
             // | DebugFilter.AnimationClips
             // | DebugFilter.Tweens
         ;

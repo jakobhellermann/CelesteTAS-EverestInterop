@@ -25,7 +25,7 @@ public class UpdateMetaAttribute : Attribute;
 
 /// Main controller, which manages how the TAS is played back
 public static class Manager {
-    private const bool PauseOnEndDraft = true;
+    private const bool PauseOnEndDraft = false;
     
     public enum State {
         /// No TAS is currently active
