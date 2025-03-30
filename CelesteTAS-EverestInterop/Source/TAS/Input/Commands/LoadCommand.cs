@@ -143,12 +143,11 @@ public static class LoadCommand {
             },
             ParamsInt = new Dictionary<int, int>(),
             ParamsBool = new Dictionary<int, bool>(),
-            UpdateMode = Player.i.animator.updateMode,
         };
-        snapshot.Restore(Player.i.animator);
+        snapshot.Restore(player.animator);
         InputHelper.WithPrevent(() => { Player.i.animator.Update(0); });
 
-        NormalizeActor(Player.i);
+        NormalizeActor(player);
         player.jumpState = Player.PlayerJumpState.None;
         player.varJumpSpeed = 0;
         player.dashCooldownTimer = 0;
@@ -156,16 +155,24 @@ public static class LoadCommand {
         player.parryCoolDownTimer = 0;
         player.meleeAttackCooldownTimer = 0;
         player.fooAttackInputLockTimer = 0;
+        player.offLedgeTimer = 0;
         player.CanMove = true;
         player.pathFindAgent.Clear();
         player.InvokeMethod("UpdateBounds");
-        Player.i.lastMoveX = 0;
-        Player.i.moveX = 0;
-        Player.i.ForceOnGround();
-        Player.i.SetOnGround = true;
+        player.lastMoveX = 0;
+        player.moveX = 0;
+        player.ForceOnGround();
+        player.SetOnGround = true;
+        player.health.GetFieldValue<InternalDamageUpdater>("_internalDamageUpdater")!.Reset();
         Physics2D.SyncTransforms();
         player.GroundCheck();
         NormalizePathFindAgent(player.pathFindAgent);
+
+        player.chargeAttackParticleAnim.playbackTime = 0;
+        player.chargeAttackParticleAnim.playbackTime = 0;
+
+        player.ChargingReleasedOrCanceled();
+
 
         player.ChangeState(PlayerStateType.Normal, true);
 
@@ -214,6 +221,7 @@ public static class LoadCommand {
         actor.Facing = Facings.Right;
         actor.finalOffset = Vector2.zero;
         actor.movementCounter = Vector2.zero;
+        actor.lastHitGroundSpeed = 0;
     }
 
     private static void NormalizeMonster(MonsterBase monsterBase) {
@@ -222,6 +230,13 @@ public static class LoadCommand {
         monsterBase.lastAttackSensor = null;
         monsterBase.monsterContext = new MonsterBase.MonsterContextRuntimeData();
         monsterBase.EngagingTimer = 0;
+        monsterBase.SetFieldValue("hurtSoundCooldownTimer", 0);
+        monsterBase.LinkMoveReset();
+        monsterBase.postureSystem.lastPostureValue = monsterBase.postureSystem.PostureValue;
+        monsterBase.postureSystem.GetFieldValue<InternalDamageUpdater>("_internalDamageUpdater")!.Reset();
+        var moveScaler = monsterBase.animator.transform.Find("LogicRoot/MoveScale")
+            ?.GetComponent<AnimationMoveScaler>();
+        if (moveScaler != null) moveScaler.EvaluatePosition();
         NormalizePathFindAgent(monsterBase.pathFindAgent);
         foreach (var state in monsterBase.fsm._stateMapping.getAllStates) {
             if (state.stateBehavior is BossGeneralState generalState) {
