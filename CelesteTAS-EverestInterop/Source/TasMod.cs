@@ -137,13 +137,6 @@ public class TasMod : BaseUnityPlugin {
         if (Player.i) {
             Player.i.health.GainFull();
         }
-
-        if (Manager.CurrState == Manager.State.Paused) {
-            Manager.UpdateMeta();
-            if (Manager.CurrState == Manager.State.Paused && Manager.NextState != Manager.State.Paused) {
-                Manager.DisablePause();
-            }
-        }
     }
 
     private void LateUpdate() {
@@ -215,13 +208,14 @@ public class TasMod : BaseUnityPlugin {
 
             AttributeUtils.Invoke<BeforeTasFrame>();
 
-            if (Manager.CurrState != Manager.State.Paused) {
-                // pause updatemeta is called in Update
-                Manager.UpdateMeta();
-            }
+            Manager.UpdateMeta();
 
             if (!Manager.Running && Manager.NextState == Manager.State.Running) {
                 Manager.EnableRun();
+            }
+
+            if (Manager.CurrState == Manager.State.Paused && Manager.NextState != Manager.State.Paused) {
+                Manager.DisablePause();
             }
 
             if (Manager.Running) {

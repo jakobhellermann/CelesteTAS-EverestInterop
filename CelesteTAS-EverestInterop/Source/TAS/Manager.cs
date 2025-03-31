@@ -146,25 +146,31 @@ public static class Manager {
         try {
             if (Player.i?.animator is {} animator) {
                 prePauseAnimatorStates.Add((animator, AnimatorSnapshot.Snapshot(animator)));
+                var snap = AnimatorSnapshot.Snapshot(animator);
+                prePauseAnimatorStates.Add((animator, snap));
+                animator.enabled = false;
             }
 
             if (MonsterManager.Instance.ClosetMonster) {
                 var monsterAnim = MonsterManager.Instance.ClosetMonster.animator;
+                // prePauseAnimatorStates.Add((monsterAnim, AnimatorSnapshot.Snapshot(monsterAnim)));
+                monsterAnim.enabled = false;
                 prePauseAnimatorStates.Add((monsterAnim, AnimatorSnapshot.Snapshot(monsterAnim)));
             }
         } catch (Exception e) {
             ToastManager.Toast($"Error tyring to snapshot animator: {e}");
         }
-        
     }
+
 
     private static List<(Animator, AnimatorSnapshot)> prePauseAnimatorStates = [];
     
     public static void DisablePause() {
         TasTracerState.AddFrameHistoryPaused("DisablePause");
 
-        foreach (var (anim, snapshot) in prePauseAnimatorStates) {
-            snapshot.Restore(anim);
+        foreach (var (anim, _) in prePauseAnimatorStates) {
+            // snapshot.Restore(anim);
+            anim.enabled = true;
         }
         prePauseAnimatorStates.Clear();
 

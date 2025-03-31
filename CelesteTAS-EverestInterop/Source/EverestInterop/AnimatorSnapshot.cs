@@ -55,7 +55,9 @@ public class AnimatorSnapshot {
     public void Restore(Animator animator) {
         if (animator == null) return;
 
+        // TODO: fix FooExplode freeze
         animator.Play(StateHash, 0, NormalizedTime);
+        InputHelper.WithPrevent(() => animator.Update(0));
         foreach (var param in ParamsFloat) animator.SetFloat(param.Key, param.Value);
         foreach (var param in ParamsInt) animator.SetInteger(param.Key, param.Value);
         foreach (var param in ParamsBool) animator.SetBool(param.Key, param.Value);
