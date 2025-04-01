@@ -135,6 +135,7 @@ public static class Savestates {
 
                 if ( /*Engine.Scene is Level*/ true) {
                     DebugModPlusInterop!.LoadSavestateDisk(SavestateSlot, null);
+                    InputHelper.ClearInputState();
                     TasTracerState.AddFrameHistory("SavestateLoaded");
                     Manager.Controller.CopyProgressFrom(savedController);
 

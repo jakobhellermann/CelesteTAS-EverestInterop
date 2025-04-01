@@ -7,6 +7,7 @@ using StudioCommunication;
 using System;
 using System.Reflection;
 using TAS.Input;
+using TAS.Utils;
 using UnityEngine;
 
 namespace TAS;
@@ -32,6 +33,7 @@ public static class InputHelper {
     [HarmonyPatch(typeof(BackgroundTaskExecutor), "Update")]
     [HarmonyPatch(typeof(BackgroundTaskExecutor), "Update")]
     [HarmonyPatch(typeof(AbstractEmitter), "Update")]
+    // [HarmonyPatch(typeof(InControlManager), "Update")]
     [HarmonyPrefix]
     public static bool DontRunWhenPaused(MethodBase __originalMethod) {
         var run = Manager.CurrState != Manager.State.Paused && !Prevent;
@@ -92,7 +94,7 @@ public static class InputHelper {
     private static void EnableRun() {
         InputManager.SuspendInBackground = false;
         InputManager.Enabled = true;
-        InputManager.ClearInputState();
+        ClearInputState();
         // typeof(InputManager).SetFieldValue("initialTime", Time.realtimeSinceStartup);
         // typeof(InputManager).SetFieldValue("currentTick", 0U);
         // typeof(InputManager).SetFieldValue("currentTime", 0f);
@@ -111,11 +113,20 @@ public static class InputHelper {
         Physics2D.simulationMode = SimulationMode2D.Script;
     }
 
+    public static void ClearInputState() {
+        typeof(InputManager).InvokeMethod("SetZeroTickOnAllControls");
+        InputManager.ClearInputState();
+        foreach (var actionSet in typeof(InputManager).GetFieldValue<List<PlayerActionSet>>("playerActionSets")!) {
+            foreach (var action in actionSet.Actions) {
+                action.SetFieldValue("clearInputState", false);
+            }
+        }
+    }
+
     [DisableRun]
     private static void DisableRun() {
         InputManager.SuspendInBackground = true;
-        InputManager.ClearInputState();
-        // inputManagerUpdateInternal.Invoke();
+        ClearInputState();
 
         framerateState.Restore();
         Time.captureFramerate = 0;
