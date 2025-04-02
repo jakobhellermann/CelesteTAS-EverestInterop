@@ -3,6 +3,7 @@ CelesteTAS.zip
 /everest.yaml
 /Dialog
 /Graphics
+/out
 
 # User-specific files
 *.suo
