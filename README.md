@@ -2,6 +2,17 @@
 
 ## TAS tools for Nine Sols based on CelesteTAS
 
+```shell
+dotnet publish -c Release CelesteTAS-EverestInterop
+dotnet publish -c Release Studio/CelesteStudio.WPF
+
+# thunderstore/build/jakobhellermann-TAS-0.1.0-zip
+# Studio/CelesteStudio.WPF/bin/Release/net7.0-windows/win-x64/publish 
+```
+
+## Building
+
+
 ## Documentation
 
 You can find documentation around CelesteTAS and Celeste Studio, as well as general TASing references on the [wiki](https://github.com/EverestAPI/CelesteTAS-EverestInterop/wiki).  
@@ -31,33 +42,16 @@ e.g. `123,R,J` (For `123` frames, hold `Right` and `Jump`)
 - `P` = Custom Button Press Modifier (used to press inputs added by mods after binding them using the [Set command](Docs/Commands.md#set), e.g. `15,R,X,PA` after binding A to a custom input)
 
 ## Controls
-While in game or in Studio:
-- Start/Stop Playback: `RightControl`
-- Restart Playback: `Equals`
-- Fast Forward / Frame Advance Continuously: `RightShift` or `Controller Right Analog Stick`
-- Fast Forward to Next Comment: `RightAlt + RightShift`
-- Slow Forward: `\`
-- Pause / Frame Advance: `[`
-- Pause / Resume: `]`
-- Toggle Hitboxes: `LeftControl + B`
-- Toggle Simplified Graphics: `LeftControl + N`
-- Toggle Center Camera: `LeftControl + M`
-- Save State: `RightAlt + Minus`
-- Clear State: `RightAlt + Back`
-- Info HUD:
-  * While holding the Info HUD hotkey, left-click to move the HUD around
-  * Double press the Info HUD hotkey to toggle it
-  * While Holding the Info HUD hotkey, left-click on entity to watch the entity
-- These can be rebound in Mod Options
-  * You will have to rebind some of these if you are on a non-US keyboard layout.
-  * Binding multiple keys to a control will cause those keys to act as a key-combo.
-
-## Special Input
+Bind these keys in `Settings / Key Bindings... / Additional Game HotkeysA:`
+- Start/Stop Playback
+- Restart Playback
+- Pause / Frame Advance
+- Pause / Resume
 
 ### Breakpoints
-- You can create a breakpoint in the input file by typing `***` by itself on a single line
+- You can create a breakpoint in the input file by typing `***` or pressing `Ctrl-.`
 - The TAS, when played back from the start will fast-forward until it reaches that line and will then pause the TAS
-- `***S` will make a [savestate](#savestate), which can reduce TAS playback time. 
+- `***S` will make a savestate, which can reduce TAS playback time.  (kinda broken right now)
 - You can specify the speed with `***X`, where `X` is the speedup factor. e.g. `***10` will go at 10x speed, `***0.5` will go at 0.5x speed.
 
 ### Commands
