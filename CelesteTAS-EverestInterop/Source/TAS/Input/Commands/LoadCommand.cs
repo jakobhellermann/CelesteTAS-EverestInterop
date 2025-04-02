@@ -71,13 +71,13 @@ public static class LoadCommand {
         var gameCore = GameCore.Instance;
         if (gameCore.gameLevel?.SceneName != scene) {
             AbortTas("Loading scene, please restart TAS when finished");
-            ChangeSceneImmediately.ChangeScene(new SceneConnectionPoint.ChangeSceneData {
-                    sceneName = scene,
-                    playerSpawnPosition = () => new Vector3(x, y, 0),
-                    changeSceneMode = SceneConnectionPoint.ChangeSceneMode.Teleport,
-                    findMode = SceneConnectionPoint.FindConnectionMode.ID,
-                },
-                true);
+            // ChangeSceneImmediately.ChangeScene(new SceneConnectionPoint.ChangeSceneData {});
+            GameCore.Instance.ChangeScene(new SceneConnectionPoint.ChangeSceneData {
+                sceneName = scene,
+                playerSpawnPosition = () => new Vector3(x, y, 0),
+                changeSceneMode = SceneConnectionPoint.ChangeSceneMode.Teleport,
+                findMode = SceneConnectionPoint.FindConnectionMode.ID,
+            });
             return;
         }
 
@@ -157,7 +157,7 @@ public static class LoadCommand {
         player.fooAttackInputLockTimer = 0;
         player.offLedgeTimer = 0;
         player.CanMove = true;
-        player.pathFindAgent.Clear();
+        player.pathFindAgent.SetFieldValue("lastArea", null);
         player.InvokeMethod("UpdateBounds");
         player.lastMoveX = 0;
         player.moveX = 0;
@@ -200,7 +200,8 @@ public static class LoadCommand {
     }
 
     private static void NormalizePathFindAgent(PathFindAgent pathFindAgent) {
-        pathFindAgent.Clear();
+        pathFindAgent.SetFieldValue("lastArea", null);
+        pathFindAgent.SetFieldValue("_currentArea", null);
         pathFindAgent.GetFieldValue<List<PathArea>>("touchingAreas")!.Clear();
         pathFindAgent.target = null;
         pathFindAgent.FindCurrentPathArea();
@@ -226,7 +227,7 @@ public static class LoadCommand {
 
     private static void NormalizeMonster(MonsterBase monsterBase) {
         NormalizeActor(monsterBase);
-        if(monsterBase.canSeePlayerCondition != null) monsterBase.canSeePlayerCondition.ExtendFalseTime();
+        if (monsterBase.canSeePlayerCondition != null) monsterBase.canSeePlayerCondition.ExtendFalseTime();
         monsterBase.lastAttackSensor = null;
         monsterBase.monsterContext = new MonsterBase.MonsterContextRuntimeData();
         monsterBase.EngagingTimer = 0;

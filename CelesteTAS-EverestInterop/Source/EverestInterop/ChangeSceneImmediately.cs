@@ -1,3 +1,5 @@
+#if FALSE
+
 using HarmonyLib;
 using NineSolsAPI;
 using PrimeTween;
@@ -40,3 +42,5 @@ public class ChangeSceneImmediately {
         duration = 0;
     }
 }
+
+#endif

@@ -151,9 +151,8 @@ public static class Manager {
                 animator.enabled = false;
             }
 
-            if (MonsterManager.Instance.ClosetMonster) {
-                var monsterAnim = MonsterManager.Instance.ClosetMonster.animator;
-                // prePauseAnimatorStates.Add((monsterAnim, AnimatorSnapshot.Snapshot(monsterAnim)));
+            foreach (var monster in MonsterManager.Instance.monsterDict.Values) {
+                var monsterAnim = monster.animator;
                 monsterAnim.enabled = false;
                 prePauseAnimatorStates.Add((monsterAnim, AnimatorSnapshot.Snapshot(monsterAnim)));
             }

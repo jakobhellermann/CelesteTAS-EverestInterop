@@ -11,6 +11,7 @@ using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Random = UnityEngine.Random;
@@ -320,6 +321,7 @@ public static class DebugInfo {
                     text += ClipText<PlayerAnimationEventTag>(player.animator, layer);
                     if (!filter.HasFlag(DebugFilter.AllAnimatorLayers)) break;
                 }
+
                 text += "\n";
             }
         }
@@ -484,7 +486,10 @@ public static class DebugInfo {
     public static string GetMonsterInfotext(DebugFilter filter) {
         var text = "";
         foreach (var monster in MonsterManager.Instance.monsterDict.Values) {
-            if (!monster.isActiveAndEnabled) text += "(disabled) ";
+            if (!monster.isActiveAndEnabled) {
+                // text += "(disabled) ";
+                continue;
+            }
 
             text += GetMonsterInfotext(monster, filter) + "\n";
         }
@@ -498,13 +503,18 @@ public static class DebugInfo {
 
         var state = monster.fsm.FindMappingState(monster.fsm.State);
         var animInfo = monster.animator.GetCurrentAnimatorStateInfo(0);
-        var preAttackState = (StealthPreAttackState)monster.fsm.FindMappingState(MonsterBase.States.PreAttack);
+        var preAttackState = (StealthPreAttackState?)monster.fsm.FindMappingState(MonsterBase.States.PreAttack);
 
         text += $"Pos: {(Vector2)monster.transform.position}\n";
         text += $"Vel: {monster.Velocity} + {(Vector2)monster.AnimationVelocity}\n";
         text += $"HP:  {monster.health.currentValue:0.00}\n";
         // text += $"Area: {monster.pathFindAgent.currentArea}\n";
         // text += $"TouchingAreas: {monster.pathFindAgent.GetFieldValue<List<PathArea>>("touchingAreas")!.Select(x => x.name).Join()}\n";
+        if (state == null) {
+            text += "fsm is null\n";
+            return text;
+        }
+
         text += $"State:  {monster.fsm.State} '{FsmStateName(state)}'";
         text += $" {animInfo.normalizedTime % 1 * 100:00}%";
         text += "\n";
@@ -513,55 +523,53 @@ public static class DebugInfo {
         if (!monster.IsAlwaysEngaging) flags.Add((monster.IsEngaging, "Engaging"));
         flags.AddRange([
             (monster.isDefending, "Defending"),
-            (preAttackState.IsFollowingSomeone, "Following"),
+            (preAttackState?.IsFollowingSomeone ?? false, "Following"),
             (monster.IsEngagingFollowing, "EngagingFollowing"),
             (monster.IsWanderingFollowing, "WanderingFollowing"),
             (monster.IsParriedWillAttack, "ParriedWillAttack"),
             (monster.monsterContext.IsInForceDisEngageArea, "ForceDisengage"),
             (monster.GetPropertyValue<bool>("isForceDisEngage"), "ForceDisengage"),
             (monster.GetPropertyValue<bool>("isForceEngage"), "ForceEngage"),
-            // (monster.pathFindAgent.IsSameAreaWithTarget && !(Manager.Running && Manager.Controller.CurrentFrameInTas <= 1), "SameArea"), // TODO: flaky first frame
+            (monster.pathFindAgent.IsSameAreaWithTarget && !(Manager.Running && Manager.Controller.CurrentFrameInTas <= 1),
+                "SameArea"), // TODO: flaky first frame
             (monster.CutSceneCheck(), "Cutscene"),
         ]);
+
         if (!monster.IsAlwaysEngaging) timers.Add((monster.EngagingTimer, "Engaging"));
         timers.AddRange([
             (monster.CanSeePlayerFalseTimer, "!CanSeePlayer"),
             (monster.CanSeePlayerTrueTimer, "CanSeePlayer"),
             // (preAttackState.exitPreAttackCoolDown, "PreAttackExit"), TODO: flaky
-            (preAttackState.GetFieldValue<float>("ChangeToEngageDelayTime"), "ChangeToEngageDelayTime"),
+            (preAttackState?.GetFieldValue<float>("ChangeToEngageDelayTime") ?? 0, "ChangeToEngageDelayTime"),
         ]);
         text += "Flags:  " + Flags(flags) + "\n";
         text += "Timers: " + Timers(timers) + "\n";
 
-        if (preAttackState.ApproachingSchemes.Count > 1) text += "TODO: multiple schemes\n";
+        /*if (preAttackState != null) {
+            if (preAttackState.ApproachingSchemes.Count > 1) text += "TODO: multiple schemes\n";
 
-        var currentScheme = preAttackState.SchemesIndex != -1
-            ? preAttackState.ApproachingSchemes[preAttackState.SchemesIndex]
-            : null;
-        // canseeplayer > 0.5
-        text += $"Vars:   Scheme={currentScheme?.name} Dist={monster.GetDistanceToPlayer():0.00}\n";
+            var currentScheme = preAttackState.SchemesIndex != -1
+                ? preAttackState.ApproachingSchemes[preAttackState.SchemesIndex]
+                : null;
+            text += $"Vars:   Scheme={currentScheme?.name} Dist={monster.GetDistanceToPlayer():0.00}\n";
 
-        text += "\n";
+            text += "Schemes:\n";
+            foreach (var scheme in preAttackState.ApproachingSchemes) {
+                text +=
+                    $"- {scheme.name} {scheme.EnterApproachingRange} ± {scheme.EnterApproachingRangeRandomOffset}\n";
+            }
 
-        text +=
-            $"Stat: RaycastNeeded={monster.monsterStat.IsRayCastToPlayerNeededForEngage} IsGuarding={preAttackState.IsGuardingPath}\n\n";
-        text += "Schemes:\n";
-        foreach (var scheme in preAttackState.ApproachingSchemes) {
-            text += $"- {scheme.name} {scheme.EnterApproachingRange} ± {scheme.EnterApproachingRangeRandomOffset}\n";
-        }
+            text += "\n";
+        }*/
 
-        text += "\n";
+        // text +=
+        // $"Stat: RaycastNeeded={monster.monsterStat.IsRayCastToPlayerNeededForEngage} IsGuarding={preAttackState?.IsGuardingPath}\n\n";
 
 
         var core = monster.monsterCore;
 
         if (core.attackSequenceMoodule.getCurrentSequence() is not null) {
             text += "TODO: attack sequence\n";
-        }
-
-        if (monster.fsm == null) {
-            text += "FSM is null?\n";
-            return text;
         }
 
         var hurtInterrupt = monster.HurtInterrupt;
@@ -580,17 +588,19 @@ public static class DebugInfo {
             // if (monster.IsEngaging) text += "IsEngaging\n";
         }
 
-        text += "Attack:\n";
-
-        text += "Inside: ";
-        foreach (var attackSensor in monster.AttackSensorsCompat()) {
-            if (attackSensor.IsPlayerInside) text += attackSensor.name + " ";
-        }
-
-        text += "\n";
-
         if (filter.HasFlag(DebugFilter.AttackSensors)) {
-            foreach (var attackSensor in monster.AttackSensorsCompat()) {
+            var attackSensors = monster.AttackSensorsCompat().ToArray();
+
+            text += "Attack:\n";
+
+            text += "Inside: ";
+            foreach (var attackSensor in attackSensors) {
+                if (attackSensor.IsPlayerInside) text += attackSensor.name + " ";
+            }
+
+            text += "\n";
+
+            foreach (var attackSensor in attackSensors) {
                 var name = ReNumPrefix.Replace(attackSensor.name, "");
                 var active = attackSensor.gameObject.activeInHierarchy;
                 var conditions = attackSensor.GetFieldValue<AbstractConditionComp[]>("_conditions");

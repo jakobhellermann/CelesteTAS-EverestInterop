@@ -141,21 +141,14 @@ public class TasMod : BaseUnityPlugin {
 
     private void LateUpdate() {
         // TasTracerState.AddFrameHistory("count", Time.frameCount);
-        if (Manager.Running) {
-            // TODO normalize isengaging
-            var closest = MonsterManager.Instance.ClosetMonster;
-            if (closest) {
-                var state = (StealthPreAttackState)closest.fsm.FindMappingState(MonsterBase.States.PreAttack);
-            }
-        }
-
         TasTracerState.TraceVarsThroughFrame("LateUpdate");
 
         // TasTracerState.AddFrameHistory("count", Time.frameCount);
         if (Manager.Running) {
             // TODO normalize isengaging
-            var closest = MonsterManager.Instance.ClosetMonster;
-            if (closest) {
+            // var closest = MonsterManager.Instance.ClosetMonster;
+            MonsterBase? closest = null;
+            if (closest != null) {
                 var state = (StealthPreAttackState)closest.fsm.FindMappingState(MonsterBase.States.PreAttack);
                 TasTracerState.AddFrameHistory(
                     closest.fsm.State.ToString(),

@@ -28,7 +28,7 @@ public static class InputHelper {
     [HarmonyPatch(typeof(Player), "Update")]
     [HarmonyPatch(typeof(Health), nameof(Health.InvincibleForDuration))]
     [HarmonyPatch(typeof(SelectableNavigationRemapping), "RemapAfterAFrame")]
-    [HarmonyPatch(typeof(UpdateLoopManager), "Update")]
+    // [HarmonyPatch(typeof(UpdateLoopManager), "Update")]
     [HarmonyPatch(typeof(PushAwayWall), "Update")]
     [HarmonyPatch(typeof(BackgroundTaskExecutor), "Update")]
     [HarmonyPatch(typeof(BackgroundTaskExecutor), "Update")]
