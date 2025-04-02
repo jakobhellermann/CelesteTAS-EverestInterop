@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using NineSolsAPI.Utils;
-using MonsterLove.StateMachine;
 using RCGMaker.Test;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
@@ -15,7 +14,6 @@ using System.Threading;
 using TAS.Tracer;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
-using Random = UnityEngine.Random;
 
 // ReSharper disable InconsistentNaming
 
@@ -24,17 +22,18 @@ namespace TAS;
 [Flags]
 public enum TasTracerFilter {
     None = 0,
-    TraceVarsThroughFrame = 1 << 0,
+    FrameHistory = 1 << 0,
+    TraceVarsThroughFrame = 2 << 0,
     Random = 1 << 1,
-    Enabled = 1 << 2,
+    Enabled = 4 << 2,
 }
 
 [HarmonyPatch]
 [SuppressMessage("Method Declaration", "Harmony003:Harmony non-ref patch parameters modified")]
 public static class TasTracerState {
-    public const TasTracerFilter Filter =
-        TasTracerFilter.TraceVarsThroughFrame
-        | TasTracerFilter.Random;
+    public const TasTracerFilter Filter = TasTracerFilter.None;
+    // | TasTracerFilter.TraceVarsThroughFrame
+    // | TasTracerFilter.Random;
     // | TasTracerFilter.Enabled;
 
     private static List<(string, Func<object?>)> traceVarsThroughFrame = [
@@ -184,7 +183,7 @@ public static class TasTracerState {
     // [HarmonyPatch(typeof(EffectDealer), "DelayShootEffect")]
     // [HarmonyPatch(typeof(TimePauseManager), nameof(TimePauseManager.TimePause))]
     private static void FrameHistoryPatch(object? __instance, MethodBase __originalMethod, object[] __args) {
-        if (!Manager.Running) return;
+        if (!Manager.Running || !Filter.HasFlag(TasTracerFilter.FrameHistory)) return;
 
         AddFrameHistory([
             $"{__originalMethod.DeclaringType?.Name}.{__originalMethod.Name}{(__instance != null ? " on " : "")}{__instance}",
@@ -197,8 +196,9 @@ public static class TasTracerState {
     //[HarmonyPatch(typeof(Transform), nameof(Transform.position), MethodType.Setter)]
     //[HarmonyPatch(typeof(Transform), nameof(Transform.localPosition), MethodType.Setter)]
     [HarmonyPatch(typeof(PhysicsMover), nameof(PhysicsMover.SetPosition))]
-    private static void FrameHistoryPausedPatch(MonoBehaviour? __instance, MethodBase __originalMethod, object[] __args) {
-        if (!Manager.Running) return;
+    private static void FrameHistoryPausedPatch(MonoBehaviour? __instance, MethodBase __originalMethod,
+        object[] __args) {
+        if (!Manager.Running || !Filter.HasFlag(TasTracerFilter.FrameHistory)) return;
 
         AddFrameHistoryPaused([
             $"{__instance} {__originalMethod.DeclaringType?.Name}.{__originalMethod.Name}", ..__args, new StackTrace(),
@@ -210,7 +210,7 @@ public static class TasTracerState {
     [HarmonyPatch(typeof(Behaviour), nameof(Behaviour.enabled), MethodType.Setter)]
     private static void
         FrameHistorySetEnabledPatch(Behaviour __instance, MethodBase __originalMethod, object[] __args) {
-        if (!Manager.Running) return;
+        if (!Manager.Running || !Filter.HasFlag(TasTracerFilter.FrameHistory)) return;
         if (!Filter.HasFlag(TasTracerFilter.Enabled)) return;
 
         if (__instance is _2dxFX_Base or AkGameObj or RCGPostProcessManager or WOWROTATION or HighLightCamera) return;
@@ -231,7 +231,7 @@ public static class TasTracerState {
     [HarmonyPrefix]
     [HarmonyPatch(typeof(ReplayTest), nameof(ReplayTest.LogTestState))]
     private static void LogTestStatePatch(MonoBehaviour m, object targetName, object stateName) {
-        if (!Manager.Running) return;
+        if (!Manager.Running || !Filter.HasFlag(TasTracerFilter.FrameHistory)) return;
         if (m is PauseUIPanel) return;
 
         AddFrameHistory(["LogTestState", m.ToString(), targetName.ToString(), stateName.ToString(), new StackTrace()]);
@@ -255,15 +255,7 @@ public static class TasTracerState {
         ]);
     }*/
 
-
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(AbstractEmitter), "Update")]
-    private static void Test(AbstractEmitter __instance) {
-        AddFrameHistory("emitter path", ObjectUtils.ObjectComponentPath(__instance));
-    }
-
-
-    [HarmonyPrefix]
+    /*[HarmonyPrefix]
     // [HarmonyPatch(typeof(EffectDealer), "HitEffectReceiverCheck")]
     [HarmonyPatch(typeof(EffectDealer), "HitEffectReceiverCheck")]
     private static void UpdateImplement(EffectDealer __instance, Collider2D col) => frameHistory.Add([
@@ -298,29 +290,27 @@ public static class TasTracerState {
         __instance.GetFieldValue<EffectDealer[]>("effectDealers")!
             .Select(x => $"{x?.name} {x?.gameObject.activeInHierarchy}").Join(),
         new StackTrace(),
-    ]);
+    ]);*/
 
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(Player), "Update")]
-    private static void PlayerUpdate() =>
+    private static void PlayerUpdate() {
+        if (!Manager.Running || !Filter.HasFlag(TasTracerFilter.FrameHistory)) return;
         frameHistory.Add(["Player.Update", Time.deltaTime]);
+    }
 
     [HarmonyPatch(typeof(MonsterState), nameof(MonsterState.AnimationEvent))]
     private static void BossAnimationEvent(MonsterState __instance, AnimationEvents.AnimationEvent e) {
+        if (!Manager.Running || !Filter.HasFlag(TasTracerFilter.FrameHistory)) return;
         frameHistory.Add([$"BossAnimationEvent {__instance}", e.ToString()]);
     }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(PlayerAnimatorEvents), nameof(PlayerAnimatorEvents.AnimationDone))]
     private static void HistoryAnimationDone(PlayerAnimationEventTag tag) {
+        if (!Manager.Running || !Filter.HasFlag(TasTracerFilter.FrameHistory)) return;
         frameHistory.Add(["PlayerAnimationDone", tag.ToString(), Player.i.AnimationVelocity]);
-    }
-
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(PlayerNormalState), nameof(PlayerNormalState.OnStateEnter))]
-    private static void PlayerNormalStateE(PlayerNormalState __instance) {
-        frameHistory.Add(["PlayerNormalState", Player.i.IsOnGround, AnimatorSnapshot.Snapshot(Player.i.animator)]);
     }
 
     #endregion
