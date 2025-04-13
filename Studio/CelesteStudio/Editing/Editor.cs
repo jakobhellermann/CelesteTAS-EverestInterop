@@ -243,8 +243,8 @@ public sealed class Editor : SkiaDrawable {
         new CombineConsecutiveSameInputs(),
 
         new SwapActions(Actions.Left, Actions.Right),
-        new SwapActions(Actions.Jump, Actions.Jump2),
-        new SwapActions(Actions.Dash, Actions.Dash2),
+        // new SwapActions(Actions.Jump, Actions.Jump2),
+        // new SwapActions(Actions.Dash, Actions.Dash2),
 
         new ForceCombineInputFrames(),
         new SplitFrames(),
@@ -2256,7 +2256,7 @@ public sealed class Editor : SkiaDrawable {
             var typedAction = typedCharacter.ActionForChar();
 
             // Handle feather inputs
-            int featherStart = GetColumnOfAction(actionLine, Actions.Feather);
+            /*int featherStart = GetColumnOfAction(actionLine, Actions.Feather);
             if (featherStart != -1 && Document.Caret.Col > featherStart && (typedCharacter is '.' or ',' or (>= '0' and <= '9'))) {
                 int newCol;
                 if (typedCharacter == '.' && Document.Caret.Col > 0 && line[Document.Caret.Col - 1] == ActionLine.Delimiter) {
@@ -2284,8 +2284,8 @@ public sealed class Editor : SkiaDrawable {
                 }
             }
             // Handle regular inputs
-            else if (typedAction != Actions.None) {
-                int dashOnlyStart = GetColumnOfAction(actionLine, Actions.DashOnly);
+            else */ if (typedAction != Actions.None) {
+                /*int dashOnlyStart = GetColumnOfAction(actionLine, Actions.DashOnly);
                 int dashOnlyEnd = dashOnlyStart + actionLine.Actions.GetDashOnly().Count();
                 if (dashOnlyStart != -1 && Document.Caret.Col >= dashOnlyStart && Document.Caret.Col <= dashOnlyEnd)
                     typedAction = typedAction.ToDashOnlyActions();
@@ -2293,12 +2293,12 @@ public sealed class Editor : SkiaDrawable {
                 int moveOnlyStart = GetColumnOfAction(actionLine, Actions.MoveOnly);
                 int moveOnlyEnd = moveOnlyStart + actionLine.Actions.GetMoveOnly().Count();
                 if (moveOnlyStart != -1 && Document.Caret.Col >= moveOnlyStart && Document.Caret.Col <= moveOnlyEnd)
-                    typedAction = typedAction.ToMoveOnlyActions();
+                    typedAction = typedAction.ToMoveOnlyActions();*/
 
                 // Toggle it
                 actionLine.Actions = actionLine.Actions.ToggleAction(typedAction, Settings.Instance.AutoRemoveMutuallyExclusiveActions);
 
-                // Warp the cursor after the number
+                /*// Warp the cursor after the number
                 if (typedAction == Actions.Feather && actionLine.Actions.HasFlag(Actions.Feather)) {
                     Document.Caret.Col = GetColumnOfAction(actionLine, Actions.Feather) + 1;
                 } else if (typedAction == Actions.Feather && !actionLine.Actions.HasFlag(Actions.Feather)) {
@@ -2311,7 +2311,7 @@ public sealed class Editor : SkiaDrawable {
                     Document.Caret.Col = GetColumnOfAction(actionLine, Actions.MoveOnly) + actionLine.Actions.GetMoveOnly().Count();
                 } else {
                     Document.Caret.Col = ActionLine.MaxFramesDigits;
-                }
+                }*/
             }
             // If the key we entered is a number
             else if (typedCharacter is >= '0' and <= '9' && Document.Caret.Col <= ActionLine.MaxFramesDigits) {
@@ -2476,7 +2476,7 @@ public sealed class Editor : SkiaDrawable {
             }
 
             // Handle feather angle/magnitude
-            int featherColumn = GetColumnOfAction(actionLine, Actions.Feather);
+            /*int featherColumn = GetColumnOfAction(actionLine, Actions.Feather);
             if (featherColumn != -1 && caret.Col >= featherColumn) {
                 int angleMagnitudeCommaColumn = line.IndexOf(ActionLine.Delimiter, featherColumn + 1) + 1;
 
@@ -2501,7 +2501,7 @@ public sealed class Editor : SkiaDrawable {
                     line = actionLine.ToString();
                     goto FinishDeletion;
                 }
-            }
+            }*/
 
             // Remove blank lines with delete at the end of a line
             if (caret.Col == line.Length &&
@@ -4057,18 +4057,18 @@ public sealed class Editor : SkiaDrawable {
             int column = GetColumnOfAction(actionLine, action);
             softSnapColumns.Add(column);
 
-            if (action == Actions.DashOnly)
+            /*if (action == Actions.DashOnly)
                 softSnapColumns.AddRange(Enumerable.Range(column + 1, actionLine.Actions.GetDashOnly().Count()));
             if (action == Actions.MoveOnly)
-                softSnapColumns.AddRange(Enumerable.Range(column + 1, actionLine.Actions.GetMoveOnly().Count()));
+                softSnapColumns.AddRange(Enumerable.Range(column + 1, actionLine.Actions.GetMoveOnly().Count()));*/
             if (action == Actions.PressedKey)
                 softSnapColumns.AddRange(Enumerable.Range(column + 1, actionLine.CustomBindings.Count));
         }
         // Feather angle/magnitude
-        if (actionLine.Actions.HasFlag(Actions.Feather)) {
+        /*if (actionLine.Actions.HasFlag(Actions.Feather)) {
             int featherColumn = GetColumnOfAction(actionLine, Actions.Feather);
             softSnapColumns.AddRange(Enumerable.Range(featherColumn, actionLine.ToString().Length + 1 - featherColumn));
-        }
+        }*/
 
         return softSnapColumns.AsReadOnly();
     }
@@ -4085,38 +4085,40 @@ public sealed class Editor : SkiaDrawable {
 
         // Actions
         if (actionLine.Actions != Actions.None) {
-            hardSnapColumns.Add(GetColumnOfAction(actionLine, actionLine.Actions.Sorted().Last()) + actionLine.CustomBindings.Count);
+            hardSnapColumns.Add(GetColumnOfAction(actionLine, actionLine.Actions.Sorted().Last()) +
+                                actionLine.CustomBindings.Count);
 
-        // Feather angle/magnitude
-        if (actionLine.Actions.HasFlag(Actions.Feather)) {
-            int featherColumn = GetColumnOfAction(actionLine, Actions.Feather);
-            string line = actionLine.ToString();
+            // Feather angle/magnitude
+            /*if (actionLine.Actions.HasFlag(Actions.Feather)) {
+                int featherColumn = GetColumnOfAction(actionLine, Actions.Feather);
+                string line = actionLine.ToString();
 
-            int decimalColumn = featherColumn + 1;
-            while (decimalColumn <= line.Length && line[decimalColumn - 1] != '.') {
-                decimalColumn++;
-            }
-            hardSnapColumns.Add(decimalColumn);
-            hardSnapColumns.Add(decimalColumn + 1);
-
-            if (actionLine.FeatherMagnitude != null) {
-                hardSnapColumns.Add(featherColumn + 1);
-                int borderColumn = featherColumn + 1;
-                while (borderColumn <= line.Length && line[borderColumn - 1] != ',') {
-                    borderColumn++;
-                }
-                hardSnapColumns.Add(borderColumn);
-                hardSnapColumns.Add(borderColumn + 1);
-
-                decimalColumn = borderColumn + 1;
+                int decimalColumn = featherColumn + 1;
                 while (decimalColumn <= line.Length && line[decimalColumn - 1] != '.') {
                     decimalColumn++;
                 }
                 hardSnapColumns.Add(decimalColumn);
                 hardSnapColumns.Add(decimalColumn + 1);
-            }
-            hardSnapColumns.Add(line.Length + 1);
-        }}
+
+                if (actionLine.FeatherMagnitude != null) {
+                    hardSnapColumns.Add(featherColumn + 1);
+                    int borderColumn = featherColumn + 1;
+                    while (borderColumn <= line.Length && line[borderColumn - 1] != ',') {
+                        borderColumn++;
+                    }
+                    hardSnapColumns.Add(borderColumn);
+                    hardSnapColumns.Add(borderColumn + 1);
+
+                    decimalColumn = borderColumn + 1;
+                    while (decimalColumn <= line.Length && line[decimalColumn - 1] != '.') {
+                        decimalColumn++;
+                    }
+                    hardSnapColumns.Add(decimalColumn);
+                    hardSnapColumns.Add(decimalColumn + 1);
+                }
+                hardSnapColumns.Add(line.Length + 1);
+            }*/
+        }
 
         return hardSnapColumns.AsReadOnly();
     }
@@ -4125,16 +4127,16 @@ public sealed class Editor : SkiaDrawable {
         int index = actionLine.Actions.Sorted().IndexOf(action);
         if (index < 0) return -1;
 
-        int dashOnlyIndex = actionLine.Actions.Sorted().IndexOf(Actions.DashOnly);
-        int moveOnlyIndex = actionLine.Actions.Sorted().IndexOf(Actions.MoveOnly);
+        /*int dashOnlyIndex = actionLine.Actions.Sorted().IndexOf(Actions.DashOnly);
+        int moveOnlyIndex = actionLine.Actions.Sorted().IndexOf(Actions.MoveOnly);*/
         int customBindingIndex = actionLine.Actions.Sorted().IndexOf(Actions.PressedKey);
 
         int additionalOffset = 0;
 
-        if (dashOnlyIndex != -1 && index > dashOnlyIndex)
+        /*if (dashOnlyIndex != -1 && index > dashOnlyIndex)
             additionalOffset += actionLine.Actions.GetDashOnly().Count();
         if (moveOnlyIndex != -1 && index > moveOnlyIndex)
-            additionalOffset += actionLine.Actions.GetMoveOnly().Count();
+            additionalOffset += actionLine.Actions.GetMoveOnly().Count();*/
         if (customBindingIndex != -1 && index > customBindingIndex)
             additionalOffset += actionLine.CustomBindings.Count;
 
