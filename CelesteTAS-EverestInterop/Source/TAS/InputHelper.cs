@@ -154,6 +154,15 @@ public static class InputHelper {
 
         { Actions.Jump, Key.Space },
         { Actions.Dash, Key.LeftShift },
+        
+        { Actions.Interact, Key.E },
+        { Actions.Attack, Key.J },
+        { Actions.Shoot, Key.C },
+        { Actions.Parry, Key.K },
+
+        { Actions.Talisman, Key.F },
+        { Actions.Nymph, Key.Q },
+        { Actions.Heal, Key.R },
     };
 
     [HarmonyPatch(typeof(UnityKeyboardProvider), nameof(UnityKeyboardProvider.GetKeyIsPressed))]
