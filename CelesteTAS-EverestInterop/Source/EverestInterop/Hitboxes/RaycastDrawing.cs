@@ -1,7 +1,6 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -16,8 +15,7 @@ internal enum RaycastFilter {
 }
 
 [HarmonyPatch]
-public static class RaycastDrawing
-{
+public static class RaycastDrawing {
     private static bool ShowRaycasts => false; // TODO TasSettings.ShowRaycasts.Value;
     
     private const RaycastFilter Filter = RaycastFilter.All;
