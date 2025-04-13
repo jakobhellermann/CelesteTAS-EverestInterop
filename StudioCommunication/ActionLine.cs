@@ -63,7 +63,7 @@ public struct ActionLine() {
             actionLine.Actions |= action;
 
             // Parse dash-only/move-only/custom bindings
-            if (action is Actions.DashOnly) {
+            /*if (action is Actions.DashOnly) {
                 for (int j = 1; j < tokens[i].Length; j++) {
                     actionLine.Actions |= tokens[i][j].ActionForChar().ToDashOnlyActions();
                 }
@@ -74,7 +74,7 @@ public struct ActionLine() {
                     actionLine.Actions |= tokens[i][j].ActionForChar().ToMoveOnlyActions();
                 }
                 continue;
-            }
+            }*/
             if (action is Actions.PressedKey) {
                 actionLine.CustomBindings = tokens[i][1..].Select(char.ToUpper).ToHashSet();
                 continue;
@@ -85,7 +85,7 @@ public struct ActionLine() {
             }
 
             // Parse feather angle/magnitude
-            bool validAngle = true;
+            /*bool validAngle = true;
             if (action == Actions.Feather && i + 1 < tokens.Length && (validAngle = float.TryParse(tokens[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out float angle))) {
                 if (angle > 360.0f)
                     actionLine.FeatherAngle = "360";
@@ -125,7 +125,7 @@ public struct ActionLine() {
                 i += 2;
             } else if (!validAngle && !ignoreInvalidFloats) {
                 return false;
-            }
+            }*/
         }
 
         if (actionLine.Frames.Length == 0 &&
@@ -195,10 +195,10 @@ public struct ActionLine() {
                     var action = c.ActionForChar();
                     actionLine.Actions |= action;
                     state = action switch {
-                        Actions.DashOnly => ParseState.DashOnly,
-                        Actions.MoveOnly => ParseState.MoveOnly,
+                        // Actions.DashOnly => ParseState.DashOnly,
+                        // Actions.MoveOnly => ParseState.MoveOnly,
                         Actions.PressedKey => ParseState.PressedKey,
-                        Actions.Feather => ParseState.FeatherAngle,
+                        // Actions.Feather => ParseState.FeatherAngle,
                         _ => ParseState.Action,
                     };
                     break;
@@ -304,14 +304,15 @@ public struct ActionLine() {
         customBindings.Sort();
 
         string actions = Actions.Sorted().Aggregate("", (s, a) => $"{s}{Delimiter}{a switch {
-            Actions.DashOnly => $"{Actions.DashOnly.CharForAction()}{string.Join("", tasActions.GetDashOnly().Select(ActionsUtils.CharForAction))}",
-            Actions.MoveOnly => $"{Actions.MoveOnly.CharForAction()}{string.Join("", tasActions.GetMoveOnly().Select(ActionsUtils.CharForAction))}",
+            // Actions.DashOnly => $"{Actions.DashOnly.CharForAction()}{string.Join("", tasActions.GetDashOnly().Select(ActionsUtils.CharForAction))}",
+            // Actions.MoveOnly => $"{Actions.MoveOnly.CharForAction()}{string.Join("", tasActions.GetMoveOnly().Select(ActionsUtils.CharForAction))}",
             Actions.PressedKey => $"{Actions.PressedKey.CharForAction()}{string.Join("", customBindings)}",
             _ => a.CharForAction().ToString(),
         }}");
-        string featherAngle = Actions.HasFlag(Actions.Feather) ? $"{Delimiter}{FeatherAngle ?? ""}" : string.Empty;
-        string featherMagnitude = Actions.HasFlag(Actions.Feather) && FeatherMagnitude != null ? $"{Delimiter}{FeatherMagnitude}" : string.Empty;
+        // string featherAngle = Actions.HasFlag(Actions.Feather) ? $"{Delimiter}{FeatherAngle ?? ""}" : string.Empty;
+        // string featherMagnitude = Actions.HasFlag(Actions.Feather) && FeatherMagnitude != null ? $"{Delimiter}{FeatherMagnitude}" : string.Empty;
 
-        return $"{Frames,MaxFramesDigits}{actions}{featherAngle}{featherMagnitude}";
+        // return $"{Frames,MaxFramesDigits}{actions}{featherAngle}{featherMagnitude}";
+        return $"{Frames,MaxFramesDigits}{actions}";
     }
 }

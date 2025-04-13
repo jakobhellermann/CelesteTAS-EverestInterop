@@ -206,7 +206,8 @@ public class CombineConsecutiveSameInputs : ContextAction {
         // Screen transition frames don't have actions (except for buffering!)
         // And are followed by a #lvl_ label
 
-        const Actions allowedActions = Actions.Jump | Actions.Jump2 | Actions.Dash | Actions.Dash2 | Actions.DemoDash | Actions.DemoDash2;
+        // const Actions allowedActions = Actions.Jump | Actions.Jump2 | Actions.Dash | Actions.Dash2 | Actions.DemoDash | Actions.DemoDash2;
+        const Actions allowedActions = Actions.Jump | Actions.Dash;
 
         if (!ActionLine.TryParse(Document.Lines[row], out var actionLine) ||
             (actionLine.Actions & ~allowedActions) != Actions.None)
