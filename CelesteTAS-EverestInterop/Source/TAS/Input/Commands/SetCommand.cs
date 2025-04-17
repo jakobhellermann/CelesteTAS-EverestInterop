@@ -1,13 +1,9 @@
 using System.Linq;
-using Celeste.Mod;
-using JetBrains.Annotations;
-using Monocle;
 using StudioCommunication;
 using StudioCommunication.Util;
 using System.Collections.Generic;
 using TAS.InfoHUD;
 using TAS.Playback;
-using TAS.Utils;
 
 namespace TAS.Input.Commands;
 
@@ -58,7 +54,7 @@ public static class SetCommand {
 
     private static void ReportError(string message) {
         if (activeFile == null) {
-            $"{CommandName} Command Failed: {message}".ConsoleLog(LogLevel.Error);
+            Log.Toast($"{CommandName} Command Failed: {message}");
         } else {
             PopupToast.ShowAndLog($"""
                                    {CommandName} '{activeFile.Value.Name}' line {activeFile.Value.Line} failed:
@@ -67,6 +63,7 @@ public static class SetCommand {
         }
     }
 
+    /*
     [Monocle.Command(CommandName, "'set Settings/Level/Session/Entity value' | Example: 'set DashMode Infinite', 'set Player.Speed 325 -52.5' (CelesteTAS)"), UsedImplicitly]
     private static void SetCmd() {
         if (!CommandLine.TryParse(Engine.Commands.commandHistory[0], out var commandLine)) {
@@ -76,6 +73,7 @@ public static class SetCommand {
 
         Set(commandLine.Arguments);
     }
+    */
 
     // Set, Setting, Value
     // Set, Mod.Setting, Value

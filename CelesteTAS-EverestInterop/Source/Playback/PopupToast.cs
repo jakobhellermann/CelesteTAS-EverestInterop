@@ -1,15 +1,7 @@
-using Celeste;
-using Celeste.Mod;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Monocle;
+using BepInEx.Logging;
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using TAS.Gameplay;
-using TAS.ModInterop;
-using TAS.Module;
-using TAS.Utils;
+using UnityEngine;
 
 namespace TAS.Playback;
 
@@ -31,7 +23,7 @@ internal static class PopupToast {
     private static readonly List<Entry> entries = [];
 
     public static Entry Show(string message, float timeout = DefaultDuration) {
-        var entry = new Entry(message, timeout, Color.White);
+        var entry = new Entry(message, timeout, Color.white);
         Show(entry);
         return entry;
     }
@@ -40,22 +32,24 @@ internal static class PopupToast {
         Show(entry);
         return entry;
     }
-    public static Entry ShowAndLog(string message, float timeout = DefaultDuration, LogLevel level = LogLevel.Warn) {
+    public static Entry ShowAndLog(string message, float timeout = DefaultDuration, LogLevel level = LogLevel.Warning) {
         foreach (var line in message.AsSpan().EnumerateLines()) {
             line.ToString().Log(level);
         }
 
         return ShowWithColor(message, level switch {
-            LogLevel.Verbose => Color.Purple,
-            LogLevel.Debug => Color.Blue,
-            LogLevel.Info => Color.White,
-            LogLevel.Warn => Color.Yellow,
-            LogLevel.Error => Color.Red,
+            LogLevel.Message => Color.magenta,
+            LogLevel.Debug => Color.blue,
+            LogLevel.Info => Color.white,
+            LogLevel.Warning => Color.yellow,
+            LogLevel.Error => Color.red,
+            LogLevel.Fatal => Color.red,
             _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
         }, timeout);
     }
 
     public static void Show(Entry entry) {
+        Log.Error(entry.Text);
         entries.Add(entry);
     }
 }

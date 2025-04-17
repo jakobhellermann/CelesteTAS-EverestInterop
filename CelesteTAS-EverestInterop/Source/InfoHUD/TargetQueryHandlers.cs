@@ -77,11 +77,11 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
             targetTypes = [type.GetElementType()!];
             return Result<bool, TargetQuery.MemberAccessError>.Ok(true);
         }
-        if (type.IsAssignableTo(typeof(IList))) {
+        if (typeof(IList).IsAssignableFrom(type)) {
             targetTypes = [type.GetElementType() ?? type.GenericTypeArguments[0]];
             return Result<bool, TargetQuery.MemberAccessError>.Ok(true);
         }
-        if (type.IsAssignableTo(typeof(IDictionary))) {
+        if (typeof(IDictionary).IsAssignableFrom(type)) {
             targetTypes = [type.GenericTypeArguments[1]];
             return Result<bool, TargetQuery.MemberAccessError>.Ok(true);
         }
@@ -97,7 +97,7 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
         }
 
         var keyType = typeof(int); // Default to an integer index
-        if (type.IsAssignableTo(typeof(IDictionary))) {
+        if (typeof(IDictionary).IsAssignableFrom(type)) {
             keyType = type.GenericTypeArguments[0];
         }
 
@@ -157,7 +157,7 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
         }
 
         var keyType = typeof(int); // Default to an integer index
-        if (type.IsAssignableTo(typeof(IDictionary))) {
+        if (typeof(IDictionary).IsAssignableFrom(type)) {
             keyType = type.GenericTypeArguments[0];
         }
 
@@ -201,7 +201,7 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
     }
 
     private static bool ProcessGetValue(ref object?[] values, int valueIdx, object? value) {
-        if (value is ICollection collection) {
+        if (value is System.Collections.ICollection collection) {
             switch (collection.Count) {
                 case 0:
                     values[valueIdx] = TargetQuery.InvalidValue;
@@ -292,7 +292,7 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
                         return true;
                 }
 
-            case ICollection collection:
+            case System.Collections.ICollection collection:
                 switch (collection.Count) {
                     case 0:
                         values[valueIdx] = TargetQuery.InvalidValue;

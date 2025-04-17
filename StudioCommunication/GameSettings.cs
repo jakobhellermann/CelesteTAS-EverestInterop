@@ -26,7 +26,7 @@ public partial class GameSettings {
     public bool InfoHud = false;
     public bool InfoGame = true;
     public bool InfoTasInput = true;
-    public bool InfoSubpixelIndicator = true;
+    public bool InfoSubpixelIndicator = false;
     public HudOptions InfoCustom = HudOptions.Off;
     public WatchEntityType InfoWatchEntityHudType = WatchEntityType.Position;
     public WatchEntityType InfoWatchEntityStudioType = WatchEntityType.All;
