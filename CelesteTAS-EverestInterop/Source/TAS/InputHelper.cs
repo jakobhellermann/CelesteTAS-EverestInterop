@@ -1,104 +1,130 @@
 using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using Monocle;
+using HarmonyLib;
 using StudioCommunication;
+using System;
+using System.Reflection;
 using TAS.Input;
-using TAS.Input.Commands;
-using TAS.Utils;
+using UnityEngine;
+
+// ReSharper disable InconsistentNaming
 
 namespace TAS;
 
+[HarmonyPatch]
 public static class InputHelper {
-    public static void FeedInputs(InputFrame input) {
-        GamePadDPad pad = default;
-        GamePadThumbSticks sticks = default;
-        GamePadState gamePadState = default;
-        if (input.Actions.Has(Actions.Feather)) {
-            SetFeather(input, ref pad, ref sticks);
-        } else {
-            SetDPad(input, ref pad, ref sticks);
-        }
+    public static bool Prevent = false;
 
-        SetGamePadState(input, ref gamePadState, ref pad, ref sticks);
-
-        MInput.GamePadData gamePadData = MInput.GamePads[Celeste.Input.Gamepad];
-        gamePadData.PreviousState = gamePadData.CurrentState;
-        gamePadData.CurrentState = gamePadState;
-
-        MouseCommand.SetMouseState();
-        SetKeyboardState(input);
-
-        MInput.UpdateVirtualInputs();
+    public static void WithPrevent(Action a) {
+        Prevent = true;
+        a();
+        Prevent = false;
     }
 
-    private static void SetKeyboardState(InputFrame input) {
-        MInput.Keyboard.PreviousState = MInput.Keyboard.CurrentState;
+    /*[HarmonyPrefix]
+    public static bool DontRunWhenPaused(MethodBase __originalMethod) =>
+        Manager.CurrState != Manager.State.Paused && !Prevent;
 
-        HashSet<Keys> keys = PressCommand.GetKeys();
-        if (input.Actions.Has(Actions.Confirm)) {
-            keys.Add(BindingHelper.Confirm2);
+    [HarmonyPrefix]
+    public static bool DontRunInTAS(MethodBase __originalMethod) => !Manager.Running;*/
+
+    private const int DefaultTasFramerate = 60;
+    public static int CurrentTasFramerate = DefaultTasFramerate;
+
+    private record FramerateState(int TargetFramerate, int VsyncCount) {
+        public static FramerateState Save() => new(Application.targetFrameRate, QualitySettings.vSyncCount);
+
+        public void Restore() {
+            Application.targetFrameRate = TargetFramerate;
+            QualitySettings.vSyncCount = VsyncCount;
         }
-
-        if (input.Actions.Has(Actions.LeftMoveOnly)) {
-            keys.Add(BindingHelper.LeftMoveOnly);
-        }
-
-        if (input.Actions.Has(Actions.RightMoveOnly)) {
-            keys.Add(BindingHelper.RightMoveOnly);
-        }
-
-        if (input.Actions.Has(Actions.UpMoveOnly)) {
-            keys.Add(BindingHelper.UpMoveOnly);
-        }
-
-        if (input.Actions.Has(Actions.DownMoveOnly)) {
-            keys.Add(BindingHelper.DownMoveOnly);
-        }
-
-        keys.UnionWith(input.PressedKeys);
-
-        MInput.Keyboard.CurrentState = new KeyboardState(keys.ToArray());
     }
 
-    private static void SetFeather(InputFrame input, ref GamePadDPad pad, ref GamePadThumbSticks sticks) {
-        pad = new GamePadDPad(ButtonState.Released, ButtonState.Released, ButtonState.Released, ButtonState.Released);
-        sticks = new GamePadThumbSticks(input.StickPosition, input.DashOnlyStickPosition);
+    public static void WriteFramerate() {
+        Application.targetFrameRate = (int)(CurrentTasFramerate * Manager.PlaybackSpeed);
     }
 
-    private static void SetDPad(InputFrame input, ref GamePadDPad pad, ref GamePadThumbSticks sticks) {
-        pad = new GamePadDPad(
-            input.Actions.Has(Actions.Up) ? ButtonState.Pressed : ButtonState.Released,
-            input.Actions.Has(Actions.Down) ? ButtonState.Pressed : ButtonState.Released,
-            input.Actions.Has(Actions.Left) ? ButtonState.Pressed : ButtonState.Released,
-            input.Actions.Has(Actions.Right) ? ButtonState.Pressed : ButtonState.Released
-        );
-        sticks = new GamePadThumbSticks(new Vector2(0, 0), input.DashOnlyStickPosition);
+
+    public static void SetTasFramerate(int framerate) {
+        // If we have 1:1 tas playback, keep that
+        // if (Application.targetFrameRate == Time.captureFramerate) {
+        // }
+        CurrentTasFramerate = framerate;
+        WriteFramerate();
+        Time.captureFramerate = framerate;
     }
 
-    private static void SetGamePadState(InputFrame input, ref GamePadState state, ref GamePadDPad pad, ref GamePadThumbSticks sticks) {
-        state = new GamePadState(
-            sticks,
-            new GamePadTriggers(input.Actions.Has(Actions.Journal) ? 1f : 0f, 0),
-            new GamePadButtons(
-                (input.Actions.Has(Actions.Jump) ? BindingHelper.JumpAndConfirm : 0)
-                | (input.Actions.Has(Actions.Jump2) ? BindingHelper.Jump2 : 0)
-                | (input.Actions.Has(Actions.DemoDash) ? BindingHelper.DemoDash : 0)
-                | (input.Actions.Has(Actions.DemoDash2) ? BindingHelper.DemoDash2 : 0)
-                | (input.Actions.Has(Actions.Dash) ? BindingHelper.DashAndTalkAndCancel : 0)
-                | (input.Actions.Has(Actions.Dash2) ? BindingHelper.Dash2AndCancel : 0)
-                | (input.Actions.Has(Actions.Grab) ? BindingHelper.Grab : 0)
-                | (input.Actions.Has(Actions.Grab2) ? BindingHelper.Grab2 : 0)
-                | (input.Actions.Has(Actions.Start) ? BindingHelper.Pause : 0)
-                | (input.Actions.Has(Actions.Restart) ? BindingHelper.QuickRestart : 0)
-                | (input.Actions.Has(Actions.Up) ? BindingHelper.Up : 0)
-                | (input.Actions.Has(Actions.Down) ? BindingHelper.Down : 0)
-                | (input.Actions.Has(Actions.Left) ? BindingHelper.Left : 0)
-                | (input.Actions.Has(Actions.Right) ? BindingHelper.Right : 0)
-                | (input.Actions.Has(Actions.Journal) ? BindingHelper.JournalAndTalk : 0)
-            ),
-            pad
-        );
+
+    private static FramerateState framerateState = FramerateState.Save();
+
+    [EnableRun]
+    private static void EnableRun() {
+        framerateState = FramerateState.Save();
+
+        Time.timeScale = 1;
+
+        SetTasFramerate(DefaultTasFramerate);
+        QualitySettings.vSyncCount = 0;
+
+        Time.fixedDeltaTime = 1f / 60f;
+        // Physics.simulationMode = SimulationMode.FixedUpdate;
+
+        Physics2D.simulationMode = SimulationMode2D.Script;
     }
+
+    [DisableRun]
+    private static void DisableRun() {
+        framerateState.Restore();
+        Time.captureFramerate = 0;
+
+        Time.fixedDeltaTime = 0.02f;
+        Physics2D.simulationMode = SimulationMode2D.Update;
+    }
+
+    private static InputFrame? currentFeed;
+
+    public static void FeedInputs(InputFrame inputFrame) {
+        currentFeed = inputFrame;
+    }
+
+
+    private static Dictionary<Actions, KeyCode> actionKeyMap = new() {
+        { Actions.Up, KeyCode.W },
+        { Actions.Down, KeyCode.S },
+        { Actions.Left, KeyCode.A },
+        { Actions.Right, KeyCode.D },
+
+        { Actions.Jump, KeyCode.Space },
+        { Actions.Dash, KeyCode.LeftShift },
+    };
+
+    [HarmonyPatch(typeof(UnityEngine.Input), nameof(UnityEngine.Input.GetKey), [typeof(KeyCode)])]
+    [HarmonyPrefix]
+    public static bool GetKey(KeyCode key, ref bool __result) {
+        if (!Manager.Running || currentFeed is null) return true;
+
+        foreach (var (action, actionKey) in actionKeyMap) {
+            if ((currentFeed.Actions & action) != 0 && actionKey == key) {
+                __result = true;
+            }
+        }
+
+        return false;
+    }
+    
+    [HarmonyPatch(typeof(UnityEngine.Input), nameof(UnityEngine.Input.GetKeyDown), [typeof(KeyCode)])]
+    [HarmonyPrefix]
+    public static bool GetKeyDown(KeyCode key, ref bool __result) {
+        if (!Manager.Running || currentFeed is null) return true;
+
+        foreach (var (action, actionKey) in actionKeyMap) {
+            if ((currentFeed.Actions & action) != 0 && actionKey == key) {
+                // TODO: only true for a frame
+                __result = true;
+            }
+        }
+
+        return false;
+    }
+    
+    // TODO: GetKeyUp
 }

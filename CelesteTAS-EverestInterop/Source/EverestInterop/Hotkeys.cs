@@ -1,33 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Celeste;
-using Celeste.Mod;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using Monocle;
 using StudioCommunication;
 using TAS.Communication;
-using TAS.ModInterop;
-using TAS.Module;
 using TAS.Utils;
-using InputKeys = Microsoft.Xna.Framework.Input.Keys;
-using InputButtons = Microsoft.Xna.Framework.Input.Buttons;
-using Hud = TAS.EverestInterop.InfoHUD.InfoHud;
+using UnityEngine;
+using InputKeys = UnityEngine.KeyCode;
+using InputButtons = int;
 
-namespace TAS.EverestInterop;
+namespace TAS.UnityInterop;
 
-/// Manages hotkeys for controlling TAS playback
-/// Cannot use MInput, since that isn't updated while paused and already used for TAS inputs
 public static class Hotkeys {
-    private static readonly Lazy<FieldInfo?> f_CelesteNetClientModule_Instance = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance"));
-    private static readonly Lazy<FieldInfo?> f_CelesteNetClientModule_Context = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context"));
-    private static readonly Lazy<FieldInfo?> f_CelesteNetClientContext_Chat = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat"));
-    private static readonly Lazy<PropertyInfo?> p_CelesteNetChatComponent_Active = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active"));
+    // private static readonly Lazy<FieldInfo?> f_CelesteNetClientModule_Instance = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance"));
+    // private static readonly Lazy<FieldInfo?> f_CelesteNetClientModule_Context = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context"));
+    // private static readonly Lazy<FieldInfo?> f_CelesteNetClientContext_Chat = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat"));
+    // private static readonly Lazy<PropertyInfo?> p_CelesteNetChatComponent_Active = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active"));
 
-    private static KeyboardState kbState;
-    private static GamePadState padState;
+    // private static KeyboardState kbState;
+    // private static GamePadState padState;
 
     public static Hotkey StartStop { get; private set; } = null!;
     public static Hotkey Restart { get; private set; } = null!;
@@ -54,10 +44,10 @@ public static class Hotkeys {
     public static Hotkey CameraZoomOut { get; private set; } = null!;
     public static Hotkey OpenConsole { get; private set; } = null!;
 
-    public static float RightThumbSticksX => padState.ThumbSticks.Right.X;
+    // public static float RightThumbSticksX => padState.ThumbSticks.Right.X;
 
     public static readonly Dictionary<HotkeyID, Hotkey> AllHotkeys = new();
-    public static Dictionary<HotkeyID, List<Keys>> StudioHotkeys = new();
+    public static Dictionary<HotkeyID, List<InputKeys>> StudioHotkeys = new();
 
     /// Hotkeys which shouldn't be triggered from Studio
     private static readonly List<HotkeyID> StudioIgnoreHotkeys = [
@@ -69,7 +59,7 @@ public static class Hotkeys {
     ];
 
     /// Checks if the CelesteNet chat is open
-    private static bool CelesteNetChatting {
+    /*private static bool CelesteNetChatting {
         get {
             if (f_CelesteNetClientModule_Instance.Value?.GetValue(null) is not { } instance) {
                 return false;
@@ -83,46 +73,48 @@ public static class Hotkeys {
 
             return p_CelesteNetChatComponent_Active.Value?.GetValue(chat) as bool? == true;
         }
-    }
+    }*/
 
     internal static bool Initialized { get; private set; } = false;
 
     [Initialize]
     private static void Initialize() {
         AllHotkeys.Clear();
-        AllHotkeys[HotkeyID.Start] = StartStop = BindingToHotkey(TasSettings.KeyStart);
-        AllHotkeys[HotkeyID.Restart] = Restart = BindingToHotkey(TasSettings.KeyRestart);
-        AllHotkeys[HotkeyID.FastForward] = FastForward = BindingToHotkey(TasSettings.KeyFastForward, true);
-        AllHotkeys[HotkeyID.FastForwardComment] = FastForwardComment = BindingToHotkey(TasSettings.KeyFastForwardComment);
-        AllHotkeys[HotkeyID.FrameAdvance] = FrameAdvance = BindingToHotkey(TasSettings.KeyFrameAdvance);
-        AllHotkeys[HotkeyID.FrameStepBack] = FrameStepBack = BindingToHotkey(TasSettings.KeyFrameStepBack);
-        AllHotkeys[HotkeyID.SlowForward] = SlowForward = BindingToHotkey(TasSettings.KeySlowForward, true);
-        AllHotkeys[HotkeyID.Pause] = PauseResume = BindingToHotkey(TasSettings.KeyPause);
-        AllHotkeys[HotkeyID.Hitboxes] = Hitboxes = BindingToHotkey(TasSettings.KeyHitboxes);
-        AllHotkeys[HotkeyID.TriggerHitboxes] = TriggerHitboxes = BindingToHotkey(TasSettings.KeyTriggerHitboxes);
-        AllHotkeys[HotkeyID.Graphics] = SimplifiedGraphic = BindingToHotkey(TasSettings.KeyGraphics);
-        AllHotkeys[HotkeyID.Camera] = CenterCamera = BindingToHotkey(TasSettings.KeyCamera);
-        AllHotkeys[HotkeyID.LockCamera] = LockCamera = BindingToHotkey(TasSettings.KeyLockCamera);
-        AllHotkeys[HotkeyID.SaveState] = SaveState = BindingToHotkey(TasSettings.KeySaveState);
-        AllHotkeys[HotkeyID.ClearState] = ClearState = BindingToHotkey(TasSettings.KeyClearState);
-        AllHotkeys[HotkeyID.InfoHud] = InfoHud = BindingToHotkey(TasSettings.KeyInfoHud);
-        AllHotkeys[HotkeyID.FreeCamera] = FreeCamera = BindingToHotkey(TasSettings.KeyFreeCamera);
-        AllHotkeys[HotkeyID.CameraUp] = CameraUp = BindingToHotkey(new ButtonBinding(0, Keys.Up));
-        AllHotkeys[HotkeyID.CameraDown] = CameraDown = BindingToHotkey(new ButtonBinding(0, Keys.Down));
-        AllHotkeys[HotkeyID.CameraLeft] = CameraLeft = BindingToHotkey(new ButtonBinding(0, Keys.Left));
-        AllHotkeys[HotkeyID.CameraRight] = CameraRight = BindingToHotkey(new ButtonBinding(0, Keys.Right));
-        AllHotkeys[HotkeyID.CameraZoomIn] = CameraZoomIn = BindingToHotkey(new ButtonBinding(0, Keys.Home));
-        AllHotkeys[HotkeyID.CameraZoomOut] = CameraZoomOut = BindingToHotkey(new ButtonBinding(0, Keys.End));
+        AllHotkeys[HotkeyID.Start] = StartStop = Unbound();
+        AllHotkeys[HotkeyID.Restart] = Restart = Unbound();
+        AllHotkeys[HotkeyID.FastForward] = FastForward = BindingToHotkey([InputKeys.RightShift], true);
+        AllHotkeys[HotkeyID.FastForwardComment] = FastForwardComment = Unbound();
+        AllHotkeys[HotkeyID.FrameAdvance] = FrameAdvance = Unbound();
+        AllHotkeys[HotkeyID.FrameStepBack] = FrameStepBack = Unbound();
+        AllHotkeys[HotkeyID.SlowForward] = SlowForward = Unbound();
+        AllHotkeys[HotkeyID.Pause] = PauseResume = Unbound();
+        AllHotkeys[HotkeyID.Hitboxes] = Hitboxes = Unbound();
+        AllHotkeys[HotkeyID.TriggerHitboxes] = TriggerHitboxes = Unbound();
+        AllHotkeys[HotkeyID.Graphics] = SimplifiedGraphic = Unbound();
+        AllHotkeys[HotkeyID.Camera] = CenterCamera = BindingToHotkey([InputKeys.LeftControl, InputKeys.M]);
+        AllHotkeys[HotkeyID.LockCamera] = LockCamera = Unbound();
+        AllHotkeys[HotkeyID.SaveState] = SaveState = Unbound();
+        AllHotkeys[HotkeyID.ClearState] = ClearState = Unbound();
+        AllHotkeys[HotkeyID.InfoHud] = InfoHud = Unbound();
+        AllHotkeys[HotkeyID.FreeCamera] = FreeCamera = Unbound();
+        AllHotkeys[HotkeyID.CameraUp] = CameraUp = Unbound();
+        AllHotkeys[HotkeyID.CameraDown] = CameraDown = Unbound();
+        AllHotkeys[HotkeyID.CameraLeft] = CameraLeft = Unbound();
+        AllHotkeys[HotkeyID.CameraRight] = CameraRight = Unbound();
+        AllHotkeys[HotkeyID.CameraZoomIn] = CameraZoomIn = Unbound();
+        AllHotkeys[HotkeyID.CameraZoomOut] = CameraZoomOut = Unbound();
 
-        var debugConsole = Celeste.Mod.Core.CoreModule.Settings.DebugConsole;
-        var toggleDebugConsole = Celeste.Mod.Core.CoreModule.Settings.ToggleDebugConsole;
+        /*var debugConsole = Celeste.Mod.Core.CoreModule.Settings.DebugConsole;
+        var toggleDebugConsole = Celeste.Mod.Core.CoreModule.Settings.ToggleDebugConsole;*
         AllHotkeys[HotkeyID.OpenConsole] = OpenConsole = new Hotkey(
             debugConsole.Keys.Union(toggleDebugConsole.Keys).ToList(),
             debugConsole.Buttons.Union(toggleDebugConsole.Buttons).ToList(),
             keyCombo: false, held: false);
+            */
+        AllHotkeys[HotkeyID.OpenConsole] = OpenConsole = Unbound();
 
         // Respond to rebinding
-        Everest.Events.Input.OnInitialize += () => {
+        /*Everest.Events.Input.OnInitialize += () => {
             debugConsole = Celeste.Mod.Core.CoreModule.Settings.DebugConsole;
             toggleDebugConsole = Celeste.Mod.Core.CoreModule.Settings.ToggleDebugConsole;
 
@@ -133,7 +125,7 @@ public static class Hotkeys {
             AllHotkeys[HotkeyID.OpenConsole].Buttons.Clear();
             AllHotkeys[HotkeyID.OpenConsole].Buttons.AddRange(debugConsole.Buttons);
             AllHotkeys[HotkeyID.OpenConsole].Buttons.AddRange(toggleDebugConsole.Buttons);
-        };
+        };*/
 
         StudioHotkeys = AllHotkeys
             .Where(entry => !StudioIgnoreHotkeys.Contains(entry.Key))
@@ -145,12 +137,15 @@ public static class Hotkeys {
 
         return;
 
-        static Hotkey BindingToHotkey(ButtonBinding binding, bool held = false) {
-            return new(binding.Keys, binding.Buttons, true, held);
+        static Hotkey BindingToHotkey(List<InputKeys> binding, bool held = false) {
+            return new(binding, [], true, held);
+        }
+        static Hotkey Unbound() {
+            return new ([], [], false, false);
         }
     }
 
-    private static GamePadState GetGamePadState() {
+    /*private static GamePadState GetGamePadState() {
         for (int i = 0; i < 4; i++) {
             var state = GamePad.GetState((PlayerIndex) i);
             if (state.IsConnected) {
@@ -160,13 +155,14 @@ public static class Hotkeys {
 
         // No controller connected
         return default;
-    }
+    }*/
+    
     internal static void UpdateMeta() {
         // Only update if the keys aren't already used for something else
         bool updateKey = true, updateButton = true;
 
         // Prevent triggering hotkeys while writing text
-        if (Engine.Commands.Open) {
+        /*if (Engine.Commands.Open) {
             updateKey = false;
         } else if (TextInput.Initialized && typeof(TextInput).GetFieldValue<Action<char>>("_OnInput") is { } inputEvent) {
             // ImGuiHelper is always subscribed, so ignore it
@@ -194,9 +190,9 @@ public static class Hotkeys {
                 }
             }
         }
+        */
 
-        kbState = Keyboard.GetState();
-        padState = GetGamePadState();
+        // padState = GetGamePadState();
         foreach (var hotkey in AllHotkeys.Values) {
             if (hotkey == InfoHud) {
                 hotkey.Update(); // Always update Info HUD
@@ -212,7 +208,8 @@ public static class Hotkeys {
     }
 
     private static void AfterUpdate() {
-        if (Engine.Scene is Level level && (!level.Paused || level.PauseMainMenuOpen || Manager.Running)) {
+        /*
+         if (Engine.Scene is Level level && (!level.Paused || level.PauseMainMenuOpen || Manager.Running)) {
             if (Hitboxes.Pressed) {
                 TasSettings.ShowHitboxes = !TasSettings.ShowHitboxes;
                 CelesteTasModule.Instance.SaveSettings();
@@ -232,9 +229,14 @@ public static class Hotkeys {
                 TasSettings.CenterCamera = !TasSettings.CenterCamera;
                 CelesteTasModule.Instance.SaveSettings();
             }
+            
+            if (CenterCamera.Pressed) {
+                TasSettings.CenterCamera.Value = !TasSettings.CenterCamera.Value;
+            }
         }
 
         Hud.Toggle();
+        */
     }
 
     [DisableRun]
@@ -302,36 +304,24 @@ public static class Hotkeys {
         }
 
         private bool IsKeyDown() {
-            if (Keys.Count == 0 || kbState == default) {
+            if (Keys.Count == 0) {
                 return false;
             }
 
-            return keyCombo ? Keys.All(kbState.IsKeyDown) : Keys.Any(kbState.IsKeyDown);
+            return keyCombo ? Keys.All(UnityEngine.Input.GetKey) : Keys.Any(UnityEngine.Input.GetKey);
         }
         private bool IsButtonDown() {
-            if (Buttons.Count == 0 || padState == default) {
+            if (Buttons.Count == 0) {
                 return false;
             }
 
-            return keyCombo ? Buttons.All(padState.IsButtonDown) : Buttons.Any(padState.IsButtonDown);
+            return keyCombo ? Buttons.All(UnityEngine.Input.GetMouseButton) : Buttons.Any(UnityEngine.Input.GetMouseButton);
         }
 
         public override string ToString() {
             List<string> result = new();
             if (Keys.IsNotEmpty()) {
-                result.Add(string.Join("+", Keys.Select(key => key switch {
-                    InputKeys.D0 => "0",
-                    InputKeys.D1 => "1",
-                    InputKeys.D2 => "2",
-                    InputKeys.D3 => "3",
-                    InputKeys.D4 => "4",
-                    InputKeys.D5 => "5",
-                    InputKeys.D6 => "6",
-                    InputKeys.D7 => "7",
-                    InputKeys.D8 => "8",
-                    InputKeys.D9 => "9",
-                    _ => key.ToString(),
-                })));
+                result.Add(string.Join("+", Keys.Select(key => key.ToString())));
             }
 
             if (Buttons.IsNotEmpty()) {
@@ -347,8 +337,8 @@ public static class Hotkeys {
 /// Cannot use MInput, since that isn't updated while paused and already used for TAS inputs
 internal static class MouseInput {
     public class Button {
-        private DateTime doublePressTimeout;
-        private DateTime repeatTimeout;
+        // private DateTime doublePressTimeout;
+        // private DateTime repeatTimeout;
 
         public bool Check { get; private set; }
         public bool Pressed => !LastCheck && Check;
@@ -359,7 +349,7 @@ internal static class MouseInput {
 
         public bool LastCheck { get; set; }
 
-        public void Update(ButtonState state) {
+        /*public void Update(ButtonState state) {
             LastCheck = Check;
             Check = state == ButtonState.Pressed;
 
@@ -378,7 +368,7 @@ internal static class MouseInput {
                 Repeated = false;
                 repeatTimeout = default;
             }
-        }
+        }*/
     }
 
     public static bool Updating { get; private set; }
@@ -387,8 +377,8 @@ internal static class MouseInput {
     public static Vector2 PositionDelta => Position - lastPosition;
     private static Vector2 lastPosition;
 
-    public static int WheelDelta { get; private set; }
-    private static int lastWheel;
+    public static float WheelDelta { get; private set; }
+    private static float lastWheel;
 
     public static readonly Button Left = new();
     public static readonly Button Middle = new();
@@ -399,26 +389,26 @@ internal static class MouseInput {
         // Avoid checking mouse inputs while fast forwarding for performance
         if (Manager.FastForwarding) {
             lastPosition = Position;
-            Left.Update(ButtonState.Released);
-            Middle.Update(ButtonState.Released);
-            Right.Update(ButtonState.Released);
+            // Left.Update(ButtonState.Released);
+            // Middle.Update(ButtonState.Released);
+            // Right.Update(ButtonState.Released);
             WheelDelta = 0;
 
             return;
         }
 
         Updating = true;
-        var mouseState = Mouse.GetState();
+        var mouseDelta = UnityEngine.Input.mouseScrollDelta.x;
         Updating = false;
 
         lastPosition = Position;
-        Position = new Vector2(mouseState.X, mouseState.Y);
+        Position = UnityEngine.Input.mousePosition;
 
-        WheelDelta = mouseState.ScrollWheelValue - lastWheel;
-        lastWheel = mouseState.ScrollWheelValue;
+        WheelDelta = mouseDelta - lastWheel;
+        lastWheel = mouseDelta;
 
-        Left.Update(mouseState.LeftButton);
-        Middle.Update(mouseState.MiddleButton);
-        Right.Update(mouseState.RightButton);
+        // Left.Update(UnityEngine.Input.GetMouseButton(0) ? ButtonState.Pressed : ButtonState.Released);
+        // Middle.Update(UnityEngine.Input.GetMouseButton(2) ? ButtonState.Pressed : ButtonState.Released);
+        // Right.Update(UnityEngine.Input.GetMouseButton(1) ? ButtonState.Pressed : ButtonState.Released);
     }
 }

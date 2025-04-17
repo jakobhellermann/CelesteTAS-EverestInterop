@@ -1,11 +1,9 @@
-﻿using System;
+﻿using BepInEx.Logging;
+using JetBrains.Annotations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Celeste.Mod;
-using Celeste.Mod.Helpers;
-using JetBrains.Annotations;
-using TAS.Module;
 
 namespace TAS.Utils;
 
@@ -22,8 +20,8 @@ public static class AttributeUtils {
     /// Gathers all static, parameterless methods with attribute T
     /// Only searches through CelesteTAS itself
     public static void CollectOwnMethods<T>(params Type[] parameterTypes) where T : Attribute {
-        attributeMethods[typeof(T)] = typeof(CelesteTasModule).Assembly
-            .GetTypesSafe()
+        attributeMethods[typeof(T)] = typeof(TasMod).Assembly
+            .GetTypes()
             .SelectMany(type => type.Collect<T>(parameterTypes))
             // Invoke higher priorities later in the chain (i.e. on top of everything else)
             .OrderBy(info => {
@@ -38,8 +36,8 @@ public static class AttributeUtils {
     /// Gathers all static, parameterless methods with attribute T
     /// Searches through all mods - Should only be called after Load()
     public static void CollectAllMethods<T>(params Type[] parameterTypes) where T : Attribute {
-        attributeMethods[typeof(T)] = FakeAssembly.GetFakeEntryAssembly()
-            .GetTypesSafe()
+        attributeMethods[typeof(T)] = typeof(TasMod).Assembly
+            .GetTypes()
             .SelectMany(type => type.Collect<T>(parameterTypes))
             // Invoke higher priorities later in the chain (i.e. on top of everything else)
             .OrderBy(info => {
@@ -54,11 +52,16 @@ public static class AttributeUtils {
     /// Invokes all previously gathered methods for attribute T
     public static void Invoke<T>(params object?[] parameters) where T : Attribute {
         if (!attributeMethods.TryGetValue(typeof(T), out var methods)) {
+            Log.Error($"Tried to call AttributeUtils.Invoke without collecting first: {typeof(T).Name}");
             return;
         }
 
         foreach (var method in methods) {
-            method.Invoke(null, parameters);
+            try {
+                method.Invoke(null, parameters);
+            } catch (Exception e) {
+                e.LogException($"Error invoking method {method.DeclaringType?.Name}::{method.Name}");
+            }
         }
     }
 
