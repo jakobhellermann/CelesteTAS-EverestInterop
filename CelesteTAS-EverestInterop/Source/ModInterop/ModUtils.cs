@@ -1,19 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Celeste;
-using Celeste.Mod;
-using Celeste.Mod.Helpers;
-using System.Collections.Generic;
-using TAS.Utils;
 
 namespace TAS.ModInterop;
 
 internal static class ModUtils {
-    public static readonly Assembly VanillaAssembly = typeof(Player).Assembly;
+    // public static readonly Assembly VanillaAssembly = typeof(Player).Assembly;
 
     /// Returns all specified type from the given mod, if the mod is present
-    public static Type? GetType(string modName, string fullTypeName) {
+    /*public static Type? GetType(string modName, string fullTypeName) {
         var asm = GetAssembly(modName);
         if (asm == null) {
             return null;
@@ -26,10 +22,10 @@ internal static class ModUtils {
         }
 
         return type;
-    }
+    }*/
 
     /// Returns all specified types from the given mod, if the mod is present
-    public static IEnumerable<Type> GetTypes(string modName, params string[] fullTypeNames) {
+    /*public static IEnumerable<Type> GetTypes(string modName, params string[] fullTypeNames) {
         var asm = GetAssembly(modName);
         if (asm == null) {
             yield break;
@@ -67,12 +63,16 @@ internal static class ModUtils {
 
         return method;
     }
-
+    */
+    
     public static Type[] GetTypes() {
-        return FakeAssembly.GetFakeEntryAssembly().GetTypes();
+        return new[] {
+            // VanillaAssembly, TODO(unity)
+            typeof(UnityEngine.Random).Assembly,
+        }.SelectMany(x => x.GetTypes()).ToArray();
     }
 
-    public static EverestModule? GetModule(string modName) {
+    /*public static EverestModule? GetModule(string modName) {
         return Everest.Modules.FirstOrDefault(module => module.Metadata?.Name == modName);
     }
 
@@ -82,5 +82,5 @@ internal static class ModUtils {
 
     public static Assembly? GetAssembly(string modName) {
         return GetModule(modName)?.GetType().Assembly;
-    }
+    }*/
 }

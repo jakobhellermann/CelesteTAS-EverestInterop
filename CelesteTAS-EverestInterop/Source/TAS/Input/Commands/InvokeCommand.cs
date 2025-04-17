@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Celeste.Mod;
-using JetBrains.Annotations;
-using Monocle;
 using StudioCommunication;
 using StudioCommunication.Util;
-using TAS.EverestInterop;
 using TAS.InfoHUD;
-using TAS.ModInterop;
 using TAS.Playback;
 using TAS.Utils;
 
@@ -62,18 +57,13 @@ public static class InvokeCommand {
 
     private static void ReportError(string message) {
         if (activeFile == null) {
-            $"Invoke Command Failed: {message}".ConsoleLog(LogLevel.Error);
+            Log.Toast($"Invoke Command Failed: {message}");
         } else {
             PopupToast.ShowAndLog($"""
                                    Invoke '{activeFile.Value.Name}' line {activeFile.Value.Line} failed:
                                    {message}
                                    """);
         }
-    }
-
-    [Monocle.Command("invoke", "Invoke level/session/entity method. eg invoke Level.Pause; invoke Player.Jump (CelesteTAS)"), UsedImplicitly]
-    private static void InvokeCmd() {
-        Invoke(Engine.Commands.commandHistory[0].Split([' ', ','], StringSplitOptions.RemoveEmptyEntries)[1..]);
     }
 
     // Invoke, Level.Method, Parameters...
