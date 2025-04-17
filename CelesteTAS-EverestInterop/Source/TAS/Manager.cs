@@ -1,24 +1,19 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using Celeste;
-using Celeste.Mod;
-using Celeste.Mod.UI;
-using Celeste.Pico8;
 using JetBrains.Annotations;
-using Monocle;
 using StudioCommunication;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using TAS.Communication;
 using TAS.EverestInterop;
 using TAS.Input;
 using TAS.Input.Commands;
 using TAS.ModInterop;
-using TAS.Module;
 using TAS.Playback;
 using TAS.Tools;
+using TAS.UnityInterop;
 using TAS.Utils;
+using UnityEngine;
 
 namespace TAS;
 
@@ -56,7 +51,18 @@ public static class Manager {
 
     public static bool Running => CurrState != State.Disabled;
     public static bool FastForwarding => Running && PlaybackSpeed >= 5.0f;
-    public static float PlaybackSpeed { get; private set; } = 1.0f;
+
+    private static float playbackSpeed = 1.0f;
+    public static float PlaybackSpeed {
+        get => playbackSpeed;
+        private set {
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (value == playbackSpeed) return;
+
+            playbackSpeed = value;
+            InputHelper.WriteFramerate();
+        }
+    }
 
     public static State CurrState, NextState;
     public static readonly InputController Controller = new();
@@ -73,39 +79,6 @@ public static class Manager {
     private static float frameStepBackTimeout = 0.0f;
     private static PopupToast.Entry? frameStepBackToast = null;
 
-#if DEBUG
-    // Hot-reloading support
-    [Load]
-    private static void RestoreStudioTasFilePath() {
-        if (Engine.Instance.GetDynamicDataInstance().Get<string>("CelesteTAS_FilePath") is { } filePath) {
-            Controller.FilePath = filePath;
-        }
-
-        // Stop TAS to avoid blocking reload
-        typeof(AssetReloadHelper)
-            .GetMethodInfo(nameof(AssetReloadHelper.Do), [typeof(string), typeof(Func<bool, Task>), typeof(bool), typeof(bool)])!
-            .IlHook((cursor, _) => {
-                var start = cursor.MarkLabel();
-                cursor.MoveBeforeLabels();
-
-                cursor.EmitLdarg2(); // bool silent
-
-                // Only disable TAS for non-silent reload actions
-                cursor.EmitBrtrue(start);
-                cursor.EmitDelegate(DisableRun);
-                cursor.EmitDelegate(SavestateManager.ClearAllSavestates); // Clean-up savestates
-            });
-    }
-
-    [Unload]
-    private static void SaveStudioTasFilePath() {
-        Engine.Instance.GetDynamicDataInstance().Set("CelesteTAS_FilePath", Controller.FilePath);
-
-        Controller.Stop();
-        Controller.Clear();
-    }
-#endif
-
     public static void EnableRun() {
         if (Running) {
             return;
@@ -117,7 +90,7 @@ public static class Manager {
         FrameStepBackTargetFrame = -1;
 
         Controller.Stop();
-        Controller.RefreshInputs();
+        Controller.RefreshInputs(forceRefresh: true);
 
         if (Controller.Inputs.Count == 0) {
             // Empty / Invalid file
@@ -141,6 +114,11 @@ public static class Manager {
         AttributeUtils.Invoke<DisableRunAttribute>();
 
         SyncChecker.ReportRunFinished();
+
+        if (CurrState == State.Paused) {
+            DisablePause();
+        }
+        
         CurrState = NextState = State.Disabled;
         Controller.Stop();
     }
@@ -150,8 +128,38 @@ public static class Manager {
     /// Will stop the TAS on the next update cycle
     public static void DisableRunLater() => NextState = State.Disabled;
 
+    public static void EnablePause() {
+        TimeHelper.OverwriteTimeScale = 0;
+
+        try {
+            // TODO(unity): pause animators
+        } catch (Exception e) {
+            Log.Error($"Error trying to snapshot animator: {e}");
+        }
+    }
+
+    private static List<(Animator, AnimatorSnapshot)> prePauseAnimatorStates = [];
+    
+    public static void DisablePause() {
+        foreach (var (anim, _) in prePauseAnimatorStates) {
+            // snapshot.Restore(anim);
+            anim.enabled = true;
+        }
+        prePauseAnimatorStates.Clear();
+
+        TimeHelper.OverwriteTimeScale = null;
+    }
+
     /// Updates the TAS itself
     public static void Update() {
+        if (CurrState != State.Paused && NextState == State.Paused) {
+            EnablePause();
+        }
+        if (CurrState == State.Paused && NextState != State.Paused) {
+            DisablePause();
+        }
+        
+        
         if (!Running && NextState == State.Running) {
             EnableRun();
         }
@@ -171,12 +179,6 @@ public static class Manager {
             return;
         }
 
-        if (CriticalErrorHandler.CurrentHandler != null) {
-            // Always prevent execution inside crash handler, even with Unsafe
-            // TODO: Move this after executing the first frame, once Everest fixes scene changes from the crash handler
-            DisableRun();
-            return;
-        }
 
         if (Controller.HasFastForward || FrameStepBackTargetFrame > 0) {
             NextState = State.Running;
@@ -222,19 +224,6 @@ public static class Manager {
             if (GameInterop.IsUnsafeInput()) {
                 SyncChecker.ReportUnsafeAction();
                 DisableRun();
-            }
-            // Disallow modifying options
-            else if (Engine.Scene is Level level && level.Tracker.GetEntityTrackIfNeeded<TextMenu>() is { } menu) {
-                var item = menu.Items.FirstOrDefault();
-
-                if (item is TextMenu.Header { Title: { } title }
-                    && (title == Dialog.Clean("OPTIONS_TITLE") || title == Dialog.Clean("MENU_VARIANT_TITLE")
-                        || Dialog.Has("MODOPTIONS_EXTENDEDVARIANTS_PAUSEMENU_BUTTON") && title == Dialog.Clean("MODOPTIONS_EXTENDEDVARIANTS_PAUSEMENU_BUTTON").ToUpperInvariant())
-                    || item is TextMenuExt.HeaderImage { Image: "menu/everest" }
-                ) {
-                    SyncChecker.ReportUnsafeAction();
-                    DisableRun();
-                }
             }
         }
     }
@@ -368,11 +357,12 @@ public static class Manager {
         }
 
         // Allow altering the playback speed with the right thumb-stick
-        float normalSpeed = Hotkeys.RightThumbSticksX switch {
+        /*float normalSpeed = Hotkeys.RightThumbSticksX switch {
             >=  0.001f => Hotkeys.RightThumbSticksX * TasSettings.FastForwardSpeed,
             <= -0.001f => (1 + Hotkeys.RightThumbSticksX) * TasSettings.SlowForwardSpeed,
             _          => 1.0f,
-        };
+        };*/
+        float normalSpeed = 1.0f;
 
         // Apply fast / slow forwarding
         switch (NextState) {
@@ -446,55 +436,10 @@ public static class Manager {
             LevelName = GameInfo.LevelName,
             ChapterTime = GameInfo.ChapterTime,
 
-            ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator && Engine.Scene is Level or Emulator,
+            // ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator && Engine.Scene is Level or Emulator,
         };
         GameInterop.SetStudioState(ref state);
 
         CommunicationWrapper.SendState(state);
-    }
-
-    [Monocle.Command("dump_tas", "Dumps the parsed TAS file into the console (CelesteTAS)"), UsedImplicitly]
-    private static void CmdDumpTas() {
-        if (Controller.NeedsReload) {
-            if (Running) {
-                "Cannot dump TAS file while running it with unparsed changes".Log(LogLevel.Error);
-                return;
-            }
-
-            // Pretend to start a TAS. so that AbortTas detection works
-            NextState = State.Running;
-            Controller.RefreshInputs(forceRefresh: true);
-            if (NextState == State.Disabled) {
-                "TAS contains errors. Cannot dump to console".ConsoleLog(LogLevel.Error);
-                return;
-            }
-            NextState = State.Disabled;
-        }
-
-        $"TAS file dump for '{Controller.FilePath}':".Log();
-
-        var writer = Console.Out;
-        for (int i = 0; i < Controller.Inputs.Count;) {
-            foreach (var comment in Controller.Comments.GetValueOrDefault(i, [])) {
-                writer.WriteLine($"#{comment.Text}");
-            }
-            foreach (var command in Controller.Commands.GetValueOrDefault(i, [])) {
-                if (command.Attribute.ExecuteTiming == ExecuteTiming.Parse) {
-                    // Comment-out parse-only commands
-                    writer.WriteLine($"# {command.CommandLine.ToString()}");
-                } else {
-                    writer.WriteLine(command.CommandLine.ToString());
-                }
-            }
-            if (Controller.FastForwards.TryGetValue(i, out var fastForward)) {
-                writer.WriteLine(fastForward.ToString());
-            }
-
-            writer.WriteLine(Controller.Inputs[i]);
-            i += Controller.Inputs[i].Frames;
-        }
-        writer.Flush();
-
-        "Successfully dumped TAS file to console".ConsoleLog();
     }
 }

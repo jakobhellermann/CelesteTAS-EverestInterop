@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Input;
 using StudioCommunication;
-using System.Linq;
-using System.Threading.Tasks;
 using TAS.Utils;
 
 namespace TAS.Input.Commands;
@@ -18,7 +16,7 @@ public static class PressCommand {
                 yield break;
             }
 
-            foreach (var key in Enum.GetValues<Keys>()) {
+            foreach (var key in Enum.GetValues(typeof(Keys))) {
                 yield return new CommandAutoCompleteEntry { Name = key.ToString(), Extra = "Keys", IsDone = true };
             }
         }
@@ -49,6 +47,7 @@ public static class PressCommand {
         PressKeys.Clear();
     }
 
+    // TODO: implement
     public static HashSet<Keys> GetKeys() {
         HashSet<Keys> result = new(PressKeys);
 

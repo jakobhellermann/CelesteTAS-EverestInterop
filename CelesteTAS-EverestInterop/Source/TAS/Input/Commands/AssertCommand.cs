@@ -1,8 +1,7 @@
 ﻿using System;
-using StudioCommunication;
 using System.Collections.Generic;
 using System.IO;
-using TAS.InfoHUD;
+using StudioCommunication;
 using TAS.Tools;
 using TAS.Utils;
 
@@ -18,7 +17,7 @@ public static class AssertCommand {
                 yield break;
             }
 
-            foreach (var mode in Enum.GetValues<AssertCondition>()) {
+            foreach (var mode in Enum.GetValues(typeof(AssertCondition))) {
                 yield return new CommandAutoCompleteEntry { Name = mode.ToString(), Extra = "Condition", HasNext = true };
             }
         }
@@ -64,7 +63,8 @@ public static class AssertCommand {
             string? failureMessage = args.Length >= 4 ? args[3] : null;
 
             Running = true;
-            string actual = string.Join("\n", InfoCustom.ParseTemplateLine(actualTemplate, 0, forceAllowCodeExecution: true));
+            // string actual = InfoCustom.ParseTemplate(actualTemplate, 0, [], false);
+            var actual = "todo infocustom";
             Running = false;
 
             switch (condition) {

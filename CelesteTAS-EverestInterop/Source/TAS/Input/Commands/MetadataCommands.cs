@@ -1,13 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using Celeste;
-using Celeste.Mod;
-using Monocle;
 using StudioCommunication;
 using TAS.Communication;
-using TAS.EverestInterop;
-using TAS.Module;
 using TAS.Tools;
 using TAS.Utils;
 
@@ -16,13 +11,15 @@ namespace TAS.Input.Commands;
 /// Commands which don't influence gameplay at all and just provide information to the user
 internal static class MetadataCommands {
     // Track starting conditions for TAS to properly calculate (Midway)FileTime
-    public static (long FileTimeTicks, int FileSlot)? TasStartInfo;
+    // public static (long FileTimeTicks, int FileSlot)? TasStartInfo;
 
     /// Total real-time frames in the TAS, without loading times
-    internal static (int FrameCount, int FileSlot)? RealTimeInfo = null;
+    // internal static (int FrameCount, int FileSlot)? RealTimeInfo = null;
 
-    [Load]
+    /*[Load]
     private static void Load() {
+        On.Celeste.Level.Begin += LevelOnBegin;
+        On.Celeste.Level.UpdateTime += LevelOnUpdateTime;
         Everest.Events.Level.OnComplete += UpdateChapterTime;
 
         typeof(Level)
@@ -90,13 +87,7 @@ internal static class MetadataCommands {
 
         UpdateAllMetadata("ChapterTime", _ => GameInfo.GetChapterTime(level));
     }
-
-    public static void UpdateRecordCount(InputController inputController) {
-        UpdateAllMetadata(
-            "RecordCount",
-            command => (int.Parse(command.Args.FirstOrDefault() ?? "0") + 1).ToString(),
-            command => int.TryParse(command.Args.FirstOrDefault() ?? "0", out int _));
-    }
+*/
 
     private class RecordCountMeta : ITasCommandMeta {
         public string Insert => "RecordCount: 1";
@@ -123,6 +114,7 @@ internal static class MetadataCommands {
         // dummy
     }
 
+    /*
     [TasCommand("MidwayFileTime", Aliases = ["MidwayFileTime:", "MidwayFileTime："], CalcChecksum = false)]
     private static void MidwayFileTimeCommand(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
         if (TasStartInfo == null || SaveData.Instance == null) {
@@ -155,6 +147,7 @@ internal static class MetadataCommands {
             _ => $"{TimeSpan.FromSeconds(RealTimeInfo.Value.FrameCount / 60.0f).ShortGameplayFormat()}({RealTimeInfo.Value.FrameCount})",
             command => Manager.Controller.CurrentCommands.Contains(command));
     }
+    */
 
     private static void UpdateAllMetadata(string commandName, Func<Command, string> getMetadata, Func<Command, bool>? predicate = null) {
         string tasFilePath = Manager.Controller.FilePath;
@@ -205,5 +198,12 @@ internal static class MetadataCommands {
         Manager.Controller.NeedsReload = needsReload;
 
         CommunicationWrapper.SendUpdateLines(updateLines);
+    }
+    
+    public static void UpdateRecordCount(InputController inputController) {
+        UpdateAllMetadata(
+            "RecordCount",
+            command => (int.Parse(command.Args.FirstOrDefault() ?? "0") + 1).ToString(),
+            command => int.TryParse(command.Args.FirstOrDefault() ?? "0", out _));
     }
 }

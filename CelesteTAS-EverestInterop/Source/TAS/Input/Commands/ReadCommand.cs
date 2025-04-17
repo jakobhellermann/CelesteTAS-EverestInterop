@@ -1,13 +1,11 @@
-using Celeste;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Celeste.Mod;
+using BepInEx.Logging;
 using StudioCommunication;
 using StudioCommunication.Util;
-using TAS.Utils;
 
 namespace TAS.Input.Commands;
 
@@ -165,11 +163,12 @@ public static class ReadCommand {
 
         string readCommandDetail = $"{commandName}: line {fileLine} of the file \"{filePath}\"";
         if (readCommandStack.Contains(readCommandDetail)) {
-            $"Multiple read commands lead to dead loops:\n{string.Join("\n", readCommandStack)}".Log(LogLevel.Warn);
+            $"Multiple read commands lead to dead loops:\n{string.Join("\n", readCommandStack)}".Log(LogLevel.Warning);
             AbortTas("Multiple read commands lead to dead loops\nPlease check log.txt for more details");
             return;
         }
 
+        /*
         var controller = Manager.Controller;
 
         // When reading a '#Start' label, assert that the correct level as actually loaded (relevant for fullgame runs)
@@ -185,9 +184,10 @@ public static class ReadCommand {
                 }
             }
         }
+        */
 
         // Restore settings changed by read file after we continue with the current one
-        var origAnalogMode = AnalogHelper.AnalogMode;
+        // var origAnalogMode = AnalogHelper.AnalogMode;
 
         readCommandStack.Add(readCommandDetail);
         Manager.Controller.ReadFile(path, startLine, endLine, studioLine);
@@ -195,7 +195,7 @@ public static class ReadCommand {
             readCommandStack.RemoveAt(readCommandStack.Count - 1);
         }
 
-        Manager.Controller.ReadLine($"AnalogMode,{origAnalogMode}", filePath, fileLine, studioLine);
+        // Manager.Controller.ReadLine($"AnalogMode,{origAnalogMode}", filePath, fileLine, studioLine);
     }
 
     private static string? FindTargetFile(string commandName, string fileDirectory, string filePath, out string errorMessage) {
@@ -294,7 +294,7 @@ public static class ReadCommand {
 
         var labelRegex = new Regex(@$"^#\s*{Regex.Escape(labelOrLineNumber)}$");
         for (lineNumber = 1; lineNumber <= lines.Length; lineNumber++) {
-            if (labelRegex.IsMatch(lines[lineNumber - 1].AsSpan().Trim())) {
+            if (labelRegex.IsMatch(lines[lineNumber - 1].Trim())) {
                 return true;
             }
         }

@@ -10,7 +10,7 @@ public static class SafeCommand {
 
     [TasCommand("Safe", ExecuteTiming = ExecuteTiming.Parse | ExecuteTiming.Runtime)]
     private static void Safe(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
-        if (ParsingCommand) {
+        if (Command.Parsing) {
             DisallowUnsafeInputParsing = true;
         } else {
             DisallowUnsafeInput = true;
@@ -19,7 +19,7 @@ public static class SafeCommand {
 
     [TasCommand("Unsafe", ExecuteTiming = ExecuteTiming.Parse | ExecuteTiming.Runtime)]
     private static void Unsafe(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
-        if (ParsingCommand) {
+        if (Command.Parsing) {
             DisallowUnsafeInputParsing = false;
         } else {
             DisallowUnsafeInput = false;

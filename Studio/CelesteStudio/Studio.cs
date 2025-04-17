@@ -649,10 +649,10 @@ public sealed class Studio : Form {
     private MenuBar CreateMenu() {
         const int minDecimals = 2;
         const int maxDecimals = 12;
-        const int minFastForwardSpeed = 2;
-        const int maxFastForwardSpeed = 30;
-        const float minSlowForwardSpeed = 0.1f;
-        const float maxSlowForwardSpeed = 0.9f;
+        // const int minFastForwardSpeed = 2;
+        // const int maxFastForwardSpeed = 30;
+        // const float minSlowForwardSpeed = 0.1f;
+        // const float maxSlowForwardSpeed = 0.9f;
 
         // NOTE: Index 0 is the recent files is the current file, so that is skipped
         var recentFilesMenu = new SubMenuItem { Text = "Open &Recent" };
@@ -724,10 +724,10 @@ public sealed class Studio : Form {
                 new SeparatorMenuItem(),
                 SaveFile,
                 SaveFileAs,
-                new SeparatorMenuItem(),
-                MenuUtils.CreateAction("&Convert to LibTAS Movie..."),
-                new SeparatorMenuItem(),
-                RecordTAS.CreateItem().Apply(item => item.Enabled = CommunicationWrapper.Connected),
+                // new SeparatorMenuItem(),
+                // MenuUtils.CreateAction("&Convert to LibTAS Movie..."),
+                // new SeparatorMenuItem(),
+                // RecordTAS.CreateItem().Apply(item => item.Enabled = CommunicationWrapper.Connected),
             }},
             new SubMenuItem {Text = "&Settings", Items = {
                 new SubMenuItem {Text = "Automatic Backups", Items = {
@@ -761,8 +761,8 @@ public sealed class Studio : Form {
             new SubMenuItem { Text = "&View", Items = {
                 ShowGameInfo,
                 MenuUtils.CreateSettingNumberInput("Maximum Game Info Height", nameof(Settings.MaxGameInfoHeight), 0.1f, 0.9f, 0.05f, percent => $"{percent * 100.0f:F0}%"),
-                ShowSubpixelIndicator,
-                MenuUtils.CreateSettingNumberInput("Subpixel Indicator Scale", nameof(Settings.SubpixelIndicatorScale), 0.1f, 10.0f, 0.25f),
+                // ShowSubpixelIndicator,
+                // MenuUtils.CreateSettingNumberInput("Subpixel Indicator Scale", nameof(Settings.SubpixelIndicatorScale), 0.1f, 10.0f, 0.25f),
                 new SeparatorMenuItem(),
                 AlwaysOnTop,
                 WrapComments,
@@ -772,38 +772,38 @@ public sealed class Studio : Form {
             }},
             new SubMenuItem {Text = "&Game Settings", Enabled = CommunicationWrapper.Connected, Items = {
                 MenuUtils.CreateGameSettingToggle("&Hitboxes", nameof(GameSettings.Hitboxes)),
-                MenuUtils.CreateGameSettingToggle("&Trigger Hitboxes", nameof(GameSettings.TriggerHitboxes)),
-                MenuUtils.CreateGameSettingToggle("Unloaded Room Hitboxes", nameof(GameSettings.UnloadedRoomsHitboxes)),
-                MenuUtils.CreateGameSettingToggle("Camera Hitboxes", nameof(GameSettings.CameraHitboxes)),
-                MenuUtils.CreateGameSettingToggle("&Simplified Hitboxes", nameof(GameSettings.SimplifiedHitboxes)),
-                MenuUtils.CreateGameSettingEnum<ActualCollideHitboxType>("&Actual Collide Hitboxes", nameof(GameSettings.ActualCollideHitboxes), ["Off", "Override", "Append"]),
-                new SeparatorMenuItem(),
-                MenuUtils.CreateGameSettingToggle("Simplified &Graphics", nameof(GameSettings.SimplifiedGraphics)),
-                MenuUtils.CreateGameSettingToggle("Game&play", nameof(GameSettings.Gameplay)),
-                new SeparatorMenuItem(),
+                // MenuUtils.CreateGameSettingToggle("&Trigger Hitboxes", nameof(GameSettings.TriggerHitboxes)),
+                // MenuUtils.CreateGameSettingToggle("Unloaded Room Hitboxes", nameof(GameSettings.UnloadedRoomsHitboxes)),
+                // MenuUtils.CreateGameSettingToggle("Camera Hitboxes", nameof(GameSettings.CameraHitboxes)),
+                // MenuUtils.CreateGameSettingToggle("&Simplified Hitboxes", nameof(GameSettings.SimplifiedHitboxes)),
+                // MenuUtils.CreateGameSettingEnum<ActualCollideHitboxType>("&Actual Collide Hitboxes", nameof(GameSettings.ActualCollideHitboxes), ["Off", "Override", "Append"]),
+                // new SeparatorMenuItem(),
+                // MenuUtils.CreateGameSettingToggle("Simplified &Graphics", nameof(GameSettings.SimplifiedGraphics)),
+                // MenuUtils.CreateGameSettingToggle("Game&play", nameof(GameSettings.Gameplay)),
+                // new SeparatorMenuItem(),
                 MenuUtils.CreateGameSettingToggle("&Center Camera", nameof(GameSettings.CenterCamera)),
-                MenuUtils.CreateGameSettingToggle("Center Camera Horizontally Only", nameof(GameSettings.CenterCameraHorizontallyOnly)),
-                MenuUtils.CreateGameSettingToggle("Enable Extended Camera Dynamics for Center Camera", nameof(GameSettings.EnableExCameraDynamicsForCenterCamera)),
-                new SeparatorMenuItem(),
-                MenuUtils.CreateGameSettingToggle("&Info HUD", nameof(GameSettings.InfoHud)),
-                MenuUtils.CreateGameSettingToggle("TAS Input Info", nameof(GameSettings.InfoTasInput)),
-                MenuUtils.CreateGameSettingToggle("Game Info", nameof(GameSettings.InfoGame)),
-                MenuUtils.CreateGameSettingToggle("Subpixel Indicator", nameof(GameSettings.InfoSubpixelIndicator)),
-                MenuUtils.CreateGameSettingEnum<HudOptions>("Custom Info", nameof(GameSettings.InfoCustom), ["Off", "HUD Only", "Studio Only", "Both"]),
-                MenuUtils.CreateGameSettingEnum<WatchEntityType>("Watch Entity Info (HUD)", nameof(GameSettings.InfoWatchEntityHudType), ["None", "Position", "Declared Only", "All"]),
-                MenuUtils.CreateGameSettingEnum<WatchEntityType>("Watch Entity Info (Studio)", nameof(GameSettings.InfoWatchEntityStudioType), ["None", "Position", "Declared Only", "All"]),
+                // MenuUtils.CreateGameSettingToggle("Center Camera Horizontally Only", nameof(GameSettings.CenterCameraHorizontallyOnly)),
+                // MenuUtils.CreateGameSettingToggle("Enable Extended Camera Dynamics for Center Camera", nameof(GameSettings.EnableExCameraDynamicsForCenterCamera)),
+                // new SeparatorMenuItem(),
+                // MenuUtils.CreateGameSettingToggle("&Info HUD", nameof(GameSettings.InfoHud)),
+                // MenuUtils.CreateGameSettingToggle("TAS Input Info", nameof(GameSettings.InfoTasInput)),
+                // MenuUtils.CreateGameSettingToggle("Game Info", nameof(GameSettings.InfoGame)),
+                // MenuUtils.CreateGameSettingToggle("Subpixel Indicator", nameof(GameSettings.InfoSubpixelIndicator)),
+                // MenuUtils.CreateGameSettingEnum<HudOptions>("Custom Info", nameof(GameSettings.InfoCustom), ["Off", "HUD Only", "Studio Only", "Both"]),
+                // MenuUtils.CreateGameSettingEnum<WatchEntityType>("Watch Entity Info (HUD)", nameof(GameSettings.InfoWatchEntityHudType), ["None", "Position", "Declared Only", "All"]),
+                // MenuUtils.CreateGameSettingEnum<WatchEntityType>("Watch Entity Info (Studio)", nameof(GameSettings.InfoWatchEntityStudioType), ["None", "Position", "Declared Only", "All"]),
                 new SeparatorMenuItem(),
                 MenuUtils.CreateGameSettingNumberInput("Position Decimals", nameof(GameSettings.PositionDecimals), minDecimals, maxDecimals, 1),
                 MenuUtils.CreateGameSettingNumberInput("Speed Decimals", nameof(GameSettings.SpeedDecimals), minDecimals, maxDecimals, 1),
                 MenuUtils.CreateGameSettingNumberInput("Velocity Decimals", nameof(GameSettings.VelocityDecimals), minDecimals, maxDecimals, 1),
-                MenuUtils.CreateGameSettingNumberInput("Angle Decimals", nameof(GameSettings.AngleDecimals), minDecimals, maxDecimals, 1),
-                MenuUtils.CreateGameSettingNumberInput("Custom Info Decimals", nameof(GameSettings.CustomInfoDecimals), minDecimals, maxDecimals, 1),
-                MenuUtils.CreateGameSettingNumberInput("Subpixel Indicator Decimals", nameof(GameSettings.SubpixelIndicatorDecimals), minDecimals, maxDecimals, 1),
-                MenuUtils.CreateGameSettingEnum<SpeedUnit>("Speed Unit", nameof(GameSettings.SpeedUnit), ["px/s", "px/f"]),
-                MenuUtils.CreateGameSettingEnum<SpeedUnit>("Velocity Unit", nameof(GameSettings.VelocityUnit), ["px/s", "px/f"]),
-                new SeparatorMenuItem(),
-                MenuUtils.CreateGameSettingNumberInput("Fast Forward Speed", nameof(GameSettings.FastForwardSpeed), minFastForwardSpeed, maxFastForwardSpeed, 1),
-                MenuUtils.CreateGameSettingNumberInput("Slow Forward Speed", nameof(GameSettings.SlowForwardSpeed), minSlowForwardSpeed, maxSlowForwardSpeed, 0.1f),
+                // MenuUtils.CreateGameSettingNumberInput("Angle Decimals", nameof(GameSettings.AngleDecimals), minDecimals, maxDecimals, 1),
+                // MenuUtils.CreateGameSettingNumberInput("Custom Info Decimals", nameof(GameSettings.CustomInfoDecimals), minDecimals, maxDecimals, 1),
+                // MenuUtils.CreateGameSettingNumberInput("Subpixel Indicator Decimals", nameof(GameSettings.SubpixelIndicatorDecimals), minDecimals, maxDecimals, 1),
+                // MenuUtils.CreateGameSettingEnum<SpeedUnit>("Speed Unit", nameof(GameSettings.SpeedUnit), ["px/s", "px/f"]),
+                // MenuUtils.CreateGameSettingEnum<SpeedUnit>("Velocity Unit", nameof(GameSettings.VelocityUnit), ["px/s", "px/f"]),
+                // new SeparatorMenuItem(),
+                // MenuUtils.CreateGameSettingNumberInput("Fast Forward Speed", nameof(GameSettings.FastForwardSpeed), minFastForwardSpeed, maxFastForwardSpeed, 1),
+                // MenuUtils.CreateGameSettingNumberInput("Slow Forward Speed", nameof(GameSettings.SlowForwardSpeed), minSlowForwardSpeed, maxSlowForwardSpeed, 0.1f),
             }},
             new SubMenuItem { Text = "&Tools", Items = {
                 MenuUtils.CreateAction("&Project File Formatter", Keys.None, ProjectFileFormatterDialog.Show).Apply(item => item.Enabled = Editor.Document.FilePath != Document.ScratchFile),

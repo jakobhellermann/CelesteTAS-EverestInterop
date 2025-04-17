@@ -1,15 +1,12 @@
 global using static TAS.GlobalVariables;
-global using MonocleCommand = Monocle.Command;
-using Celeste.Mod;
-using TAS.Input;
+using BepInEx.Logging;
 using TAS.Module;
 using TAS.Playback;
 
 namespace TAS;
 
 public static class GlobalVariables {
-    public static CelesteTasSettings TasSettings => CelesteTasSettings.Instance;
-    public static bool ParsingCommand  => Command.Parsing;
+    public static CelesteTasSettings TasSettings => TasMod.Instance.TasSettings;
 
     public static void AbortTas(string message, bool log = false, float duration = PopupToast.DefaultDuration) {
 #if DEBUG

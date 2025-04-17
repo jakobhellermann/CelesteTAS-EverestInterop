@@ -154,8 +154,6 @@ public static class AutoInputCommand {
                     arguments.SkipWaitingFrames = 0;
                 }
             }
-        } else if (!Command.Parsing) {
-            StunPauseCommand.SkipInput(args, filePath, fileLine);
         }
     }
 
@@ -217,10 +215,6 @@ public static class AutoInputCommand {
     }
 
     public static void ParseInsertedLines(Arguments arguments, string filePath, int studioLine, int repeatIndex, int repeatCount) {
-        if (arguments.StunPause) {
-            StunPauseCommand.UpdatePauseInputs(arguments);
-        }
-
         arguments.Inserting = true;
         Manager.Controller.ReadLines(
             arguments.Inputs!,
