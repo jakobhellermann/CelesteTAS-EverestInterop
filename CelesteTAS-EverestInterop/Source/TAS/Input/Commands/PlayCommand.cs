@@ -1,10 +1,9 @@
-using Celeste.Mod;
-using StudioCommunication;
-using StudioCommunication.Util;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using TAS.Utils;
+using BepInEx.Logging;
+using StudioCommunication;
+using StudioCommunication.Util;
 
 namespace TAS.Input.Commands;
 
@@ -50,7 +49,7 @@ public static class PlayCommand {
         }
 
         if (startLine <= studioLine + 1) {
-            "Play command does not allow playback from before the current line".Log(LogLevel.Warn);
+            "Play command does not allow playback from before the current line".Log(LogLevel.Warning);
             return;
         }
 
