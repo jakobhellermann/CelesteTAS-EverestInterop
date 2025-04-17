@@ -11,11 +11,11 @@ public readonly record struct Result<TValue, TError>(TValue Value, TError? Error
     public static implicit operator TError(Result<TValue, TError> result) => result.Error!;
 
     /// Checks if the operation was successfully
-    [MemberNotNullWhen(false, nameof(Error))]
+    // [MemberNotNullWhen(false, nameof(Error))]
     public bool Success => Error == null;
 
     /// Checks if the operations has failed
-    [MemberNotNullWhen(true, nameof(Error))]
+    // [MemberNotNullWhen(true, nameof(Error))]
     public bool Failure => Error != null;
 
     /// Provides the result value if the operation was successful
@@ -38,11 +38,11 @@ public readonly record struct VoidResult<TError>(TError? Error) where TError : n
     public static implicit operator TError(VoidResult<TError> result) => result.Error!;
 
     /// Checks if the operation was successfully
-    [MemberNotNullWhen(false, nameof(Error))]
+    // [MemberNotNullWhen(false, nameof(Error))]
     public bool Success => Error == null;
 
     /// Checks if the operations has failed
-    [MemberNotNullWhen(true, nameof(Error))]
+    // [MemberNotNullWhen(true, nameof(Error))]
     public bool Failure => Error != null;
 
     /// Provides the result error if the operation has failed
