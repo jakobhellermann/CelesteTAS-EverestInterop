@@ -1,19 +1,15 @@
-using Celeste.Mod;
-using JetBrains.Annotations;
-using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using TAS.EverestInterop;
-using TAS.Input.Commands;
 using TAS.ModInterop;
-using TAS.Module;
 using TAS.Utils;
 using StudioCommunication;
 using StudioCommunication.Util;
 using System.Collections;
 using System.Runtime.CompilerServices;
+using TAS.EverestInterop;
+using TAS.Input.Commands;
 
 namespace TAS.InfoHUD;
 
@@ -80,45 +76,33 @@ public static class TargetQuery {
         }
 
         /// Provide a list of auto-complete entries which should be listed along base-types.
-        [MustDisposeResource]
+        // [MustDisposeResource]
         public virtual IEnumerator<CommandAutoCompleteEntry> ProvideGlobalEntries(string[] queryArgs, string queryPrefix, Variant variant, Type[]? targetTypeFilter) {
             yield break;
         }
 
         /// Overwrite the list of auto-complete entries which are provided for the members of the type
         /// Only invoked if <see cref="CanEnumerateMemberEntries"/> returned <c>true</c> for the type. <br/>
-        [MustDisposeResource]
+        // [MustDisposeResource]
         public virtual IEnumerator<CommandAutoCompleteEntry> EnumerateMemberEntries(Type type, Variant variant) {
             yield break;
         }
         /// Overwrite the list of auto-complete entries which are provided for the values of the type
         /// Only invoked if <see cref="CanEnumerateTypeEntries"/> returned <c>true</c> for the type. <br/>
-        [MustDisposeResource]
+        // [MustDisposeResource]
         public virtual IEnumerator<CommandAutoCompleteEntry> EnumerateTypeEntries(Type type, Variant variant) {
             yield break;
         }
     }
 
     /// Prevents invocations of methods / execution of Lua code in the Custom Info
-    public static bool PreventCodeExecution => EnforceLegalCommand.EnabledWhenRunning;
+    public static bool PreventCodeExecution => false;
 
     internal static readonly Dictionary<string, List<Type>> AllTypes = new();
     internal static readonly Dictionary<string, (List<Type> Types, string[] MemberArgs)> BaseTypeCache = [];
 
     private static readonly Handler[] Handlers = [
-        new SettingsQueryHandler(),
-        new SaveDataQueryHandler(),
-        new AssistsQueryHandler(),
-        new ExtendedVariantsQueryHandler(),
-        new EverestModuleSettingsQueryHandler(),
-        new EverestModuleSessionQueryHandler(),
-        new EverestModuleSaveDataQueryHandler(),
-        new SceneQueryHandler(),
-        new SessionQueryHandler(),
-        new EntityQueryHandler(),
-        new ComponentQueryHandler(),
-        new SpecialValueQueryHandler(),
-        new ModInteropQueryHandler(),
+        new MonobehaviourQueryHandler(),
     ];
 
     [Initialize(ConsoleEnhancements.InitializePriority + 1)]
@@ -151,7 +135,7 @@ public static class TargetQuery {
         }
     }
 
-    [MonocleCommand("get", "'get Type.fieldOrProperty' -> value | Example: 'get Player.Position', 'get Level.Wind' (CelesteTAS)"), UsedImplicitly]
+    /*[MonocleCommand("get", "'get Type.fieldOrProperty' -> value | Example: 'get Player.Position', 'get Level.Wind' (CelesteTAS)"), UsedImplicitly]
     private static void GetCmd(string? query) {
         if (query == null) {
             "No target-query specified".ConsoleLog(LogLevel.Error);
@@ -179,7 +163,7 @@ public static class TargetQuery {
                 }
             }
         }
-    }
+    }*/
 
     /// Parses a target-query and returns the results for that
     internal static Result<List<(object BaseInstance, object? Value)>, QueryError> GetMemberValues(string query, bool forceAllowCodeExecution = false) {
@@ -966,12 +950,12 @@ public static class TargetQuery {
             }
 
             // Resolve common base type
-            if (accum.Type.IsAssignableTo(error.Type)) {
+            if (error.type.IsAssignableFrom(accum.type)) {
                 return error;
             }
 
             // This will always terminate when ret == typeof(object)
-            while (!error.Type.IsAssignableTo(accum.Type)) {
+            while (!accum.Type.IsAssignableFrom(error.Type)) {
                 accum.Type = accum.Type.BaseType ?? typeof(object);
             }
             return accum;

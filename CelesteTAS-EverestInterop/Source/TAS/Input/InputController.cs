@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Celeste.Mod;
+using BepInEx.Logging;
 using JetBrains.Annotations;
 using StudioCommunication;
 using TAS.Input.Commands;
-using TAS.Module;
 using TAS.Utils;
 
 namespace TAS.Input;
@@ -37,9 +36,9 @@ public class InputController {
     public readonly SortedDictionary<int, FastForward> FastForwards = new();
     public readonly SortedDictionary<int, FastForward> FastForwardLabels = new();
 
-    public InputFrame? Previous => Inputs!.GetValueOrDefault(CurrentFrameInTas - 1);
-    public InputFrame Current => Inputs!.GetValueOrDefault(CurrentFrameInTas)!;
-    public InputFrame? Next => Inputs!.GetValueOrDefault(CurrentFrameInTas + 1);
+    public InputFrame? Previous => Inputs.GetValueOrDefault(CurrentFrameInTas - 1);
+    public InputFrame Current => Inputs.GetValueOrDefault(CurrentFrameInTas)!;
+    public InputFrame? Next => Inputs.GetValueOrDefault(CurrentFrameInTas + 1);
 
     public int CurrentFrameInTas { get; set; } = 0;
     public int CurrentFrameInInput { get; set; } = 0;
@@ -73,7 +72,7 @@ public class InputController {
     /// Whether the TAS should be paused on this frame
     public bool Break => CurrentFastForward?.Frame == CurrentFrameInTas;
 
-    private static readonly string DefaultFilePath = Path.Combine(Everest.PathEverest, "Celeste.tas");
+    private static readonly string DefaultFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Celeste.tas");
 
     private string filePath = string.Empty;
     public string FilePath {
@@ -107,7 +106,7 @@ public class InputController {
             // Preload the TAS file
             Stop();
             Clear();
-            RefreshInputs();
+            RefreshInputs(forceRefresh: true);
         }
     }
 
@@ -138,10 +137,13 @@ public class InputController {
                 }
             }
         } else {
+            Log.Error("Error trying to refresh inputs");
             // Something failed while trying to parse
             Clear();
         }
 
+        Log.Info($"Read file {FilePath}: {Inputs.Count} frames");
+        
         CurrentFrameInTas = Math.Min(Inputs.Count, CurrentFrameInTas);
     }
 
@@ -173,8 +175,8 @@ public class InputController {
             return;
         }
 
-        ExportGameInfo.ExportInfo();
-        StunPauseCommand.UpdateSimulateSkipInput();
+        // ExportGameInfo.ExportInfo();
+        // StunPauseCommand.UpdateSimulateSkipInput();
         InputHelper.FeedInputs(Current);
 
         // Increment if it's still the same input
@@ -262,7 +264,7 @@ public class InputController {
                 Comments[CurrentParsingFrame] = comments = [];
             }
             comments.Add(new Comment(CurrentParsingFrame, path, fileLine, lineText));
-        } else if (!AutoInputCommand.TryInsert(path, lineText, studioLine, repeatIndex, repeatCount)) {
+        } else if (/*!AutoInputCommand.TryInsert(path, lineText, studioLine, repeatIndex, repeatCount)*/ true) {
             AddFrames(lineText, studioLine, repeatIndex, repeatCount);
         }
 
@@ -282,7 +284,7 @@ public class InputController {
             Inputs.Add(inputFrame);
         }
 
-        LibTasHelper.WriteLibTasFrame(inputFrame);
+        // LibTasHelper.WriteLibTasFrame(inputFrame);
     }
 
     /// Fast-forwards to the next label / breakpoint
@@ -355,7 +357,7 @@ public class InputController {
 
             try {
                 watcher.EnableRaisingEvents = true;
-                $"Started watching '{path}' for changes...".Log(LogLevel.Verbose);
+                $"Started watching '{path}' for changes...".Log(LogLevel.Debug);
             } catch (Exception e) {
                 e.LogException($"Failed watching folder: {watcher.Path}, filter: {watcher.Filter}");
                 watcher.Dispose();
@@ -366,7 +368,7 @@ public class InputController {
         }
 
         void OnTasFileChanged(object sender, FileSystemEventArgs e) {
-            $"TAS file changed: {e.FullPath} - {e.ChangeType}".Log(LogLevel.Verbose);
+            $"TAS file changed: {e.FullPath} - {e.ChangeType}".Log(LogLevel.Debug);
             NeedsReload = true;
 
             AttributeUtils.Invoke<TasFileChangedAttribute>();
