@@ -2,18 +2,21 @@
 #pragma warning disable CS0162 // Unreachable code detected
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using Celeste.Mod;
-using StudioCommunication.Util;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using TAS.Module;
+using BepInEx;
+using BepInEx.Configuration;
+using BepInEx.Logging;
+using StudioCommunication.Util;
 using TAS.Tools;
 using TAS.Utils;
 
@@ -33,7 +36,7 @@ public static class StudioHelper {
 
     private const string FileName_Windows_x64    = "##FILENAME_WINDOWS_x64##";
     private const string FileName_Linux_x64      = "##FILENAME_LINUX_x64##";
-    private const string FileName_MacOS_x64      = "##FILENAME_MACOS_x64##";
+    private const string FileName_MacOS_x64       = "##FILENAME_MACOS_x64##";
     private const string FileName_MacOS_ARM64    = "##FILENAME_MACOS_ARM64##";
 
     private const string Checksum_Windows_x64    = "##CHECKSUM_WINDOWS_x64##";
@@ -45,14 +48,32 @@ public static class StudioHelper {
 
     private static bool installed = false;
 
-    private static string StudioDirectory => Path.Combine(Everest.PathGame, "CelesteStudio");
+    internal static ConfigEntry<bool> ConfigLaunchStudioOnBoot = null!;
+    internal static ConfigEntry<KeyboardShortcut> ConfigLaunchStudioShortcut = null!;
+
+    private static string StudioDirectory => Path.Combine(Paths.GameRootPath, "CelesteStudio");
     private static string TempStudioInstallDirectory => Path.Combine(StudioDirectory, ".temp_install");
     private static string VersionFile => Path.Combine(StudioDirectory, ".version");
     private static string DownloadPath => Path.Combine(StudioDirectory, FileName);
     private static string InnerArchivePath => Path.Combine(StudioDirectory, ".InnerArchive.zip");
 
+    private static bool IsWine() => Environment.GetEnvironmentVariable("WINEPREFIX") != null;
+
+    private static string ToUnixPath(string path) => path[2..].Replace('\\', '/');
+
+    private static string UnixPathExpr(string windowsPath) {
+        string prefix = Environment.GetEnvironmentVariable("WINEPREFIX") ?? "";
+        string unixPrefix = prefix.Length > 2 && prefix[1] == ':' ? ToUnixPath(prefix) : prefix.Replace('\\', '/');
+        char drive = char.ToLowerInvariant(windowsPath[0]);
+        string rel = ToUnixPath(windowsPath).TrimStart('/');
+        return $"$(readlink -f \"{unixPrefix}/dosdevices/{drive}:\")/{rel}";
+    }
+
     private static string DownloadURL {
         get {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsWine()) {
+                return DownloadURL_Linux_x64;
+            }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64) {
                 return DownloadURL_Windows_x64;
             }
@@ -71,6 +92,9 @@ public static class StudioHelper {
     }
     private static string FileName {
         get {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsWine()) {
+                return FileName_Linux_x64;
+            }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64) {
                 return FileName_Windows_x64;
             }
@@ -89,6 +113,9 @@ public static class StudioHelper {
     }
     private static string Checksum {
         get {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsWine()) {
+                return Checksum_Linux_x64;
+            }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64) {
                 return Checksum_Windows_x64;
             }
@@ -106,13 +133,16 @@ public static class StudioHelper {
         }
     }
 
-    [Load]
+    [Initialize(-1)]
     private static void Load() {
-        if (Everest.Flags.IsHeadless || SyncChecker.Active) {
+        if (SyncChecker.Active) {
             return;
         }
 
-        // INSTALL_STUDIO is only set during builds from Build.yml/Release.yml, since otherwise the URLs / checksums are invalid
+        ConfigLaunchStudioOnBoot = TasMod.Instance.Config.Bind("Studio", "Launch on start", false);
+        ConfigLaunchStudioShortcut = TasMod.Instance.Config.Bind("Studio", "Launch", new KeyboardShortcut());
+
+        // INSTALL_STUDIO is only set for release builds, since otherwise the URLs / checksums are invalid
 #if INSTALL_STUDIO
         // Check if Studio is already up-to-date
         string installedVersion = "<None>";
@@ -123,45 +153,21 @@ public static class StudioHelper {
                 try {
                     // Close all Studio instances to avoid issues with file usage
                     foreach (var process in Process.GetProcesses().Where(process => process.ProcessName is "CelesteStudio" or "CelesteStudio.WPF" or "CelesteStudio.GTK" or "CelesteStudio.Mac" or "Celeste Studio")) {
-                        $"Closing process {process} ({process.Id})...".Log(LogLevel.Verbose);
+                        $"Closing process {process} ({process.Id})...".Log(LogLevel.Debug);
                         process.Terminate();
-                        await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10.0f)).ConfigureAwait(false);
+                        await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
 
                         // Make sure it's _really_ closed
                         try {
                             process.Kill();
-                            await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5.0f)).ConfigureAwait(false);
+                            await Task.Delay(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
                         } catch {
                             // ignore
                         }
-                        "Process terminated".Log(LogLevel.Verbose);
+                        "Process terminated".Log(LogLevel.Debug);
                     }
                 } catch (Exception ex) {
                     ex.LogException("Failed to close other studio instances");
-                }
-
-                try {
-                    // If Studio fails to find the game directory for some reason, that's where "TAS Files" will be placed
-                    // Merge the content into the proper location to prevent data loss
-                    if (Directory.Exists(Path.Combine(StudioDirectory, "TAS Files"))) {
-                        foreach (string path in Directory.GetFiles(Path.Combine(StudioDirectory, "TAS Files"), "*", new EnumerationOptions { RecurseSubdirectories = true })) {
-                            // Don't copy directories themselves
-                            if (Directory.Exists(path)) {
-                                continue;
-                            }
-
-                            string relativePath = Path.GetRelativePath(Path.Combine(StudioDirectory, "TAS Files"), path);
-                            string? relativeDirectory = Path.GetDirectoryName(relativePath);
-
-                            if (relativeDirectory != null && !Directory.Exists(Path.Combine(Everest.PathGame, "TAS Files", relativeDirectory))) {
-                                Directory.CreateDirectory(Path.Combine(Everest.PathGame, "TAS Files", relativeDirectory));
-                            }
-
-                            File.Move(path, Path.Combine(Everest.PathGame, "TAS Files", relativePath));
-                        }
-                    }
-                } catch (Exception ex) {
-                    ex.LogException("Failed to migrate 'TAS Files' directory");
                 }
 
                 try {
@@ -175,55 +181,12 @@ public static class StudioHelper {
                         Directory.Delete(TempStudioInstallDirectory, recursive: true);
                     }
                     StudioUpdateBanner.CurrentState = StudioUpdateBanner.State.Failure;
-                    StudioUpdateBanner.FadeoutTimer = 5.0f;
 
                     throw;
                 }
             });
         } else {
             installed = true;
-        }
-
-        // Migrate from Studio v2
-        if (File.Exists(Path.Combine(Everest.PathGame, "Celeste Studio.exe")) &&
-            // Check .toml to see if v2 was launched once
-            File.Exists(Path.Combine(Everest.PathGame, "Celeste Studio.toml"))
-        ) {
-            // Keep "Celeste Studio.toml" for the settings to be migrated by Studio v3
-
-            // Display migration (Studio v3 was never launched since the v2 .exe still existed)
-            string path = Path.Combine(StudioDirectory, "migration_notice.txt");
-            const string text =
-                """
-                === Celeste TAS Studio v3 - Migration notice ===
-                 
-                Celeste Studio was recently fully rewritten, bringing lots of new features and proper cross-platform compatibility for Windows, Linux and macOS.
-                With this change, the executable also moved slightly from "<celeste-install>/Celeste Studio.exe" to it's own directory under "<celeste-install>/CelesteStudio/".
-
-                Make sure to update any shortcuts you have and no longer use Wine / Mono if you were using that. 
-
-                If you experience any issues, please report those to have them fixed.
-                
-                NOTE: 
-                    There are known issues with Celeste Studio v3 on Windows 7.
-                    If possible, try to update to at least Windows 10, otherwise it is recommended to continue using Celeste Studio v2 with the latest CelesteTAS v3.39.x in the mean time. (You can find the legacy releases here: https://github.com/psyGamer/CelesteTAS-EverestInterop/releases) 
-                    (Note Only major bugs will be fixed in that version! No features will be backported!)
-                """;
-
-            if (!Directory.Exists(StudioDirectory)) {
-                Directory.CreateDirectory(StudioDirectory);
-            }
-
-            File.WriteAllText(path, text);
-            IOHelper.OpenInDefaultApp(path);
-        }
-
-        // Delete executable, so that the notice only pops up once
-        if (File.Exists(Path.Combine(Everest.PathGame, "Celeste Studio.exe"))) {
-            File.Delete(Path.Combine(Everest.PathGame, "Celeste Studio.exe"));
-        }
-        if (File.Exists(Path.Combine(Everest.PathGame, "Celeste Studio.pdb"))) {
-            File.Delete(Path.Combine(Everest.PathGame, "Celeste Studio.pdb"));
         }
 #else
         installed = true;
@@ -232,7 +195,7 @@ public static class StudioHelper {
 
     [Initialize]
     private static void Initialize() {
-        if (TasSettings.Enabled && TasSettings.LaunchStudioAtBoot) {
+        if (ConfigLaunchStudioOnBoot.Value) {
             LaunchStudio();
         }
     }
@@ -244,12 +207,12 @@ public static class StudioHelper {
         bool skipDownload = false;
 
         if (File.Exists(DownloadPath)) {
-            await using var fs = File.OpenRead(DownloadPath);
-            string hash = BitConverter.ToString(await md5.ComputeHashAsync(fs)).Replace("-", "");
+            using var fs = OpenReadShared(DownloadPath);
+            string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
             if (Checksum.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
                 skipDownload = true;
             } else {
-                $"Checksum for {FileName} doesn't match. Expected {Checksum}, found {hash}".Log(LogLevel.Verbose);
+                $"Checksum for {FileName} doesn't match. Expected {Checksum}, found {hash}".Log(LogLevel.Debug);
             }
         }
 
@@ -267,18 +230,11 @@ public static class StudioHelper {
             $"Starting download of '{DownloadURL}'...".Log();
 
             StudioUpdateBanner.CurrentState = StudioUpdateBanner.State.Download;
-            Everest.Updater.DownloadFileWithProgress(DownloadURL, DownloadPath, (position, length, speed) => {
-                StudioUpdateBanner.DownloadedBytes = position;
-                StudioUpdateBanner.TotalBytes = length;
-                StudioUpdateBanner.BytesPerSecond = speed * 1024;
-
-                return true;
-            });
+            await DownloadFileAsync(DownloadURL, DownloadPath).ConfigureAwait(false);
 
             if (!File.Exists(DownloadPath)) {
                 ReportError("Download failed! The Studio archive went missing");
                 StudioUpdateBanner.CurrentState = StudioUpdateBanner.State.Failure;
-                StudioUpdateBanner.FadeoutTimer = 5.0f;
                 return;
             }
             "Finished download".Log();
@@ -292,27 +248,29 @@ public static class StudioHelper {
 
                 using (var zip = ZipFile.OpenRead(DownloadPath)) {
                     var entry = zip.Entries[0]; // There should only be a single entry in this case
-                    $"Extracting inner ZIP archive: '{entry.Name}'".Log(LogLevel.Verbose);
+                    $"Extracting inner ZIP archive: '{entry.Name}'".Log(LogLevel.Debug);
 
                     entry.ExtractToFile(InnerArchivePath);
                 }
 
-                File.Move(InnerArchivePath, DownloadPath, overwrite: true);
+                if (File.Exists(DownloadPath)) {
+                    File.Delete(DownloadPath);
+                }
+                File.Move(InnerArchivePath, DownloadPath);
             }
         }
 
         StudioUpdateBanner.CurrentState = StudioUpdateBanner.State.Install;
 
         // Verify checksum
-        await using (var fs = File.OpenRead(DownloadPath)) {
-            string hash = BitConverter.ToString(await md5.ComputeHashAsync(fs)).Replace("-", "");
+        using (var fs = OpenReadShared(DownloadPath)) {
+            string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
             if (!Checksum.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
                 ReportError($"Download failed! Invalid checksum for Studio archive file: Expected {Checksum} got {hash}");
                 StudioUpdateBanner.CurrentState = StudioUpdateBanner.State.Failure;
-                StudioUpdateBanner.FadeoutTimer = 5.0f;
                 return;
             }
-            $"Downloaded Studio archive has a valid checksum: {hash}".Log(LogLevel.Verbose);
+            $"Downloaded Studio archive has a valid checksum: {hash}".Log(LogLevel.Debug);
         }
 
         // Install to another directory and only delete the old install once it was successful
@@ -327,52 +285,71 @@ public static class StudioHelper {
         "Successfully extracted Studio archive".Log();
 
         // Store installed version number
-        await File.WriteAllTextAsync(Path.Combine(TempStudioInstallDirectory, Path.GetFileName(VersionFile)), CurrentStudioVersion).ConfigureAwait(false);
+        File.WriteAllText(Path.Combine(TempStudioInstallDirectory, Path.GetFileName(VersionFile)), CurrentStudioVersion);
 
         // Fix lost file permissions
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-            if (!await ExecuteCommand(["chmod", "+x", Path.Combine(TempStudioInstallDirectory, "CelesteStudio")],
-                    errorMessage: "Install failed! Couldn't make Studio executable").ConfigureAwait(false))
-            {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
+            (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsWine())) {
+            var studioBinary = Path.Combine(TempStudioInstallDirectory, "CelesteStudio");
+            bool success = false;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+                success = ExecuteCommand(["chmod", "+x", studioBinary],
+                    errorMessage: "Install failed! Couldn't make Studio executable");
+            } else {
+                string marker = $"{studioBinary}.ok";
+                string errorFile = $"{studioBinary}.err";
+                string scriptPath = "/tmp/ninesols-tas-chmod.sh";
+                string script =
+                    $"bin=\"{UnixPathExpr(studioBinary)}\"; " +
+                    "err=\"$bin.err\"; ok=\"$bin.ok\"; " +
+                    "chmod +x \"$bin\" 2> \"$err\" && rm -f \"$err\" && touch \"$ok\" || echo \"chmod exited with $?\" >> \"$err\"";
+                File.WriteAllText($"Z:\\{scriptPath.Replace('/', '\\')}", script);
+                try {
+                    Process.Start("start", $"/unix /bin/sh {scriptPath}");
+                } catch (Exception ex) {
+                    ex.LogException("Couldn't make Studio executable");
+                }
+
+                // start.exe spawns the unix child and exits immediately, so poll for its outcome instead of waiting on it
+                var timeout = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+                while (DateTime.UtcNow < timeout) {
+                    if (File.Exists(marker)) {
+                        success = true;
+                        break;
+                    }
+
+                    if (File.Exists(errorFile)) {
+                        break;
+                    }
+
+                    Thread.Sleep(100);
+                }
+
+                if (File.Exists(marker)) {
+                    File.Delete(marker);
+                } else {
+                    string reason = File.Exists(errorFile)
+                        ? File.ReadAllText(errorFile)
+                        : "the script did not finish in time";
+                    string shortReason = reason.Split('\n')[0];
+                    ReportError($"Install failed! Couldn't make Studio executable: {shortReason}", $"Command: start /unix /bin/sh {scriptPath}\n{script}\n{reason}");
+                }
+            }
+
+            if (!success) {
                 Directory.Delete(TempStudioInstallDirectory, recursive: true);
                 StudioUpdateBanner.CurrentState = StudioUpdateBanner.State.Failure;
-                StudioUpdateBanner.FadeoutTimer = 5.0f;
                 return;
             }
         } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-            if (!await ExecuteCommand(["chmod", "+x", Path.Combine(TempStudioInstallDirectory, "CelesteStudio.app", "Contents", "MacOS", "CelesteStudio")],
-                    errorMessage: "Install failed! Couldn't make Studio executable").ConfigureAwait(false) ||
-                !await ExecuteCommand(["xattr", "-c", Path.Combine(TempStudioInstallDirectory, "CelesteStudio.app")],
-                    errorMessage: "Install failed! Couldn't clear Studio app bundle config").ConfigureAwait(false))
+            if (!ExecuteCommand(["chmod", "+x", Path.Combine(TempStudioInstallDirectory, "CelesteStudio.app", "Contents", "MacOS", "CelesteStudio")],
+                    errorMessage: "Install failed! Couldn't make Studio executable") ||
+                !ExecuteCommand(["xattr", "-c", Path.Combine(TempStudioInstallDirectory, "CelesteStudio.app")],
+                    errorMessage: "Install failed! Couldn't clear Studio app bundle config"))
             {
                 Directory.Delete(TempStudioInstallDirectory, recursive: true);
                 StudioUpdateBanner.CurrentState = StudioUpdateBanner.State.Failure;
-                StudioUpdateBanner.FadeoutTimer = 5.0f;
                 return;
-            }
-        }
-
-        // Copy over assets
-        var metadata = CelesteTasModule.Instance.Metadata;
-        if (!string.IsNullOrEmpty(metadata.PathArchive)) {
-            using var zip = ZipFile.OpenRead(metadata.PathArchive);
-            foreach (var entry in zip.Entries.Where(entry => entry.FullName.StartsWith("Assets"))) {
-                string targetPath = Path.Combine(TempStudioInstallDirectory, entry.FullName);
-                if (Path.GetDirectoryName(targetPath) is { } targetDirectory) {
-                    Directory.CreateDirectory(targetDirectory);
-                }
-
-                entry.ExtractToFile(targetPath);
-            }
-        } else if (!string.IsNullOrEmpty(metadata.PathDirectory)) {
-            string assetsDir = Path.Combine(metadata.PathDirectory, "Assets");
-            foreach (string path in Directory.GetFiles(assetsDir, "*", new EnumerationOptions { RecurseSubdirectories = true })) {
-                string targetPath = Path.Combine(TempStudioInstallDirectory, "Assets", Path.GetRelativePath(assetsDir, path));
-                if (Path.GetDirectoryName(targetPath) is { } targetDirectory) {
-                    Directory.CreateDirectory(targetDirectory);
-                }
-
-                File.Copy(path, targetPath);
             }
         }
 
@@ -402,31 +379,31 @@ public static class StudioHelper {
         Directory.Delete(TempStudioInstallDirectory, recursive: true);
 
         StudioUpdateBanner.CurrentState = StudioUpdateBanner.State.Success;
-        StudioUpdateBanner.FadeoutTimer = 5.0f;
 
         "Successfully installed Studio".Log();
     }
 
-    private static async Task<bool> ExecuteCommand(string[] parameters, string errorMessage) {
+    private static bool ExecuteCommand(string[] parameters, string errorMessage) {
         var startInfo = new ProcessStartInfo(parameters[0]) {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            UseShellExecute = false,
         };
         foreach (string param in parameters[1..]) {
             startInfo.ArgumentList.Add(param);
         }
 
         var proc = Process.Start(startInfo)!;
-        await proc.WaitForExitAsync().ConfigureAwait(false);
+        proc.WaitForExit();
 
         string? line;
 
         if (proc.ExitCode != 0) {
             List<string> stdoutLines = [], stderrLines = [];
-            while ((line = await proc.StandardOutput.ReadLineAsync()) != null) {
+            while ((line = proc.StandardOutput.ReadLine()) != null) {
                 stdoutLines.Add(line);
             }
-            while ((line = await proc.StandardError.ReadLineAsync()) != null) {
+            while ((line = proc.StandardError.ReadLine()) != null) {
                 stderrLines.Add(line);
             }
 
@@ -441,7 +418,7 @@ public static class StudioHelper {
             stdoutLines.ForEach(l => l.Log());
             stderrLines.ForEach(l => l.Log(LogLevel.Error));
         } else {
-            while ((line = await proc.StandardOutput.ReadLineAsync()) != null) {
+            while ((line = proc.StandardOutput.ReadLine()) != null) {
                 line.Log(LogLevel.Debug);
             }
         }
@@ -450,18 +427,17 @@ public static class StudioHelper {
     }
 
     internal static void LaunchStudio() => Task.Run(async () => {
-        if (Everest.Flags.IsHeadless || SyncChecker.Active) {
+        if (SyncChecker.Active) {
             return;
         }
 
         "Launching Studio...".Log();
         try {
-            // Wait until the installation is verified
             var start = DateTime.UtcNow;
-            var timeout = TimeSpan.FromSeconds(30);
+            var timeout = TimeSpan.FromMinutes(10);
             while (!installed) {
                 if ((DateTime.UtcNow - start) > timeout) {
-                    "Timed-out while waiting for Studio installation to be verified".Log(LogLevel.Warn);
+                    "Timed-out while waiting for Studio installation to be verified".Log(LogLevel.Warning);
                     return;
                 }
 
@@ -474,18 +450,36 @@ public static class StudioHelper {
             }
 
             StudioUpdateBanner.CurrentState = StudioUpdateBanner.State.Launch;
-            StudioUpdateBanner.FadeoutTimer = 5.0f;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                $"Starting process '{Path.Combine(StudioDirectory, "CelesteStudio.exe")}'...".Log(LogLevel.Verbose);
-                // Start through explorer to detach Studio from the game process (and avoid issues with the Steam Overlay for example)
-                Process.Start("Explorer", [Path.Combine(StudioDirectory, "CelesteStudio.exe")]);
+                if (IsWine()) {
+                    var studioPath = Path.Combine(StudioDirectory, "CelesteStudio");
+                    if (Environment.GetEnvironmentVariable("container") == "pressure-vessel") {
+                        $"Couldn't launch Studio automatically: the game runs in a Steam container, start it yourself at {studioPath}".Log(LogLevel.Warning);
+                        GameToasts.Show("Couldn't launch Studio automatically: start it yourself");
+                        StudioUpdateBanner.CurrentState = StudioUpdateBanner.State.Inactive;
+                        return;
+                    }
+
+                    var studioWinPath = Path.Combine(StudioDirectory, "CelesteStudio");
+                    string launchScriptPath = "/tmp/ninesols-tas-launch.sh";
+                    File.WriteAllText($"Z:\\{launchScriptPath.Replace('/', '\\')}", $"exec \"{UnixPathExpr(studioWinPath)}\"");
+                    $"Starting process '{studioWinPath}'...".Log(LogLevel.Debug);
+                    Process.Start("start", $"/unix /bin/sh {launchScriptPath}");
+                } else {
+                    var studioPath = Path.Combine(StudioDirectory, "CelesteStudio.exe");
+                    $"Starting process '{studioPath}'...".Log(LogLevel.Debug);
+                    // Start through explorer to detach Studio from the game process (and avoid issues with the Steam Overlay for example)
+                    Process.Start("Explorer", $"\"{studioPath}\"");
+                }
             } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-                $"Starting process '{Path.Combine(StudioDirectory, "CelesteStudio")}'...".Log(LogLevel.Verbose);
-                Process.Start(Path.Combine(StudioDirectory, "CelesteStudio"));
+                var studioPath = Path.Combine(StudioDirectory, "CelesteStudio");
+                $"Starting process '{studioPath}'...".Log(LogLevel.Debug);
+                Process.Start(new ProcessStartInfo(studioPath) { UseShellExecute = false });
             } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-                $"Starting process '{Path.Combine(StudioDirectory, "CelesteStudio.app", "Contents", "MacOS", "CelesteStudio")}'...".Log(LogLevel.Verbose);
-                Process.Start(Path.Combine(StudioDirectory, "CelesteStudio.app", "Contents", "MacOS", "CelesteStudio"));
+                var studioPath = Path.Combine(StudioDirectory, "CelesteStudio.app", "Contents", "MacOS", "CelesteStudio");
+                $"Starting process '{studioPath}'...".Log(LogLevel.Debug);
+                Process.Start(new ProcessStartInfo(studioPath) { UseShellExecute = false });
             }
 
             "Successfully launched Studio".Log();
@@ -494,9 +488,30 @@ public static class StudioHelper {
         }
     });
 
+    private static FileStream OpenReadShared(string path) {
+        for (var attempt = 0; ; attempt++) {
+            try {
+                return File.OpenRead(path);
+            } catch (IOException) when (attempt < 600) {
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+            }
+        }
+    }
+
+    private static async Task DownloadFileAsync(string url, string destination) {
+        using var http = new HttpClient();
+        using var response = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+
+        using var src = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        using var dst = File.Create(destination);
+        await src.CopyToAsync(dst).ConfigureAwait(false);
+    }
+
     private static void ReportError(string error, string? additionalInfo = null) {
         error.Log(LogLevel.Error);
         additionalInfo?.Log(LogLevel.Error);
+        GameToasts.Show($"Studio: {error}");
 
         if (!Directory.Exists(StudioDirectory)) {
             Directory.CreateDirectory(StudioDirectory);
@@ -505,27 +520,12 @@ public static class StudioHelper {
         string path = Path.Combine(StudioDirectory, "error_report.txt");
         string text =
             $"""
-             === Celeste TAS Studio v{CurrentStudioVersion} - Installation failed ===
+             === NineSols TAS Studio v{CurrentStudioVersion} - Installation failed ===
              {DateTime.Now.ToString(CultureInfo.InvariantCulture)}
-             
-             NOTE: 
-                If you're using CelesteTAS just for the in-game utilities and not for actual TASing with Celeste Studio, you can ignore this error.
-                However if this issue is consistent and NOT solved by the steps below, please report it.
-             
-             The following error occured while trying to install Celeste TAS Studio:
+
              {error}
-             
-             This may be caused by a bad internet connection. You can manually download Celeste Studio by following these steps:
-             1. Close Celeste
-             2. Manually download this file: {DownloadURL}
-             3. Place it under "<celeste-install>/CelesteStudio/{FileName}" (create the "CelesteStudio" directory if it doesn't already exist. The "<celeste-install>" directory is the same as where "Celeste.exe" / "Celeste.dll" is located)
-             4. Re-open Celeste
-             
-             If the error persists, please report this issue. And send this ENTIRE file along with it.
-             (This file is located under "{path}")
-             
-             Additional Information:
-             {additionalInfo ?? "<not-available>"}
+
+             {additionalInfo ?? "<no additional information>"}
              """;
 
         File.WriteAllText(path, text);

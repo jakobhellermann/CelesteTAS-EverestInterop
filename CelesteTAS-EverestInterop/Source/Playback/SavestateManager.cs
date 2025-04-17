@@ -6,6 +6,7 @@ using System.IO;
 using TAS.EverestInterop;
 using TAS.Input;
 using TAS.ModInterop;
+using TAS.UnityInterop;
 using TAS.Utils;
 
 namespace TAS.Playback;
@@ -175,9 +176,7 @@ internal static class SavestateManager {
         }
     }
 
-    internal const int EnableRunPriority = BindingHelper.EnableRunPriority + 1;
-
-    [EnableRun(EnableRunPriority)]
+    [EnableRun]
     internal static void EnableRun() {
         if (!SpeedrunToolInterop.Installed || !GameInterop.IsInsideLevel()) {
             return;

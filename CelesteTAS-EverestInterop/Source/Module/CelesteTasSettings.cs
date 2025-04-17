@@ -13,6 +13,7 @@ public class CelesteTasSettings {
             _studioShared.CenterCamera = CenterCamera.Value;
             SyncSettings();
         };
+        infoCustomTemplate = config.Bind("Info HUD", "Custom Info Template", string.Empty);
     }
 
     // Settings which are shared / controllable from Studio
@@ -65,7 +66,25 @@ public class CelesteTasSettings {
         }
     }
 
+    public int CustomInfoDecimals {
+        get => StudioShared.CustomInfoDecimals;
+        set {
+            StudioShared.CustomInfoDecimals = Math.Clamp(value, GameSettings.MinDecimals, GameSettings.MaxDecimals);
+            GameInfo.Update();
+            SyncSettings();
+        }
+    }
+
     #endregion
+
+    // Persisted like upstream (which calls SaveSettings after a Studio edit); BepInEx's ConfigEntry writes the .cfg on
+    // set, so assigning InfoCustomTemplate survives a restart. Backed by a config entry rather than a plain property
+    // because BepInEx only persists bound entries.
+    private readonly ConfigEntry<string> infoCustomTemplate;
+    public string InfoCustomTemplate {
+        get => infoCustomTemplate.Value;
+        set => infoCustomTemplate.Value = value;
+    }
 
     #region Fast Forward
 

@@ -1,5 +1,4 @@
-using Microsoft.Xna.Framework;
-using Monocle;
+using UnityEngine;
 using StudioCommunication;
 using System;
 using System.Collections;
@@ -7,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using TAS.EverestInterop.Lua;
 using TAS.Utils;
 using StudioCommunication.Util;
 using TAS.Input;
@@ -176,10 +174,6 @@ public static class InfoCustom {
                     string key = currResultType.Name;
                     string queryResult = $"{queryPrefix}{valueStr}";
 
-                    if (baseInstance is Entity entity && !string.IsNullOrEmpty(entity.SourceId.Level)) {
-                        key += $"[{entity.SourceId}]";
-                    }
-
                     if (tableResults.TryGetValue(key, out var results)) {
                         results.Add(prefixText + queryResult);
                     } else {
@@ -240,7 +234,7 @@ public static class InfoCustom {
 
             var resultCollection = new StringBuilder("{ ");
             bool firstValue = true;
-            foreach ((object baseInstance, object? value) in result.Value) {
+            foreach ((_, object? value) in result.Value) {
                 if (!firstValue) {
                     resultCollection.Append(", ");
                 }
@@ -250,11 +244,7 @@ public static class InfoCustom {
                     valueStr = DefaultFormatter(value, decimals);
                 }
 
-                if (baseInstance is Entity entity && !string.IsNullOrEmpty(entity.SourceId.Level)) {
-                    resultCollection.Append($"[{entity.SourceId}] {queryPrefix}{valueStr}");
-                } else {
-                    resultCollection.Append($"{queryPrefix}{valueStr}");
-                }
+                resultCollection.Append($"{queryPrefix}{valueStr}");
             }
             resultCollection.Append(" }");
 
@@ -263,6 +253,8 @@ public static class InfoCustom {
 
         // Evaluate Lua code for main line
         yield return LuaRegex.Replace(mainResult, match => {
+            // TODO lua evaluation
+            /*
             if (TargetQuery.PreventCodeExecution && !forceAllowCodeExecution) {
                 return "<Cannot safely evaluate Lua code during EnforceLegal>";
             }
@@ -270,6 +262,8 @@ public static class InfoCustom {
             string code = match.Groups[1].Value;
             object?[]? objects = EvalLuaCommand.ExecuteLua(code);
             return objects == null ? "null" : string.Join(", ", objects.Select(o => o?.ToString() ?? "null"));
+            */
+            return match.Value;
         });
 
         // Format tables
@@ -349,24 +343,10 @@ public static class InfoCustom {
                 return stringValue;
             case Vector2 vectorValue:
                 return vectorValue.ToSimpleString(decimals);
-            case EntityQueryHandler.SubpixelComponent subpixelComponentValue:
-                return subpixelComponentValue.ToFormattedString(decimals);
-            case EntityQueryHandler.SubpixelPosition subpixelPositionValue:
-                return subpixelPositionValue.ToFormattedString(decimals);
-            case Vector2Double vectorValue:
-                return vectorValue.ToSimpleString(decimals);
             case float floatValue:
                 return floatValue.ToFormattedString(decimals);
-            case Scene sceneValue:
-                return sceneValue.ToString() ?? "null";
-            case Entity entity:
-                string id = !string.IsNullOrEmpty(entity.SourceId.Level) ? $"[{entity.SourceId}]" : "";
-                return $"{entity}{id}";
-            case Collider collider:
-                return ColliderToString(collider);
             case IEnumerable enumerable:
-                bool compressed = enumerable is IEnumerable<Component> or IEnumerable<Entity>;
-                return IEnumerableToString(enumerable, ", ", compressed);
+                return IEnumerableToString(enumerable, ", ", compressed: false);
 
             default:
                 return obj?.ToString() ?? "null";
@@ -410,21 +390,6 @@ public static class InfoCustom {
         }
 
         return builder.ToString();
-    }
-
-    /// Formats a collider with its important values
-    private static string ColliderToString(Collider collider, int iterationHeight = 1) {
-        return collider switch {
-            Hitbox hitbox => $"Hitbox=[{hitbox.Left},{hitbox.Right}]×[{hitbox.Top},{hitbox.Bottom}]",
-            Circle circle => circle.Position == Vector2.Zero
-                ? $"Circle=[Radius={circle.Radius}]"
-                : $"Circle=[Radius={circle.Radius},Offset={circle.Position}]",
-            ColliderList list => iterationHeight > 0
-                ? "ColliderList: { " + string.Join("; ", list.colliders.Select(s => ColliderToString(s, iterationHeight - 1))) + " }"
-                : "ColliderList: { ... }",
-
-            _ => collider.ToString() ?? "null"
-        };
     }
 
     #endregion

@@ -1,7 +1,7 @@
 using System;
-using StudioCommunication;
 using System.Collections.Generic;
 using System.IO;
+using StudioCommunication;
 using TAS.InfoHUD;
 using TAS.Tools;
 using TAS.Utils;
@@ -18,7 +18,7 @@ public static class AssertCommand {
                 yield break;
             }
 
-            foreach (var mode in Enum.GetValues<AssertCondition>()) {
+            foreach (var mode in Enum.GetValues(typeof(AssertCondition))) {
                 yield return new CommandAutoCompleteEntry { Name = mode.ToString(), Extra = "Condition", HasNext = true };
             }
         }
