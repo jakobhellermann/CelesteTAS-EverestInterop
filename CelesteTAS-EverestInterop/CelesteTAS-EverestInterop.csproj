@@ -24,10 +24,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!--
         <Reference Include="Assembly-CSharp">
             <HintPath>$(ManagedDir)/Assembly-CSharp.dll</HintPath>
             <Private>false</Private>
         </Reference>
+        -->
     </ItemGroup>
 
     <ItemGroup>

@@ -1,6 +1,8 @@
 #if !NET7_0_OR_GREATER
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
+
 // ReSharper disable UnusedType.Global
 // ReSharper disable UnusedMember.Global
 
@@ -63,3 +65,11 @@ namespace System.Runtime.CompilerServices {
     }
 }
 #endif
+
+// #if !NET7_0_OR_GREATER
+
+internal static class BitOperations {
+    public static uint RotateLeft(uint value, int offset) => (value << offset) | (value >> (32 - offset));
+}
+
+// #endif

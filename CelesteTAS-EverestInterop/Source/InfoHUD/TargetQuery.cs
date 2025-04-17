@@ -1,14 +1,8 @@
-using Celeste.Mod;
-using JetBrains.Annotations;
-using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using TAS.EverestInterop;
-using TAS.Input.Commands;
 using TAS.ModInterop;
-using TAS.Module;
 using TAS.Utils;
 using StudioCommunication;
 using StudioCommunication.Util;
@@ -16,6 +10,7 @@ using System.Collections;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using TAS.EverestInterop;
 
 namespace TAS.InfoHUD;
 
@@ -103,32 +98,33 @@ public static class TargetQuery {
         }
 
         /// Provide a list of auto-complete entries which should be listed along base-types.
-        [MustDisposeResource]
+        // [MustDisposeResource]
         public virtual IEnumerator<CommandAutoCompleteEntry> ProvideGlobalEntries(string[] queryArgs, string queryPrefix, Variant variant) {
             yield break;
         }
 
         /// Overwrite the list of auto-complete entries which are provided for the members of the type
         /// Only invoked if <see cref="CanEnumerateMemberEntries"/> returned <c>true</c> for the type. <br/>
-        [MustDisposeResource]
+        // [MustDisposeResource]
         public virtual IEnumerator<CommandAutoCompleteEntry> EnumerateMemberEntries(Type type, Variant variant, string queryPrefix, int memberIdx, string[] memberArgs) {
             yield break;
         }
         /// Overwrite the list of auto-complete entries which are provided for the values of the type
         /// Only invoked if <see cref="CanEnumerateTypeEntries"/> returned <c>true</c> for the type. <br/>
-        [MustDisposeResource]
+        // [MustDisposeResource]
         public virtual IEnumerator<CommandAutoCompleteEntry> EnumerateTypeEntries(Type type) {
             yield break;
         }
     }
 
     /// Prevents invocations of methods / execution of Lua code in the Custom Info
-    public static bool PreventCodeExecution => EnforceLegalCommand.EnabledWhenRunning;
+    public static bool PreventCodeExecution => false;
 
     internal static readonly Dictionary<string, HashSet<Type>> AllTypes = new();
     internal static readonly Dictionary<string, (HashSet<Type> Types, string[] MemberArgs)> BaseTypeCache = new();
 
     internal static readonly Handler[] Handlers = [
+        new MonobehaviourQueryHandler(),
         new CollectionQueryHandler(),
     ];
 
@@ -1049,12 +1045,12 @@ public static class TargetQuery {
             }
 
             // Resolve common base type
-            if (accum.Type.IsAssignableTo(error.Type)) {
+            if (error.type.IsAssignableFrom(accum.type)) {
                 return error;
             }
 
             // This will always terminate when ret == typeof(object)
-            while (!error.Type.IsAssignableTo(accum.Type)) {
+            while (!accum.Type.IsAssignableFrom(error.Type)) {
                 accum.Type = accum.Type.BaseType ?? typeof(object);
             }
             return accum;

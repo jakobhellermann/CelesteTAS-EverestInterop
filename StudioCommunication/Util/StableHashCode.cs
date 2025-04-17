@@ -1,5 +1,3 @@
-#if NET7_0_OR_GREATER
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace StudioCommunication.Util;
@@ -113,4 +111,3 @@ public struct StableHashCode {
         return hash;
     }
 }
-#endif

@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace TAS.Tools;
 
@@ -54,14 +52,14 @@ public struct SyncCheckResult() {
 
     public readonly void WriteToFile(string path) {
         using var file = File.Create(path);
-
-        JsonSerializer.Serialize(file, this, new JsonSerializerOptions {
+        
+        /*JsonSerializer.Serialize(file, this, new JsonSerializerOptions {
             IncludeFields = true,
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             Converters = {
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false),
             }
-        });
+        });*/
     }
 }
