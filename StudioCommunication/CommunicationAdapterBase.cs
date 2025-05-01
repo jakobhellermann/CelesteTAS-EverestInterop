@@ -124,7 +124,12 @@ public abstract class CommunicationAdapterBase : IDisposable {
             readStream.Position = 0;
             readStream.Write([0x00, 0x00, 0x00, 0x00, 0x00]);
         }
-        mutex.ReleaseMutex();
+
+        try {
+            mutex.ReleaseMutex();
+        } catch (Exception e) {
+            LogError($"Failed to released mutex: {e}");
+        }
 
         // Start the communication thread
         thread = new Thread(() => {
