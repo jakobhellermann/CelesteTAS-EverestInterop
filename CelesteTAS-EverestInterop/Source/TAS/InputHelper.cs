@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using InControl;
+using NineSolsAPI.Utils;
 using RCGMaker.Core;
 using StudioCommunication;
 using System;
 using System.Reflection;
 using TAS.Input;
-using TAS.Utils;
 using UnityEngine;
 
 // ReSharper disable InconsistentNaming

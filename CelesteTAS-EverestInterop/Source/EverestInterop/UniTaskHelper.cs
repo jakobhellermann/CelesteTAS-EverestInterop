@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using TAS.Utils;
+using NineSolsAPI.Utils;
 
 namespace EverestInterop;
 
