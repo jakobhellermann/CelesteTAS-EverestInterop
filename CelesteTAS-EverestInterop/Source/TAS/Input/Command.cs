@@ -6,9 +6,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using BepInEx.Logging;
+using NineSolsAPI.Utils;
 using TAS.Communication;
-using TAS.Module;
-using TAS.Utils;
 
 namespace TAS.Input;
 
