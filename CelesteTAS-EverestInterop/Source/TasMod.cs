@@ -28,6 +28,7 @@ public class TasMod : BaseUnityPlugin {
     internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
     internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
 
+    internal ConfigEntry<DebugInfo.DebugFilter> ConfigDebugInfo = null!;
     private ConfigEntry<bool> configAutoHeal = null!;
     private ConfigEntry<bool> configAutoSkipCutscenes = null!;
     
@@ -63,6 +64,9 @@ public class TasMod : BaseUnityPlugin {
                 TasTracerFilter.Random | TasTracerFilter.Movement
             );
 
+            ConfigDebugInfo = Config.Bind("Debug",
+                "Debug Info",
+                DebugInfo.DebugFilter.RapidlyChanging | DebugInfo.DebugFilter.Monsters | DebugInfo.DebugFilter.Random);
             configAutoHeal = Config.Bind("Debug", "Invincible", false);
             configAutoSkipCutscenes = Config.Bind("Debug", "Autoskip cutscenes", true);
             

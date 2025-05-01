@@ -8,18 +8,9 @@ public class GameInfo {
     public static string LevelName = "";
     public static string ChapterTime = "";
 
-    public const DebugFilter Filter =
-            DebugFilter.RapidlyChanging
-            | DebugFilter.Monsters
-            | DebugFilter.Random
-            // | DebugFilter.AttackSensors
-            // | DebugFilter.AnimationClips
-            // | DebugFilter.Tweens
-        ;
-
     public static void Update() {
         try {
-            StudioInfo = GetInfoText(Filter);
+            StudioInfo = GetInfoText(TasMod.Instance.ConfigDebugInfo.Value);
             ChapterTime = $"{Manager.Controller.CurrentFrameInTas}";
         } catch (Exception e) {
             StudioInfo = "<error>";
