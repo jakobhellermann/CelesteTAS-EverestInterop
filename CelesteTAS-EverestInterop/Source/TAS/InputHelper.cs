@@ -42,6 +42,15 @@ public static class InputHelper {
     public static bool DontRunWhenPaused(MethodBase __originalMethod) =>
         Manager.CurrState != Manager.State.Paused && !Prevent;
 
+    // HACK
+    [HarmonyPatch(typeof(PushAwayWall), "Update")]
+    [HarmonyPrefix]
+    public static bool DontRunAtStart(MethodBase __originalMethod) {
+        if (!Manager.Running) return true;
+
+        return Manager.Controller.CurrentFrameInTas > 6;
+    }
+
     [HarmonyPatch(typeof(LoadingLoopIcon), nameof(LoadingLoopIcon.ShowLoadingLoopIcon))]
     [HarmonyPatch(typeof(LoadingLoopIcon), nameof(LoadingLoopIcon.HideLoadingLoopIcon))]
     [HarmonyPrefix]
