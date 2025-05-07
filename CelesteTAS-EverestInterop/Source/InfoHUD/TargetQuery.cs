@@ -120,19 +120,20 @@ public static class TargetQuery {
                 // Use '.' instead of '+' for nested types
                 fullName = fullName.Replace('+', '.');
 
-                // Strip namespace
-                int namespaceLen = type.Namespace != null
-                    ? type.Namespace.Length + 1
-                    : 0;
-                string shortName = fullName[namespaceLen..];
-
                 AllTypes.AddToKey(fullName, type);
                 AllTypes.AddToKey($"{fullName}@{assemblyName}", type);
                 AllTypes.AddToKey($"{fullName}@{modName}", type);
-
-                AllTypes.AddToKey(shortName, type);
-                AllTypes.AddToKey($"{shortName}@{assemblyName}", type);
-                AllTypes.AddToKey($"{shortName}@{modName}", type);
+                    
+                // Strip namespace
+                if (type.Namespace != null) {
+                    int namespaceLen = type.Namespace != null
+                        ? type.Namespace.Length + 1
+                        : 0;
+                    string shortName = fullName[namespaceLen..];
+                    AllTypes.AddToKey(shortName, type);
+                    AllTypes.AddToKey($"{shortName}@{assemblyName}", type);
+                    AllTypes.AddToKey($"{shortName}@{modName}", type);
+                }
             }
         }
     }
@@ -343,6 +344,13 @@ public static class TargetQuery {
     /// Inside the namespace it's sorted alphabetically
     internal class NamespaceComparer : IComparer<(string Name, Type Type)> {
         public int Compare((string Name, Type Type) x, (string Name, Type Type) y) {
+            if (x.Type.Namespace == null && y.Type.Namespace != null) {
+                return -1;
+            }
+            if (x.Type.Namespace != null && y.Type.Namespace == null) {
+                return 1;
+            }
+            
             if (x.Type.Namespace == null || y.Type.Namespace == null) {
                 return StringComparer.Ordinal.Compare(x.Name, y.Name);
             }
@@ -380,7 +388,7 @@ public static class TargetQuery {
 
     internal static bool IsTypeViable(Type type, Variant variant, bool isRoot, Type[]? targetTypeFilter, int maxDepth) {
         // Filter-out types which probably aren't useful / possible
-        if (!(type.IsClass || type.IsStructType()) || type.IsGenericType || type.FullName == null || type.Namespace == null || ignoredNamespaces.Any(ns => type.Namespace!.StartsWith(ns))) {
+        if (!(type.IsClass || type.IsStructType()) || type.IsGenericType || type.FullName == null || (type.Namespace != null && ignoredNamespaces.Any(ns => type.Namespace.StartsWith(ns)))) {
             return false;
         }
         // Filter-out compiler generated types
@@ -584,7 +592,8 @@ public static class TargetQuery {
             .ToArray();
 
         string[][] namespaces = types
-            .Select(type => type.Namespace!)
+            .Select<Type, string?>(type => type.Namespace)
+            .OfType<string>()
             .Distinct()
             .Select(ns => ns.Split('.'))
             .Where(ns => ns.Length > queryArgs.Length)
@@ -646,6 +655,14 @@ public static class TargetQuery {
                 yield return new CommandAutoCompleteEntry { Name = $"{shortName}@{modName}.", Extra = type.Namespace ?? string.Empty, Prefix = queryPrefix, IsDone = false };
             } else if (AllTypes[$"{shortName}@{assemblyName}"].Count == 1) {
                 yield return new CommandAutoCompleteEntry { Name = $"{shortName}@{assemblyName}.", Extra = type.Namespace ?? string.Empty, Prefix = queryPrefix, IsDone = false };
+            } else {
+                foreach (var possibleType in AllTypes[shortName]) {
+                    if (possibleType == type) {
+                        if (queryPrefix.TrimEnd('.') == (possibleType.Namespace ?? "")) {
+                            yield return new CommandAutoCompleteEntry { Name = $"{shortName}.", Extra = type.Namespace ?? string.Empty, Prefix = queryPrefix, IsDone = false };
+                        }
+                    }
+                }
             }
         }
     }
