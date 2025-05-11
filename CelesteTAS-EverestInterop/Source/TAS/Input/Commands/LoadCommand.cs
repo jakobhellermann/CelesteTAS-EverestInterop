@@ -2,6 +2,7 @@ using HarmonyLib;
 using System.Collections.Generic;
 using StudioCommunication;
 using System.Diagnostics.CodeAnalysis;
+using TAS.Tracer;
 using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
@@ -36,6 +37,7 @@ public static class LoadCommand {
     [TasCommand("load", MetaDataProvider = typeof(LoadMeta))]
     private static void Load(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
         IsLoading = true;
+        TasTracer.AddFrameHistory("Executing load command");
 
         if (commandLine.Arguments.Length != 3) {
             AbortTas($"Invalid number of arguments in load command: '{commandLine.OriginalText}'.");
