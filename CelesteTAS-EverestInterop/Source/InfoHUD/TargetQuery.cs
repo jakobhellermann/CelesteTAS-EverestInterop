@@ -744,6 +744,22 @@ public static class TargetQuery {
                     StorageKey = $"{variant}_{type.Namespace ?? string.Empty}",
                     StorageName = type.FullName,
                 };
+            } else {
+                foreach (var possibleType in AllTypes[shortName]) {
+                    if (possibleType == type) {
+                        if (queryPrefix.TrimEnd('.') == (possibleType.Namespace ?? "")) {
+                            yield return new CommandAutoCompleteEntry {
+                                Name = $"{shortName}.",
+                                Extra = type.Namespace ?? string.Empty,
+                                Prefix = queryPrefix,
+                                Suggestion = suggestion,
+                                IsDone = false,
+                                StorageKey = $"{variant}_{type.Namespace ?? string.Empty}",
+                                StorageName = type.FullName,
+                            };
+                        }
+                    }
+                }
             }
         }
     }
