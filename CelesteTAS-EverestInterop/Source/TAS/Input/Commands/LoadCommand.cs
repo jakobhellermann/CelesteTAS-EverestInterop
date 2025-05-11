@@ -36,6 +36,7 @@ public static class LoadCommand {
     [TasCommand("load", MetaDataProvider = typeof(LoadMeta))]
     private static void Load(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
         IsLoading = true;
+        TasTracerState.AddFrameHistory("Executing load command");
 
         if (commandLine.Arguments.Length != 3) {
             AbortTas($"Invalid number of arguments in load command: '{commandLine.OriginalText}'.");
