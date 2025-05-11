@@ -1,5 +1,6 @@
 using System;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using JetBrains.Annotations;
 using PlayerLoopHelper;
@@ -16,6 +17,9 @@ public class TasMod : BaseUnityPlugin {
     public CelesteTasSettings TasSettings = null!;
 
     private Harmony harmony = null!;
+
+    internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
+    internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
 
     // private ConfigEntry<bool> configOpenStudioOnLaunch = null!;
     // private ConfigEntry<KeyboardShortcut> configOpenStudioShortcut = null!;
@@ -41,6 +45,12 @@ public class TasMod : BaseUnityPlugin {
         Instance = this;
 
         try {
+            ConfigTasTraceFrameHistory = Config.Bind("Tracer", "Frame History", false);
+            ConfigTasTraceFilter = Config.Bind("Tracer",
+                "Frame History Filter",
+                TasTracerFilter.Random | TasTracerFilter.Movement
+            );
+
             /*
             configOpenStudioOnLaunch = Config.Bind("Studio", "Launch on start", true);
             configOpenStudioShortcut = Config.Bind("Studio", "Launch", new KeyboardShortcut());
