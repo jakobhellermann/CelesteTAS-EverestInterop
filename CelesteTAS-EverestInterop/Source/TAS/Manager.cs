@@ -79,11 +79,14 @@ public static class Manager {
     private static float frameStepBackTimeout = 0.0f;
     private static PopupToast.Entry? frameStepBackToast = null;
 
+    public static bool DidComplete = false;
+    
     public static void EnableRun() {
         if (Running) {
             return;
         }
 
+        DidComplete = false;
         CurrState = NextState = State.Running;
         PlaybackSpeed = 1.0f;
 
@@ -196,6 +199,11 @@ public static class Manager {
             FrameStepBackTargetFrame = -1;
             NextState = State.Paused;
         }
+        
+        if (!Controller.CanPlayback) {
+            DidComplete = true;
+        }
+
         // Auto-pause at end of drafts
         else if (!Controller.CanPlayback && TasSettings.AutoPauseDraft && IsDraft()) {
             NextState = State.Paused;
