@@ -1,10 +1,12 @@
 using System;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using JetBrains.Annotations;
 using PlayerLoopHelper;
 using TAS.Communication;
 using TAS.Module;
+using TAS.Tracer;
 using TAS.Utils;
 using UnityEngine;
 
@@ -16,6 +18,9 @@ public class TasMod : BaseUnityPlugin {
     public CelesteTasSettings TasSettings = null!;
 
     private Harmony harmony = null!;
+
+    internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
+    internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
 
     // private ConfigEntry<bool> configOpenStudioOnLaunch = null!;
     // private ConfigEntry<KeyboardShortcut> configOpenStudioShortcut = null!;
@@ -41,6 +46,12 @@ public class TasMod : BaseUnityPlugin {
         Instance = this;
 
         try {
+            ConfigTasTraceFrameHistory = Config.Bind("Tracer", "Frame History", false);
+            ConfigTasTraceFilter = Config.Bind("Tracer",
+                "Frame History Filter",
+                TasTracerFilter.Random | TasTracerFilter.Movement
+            );
+
             /*
             configOpenStudioOnLaunch = Config.Bind("Studio", "Launch on start", true);
             configOpenStudioShortcut = Config.Bind("Studio", "Launch", new KeyboardShortcut());
@@ -82,6 +93,8 @@ public class TasMod : BaseUnityPlugin {
 
     private struct LastUpdateSystem;
 
+    private static Type? alsoTraceAround = typeof(UnityEngine.PlayerLoop.PreUpdate.Physics2DUpdate);
+
     private void Start() {
         PlayerLoopSystemHelper.Register(typeof(EarlyUpdateSystem),
             InsertPosition.FirstChildOf,
@@ -99,18 +112,38 @@ public class TasMod : BaseUnityPlugin {
             InsertPosition.FirstChildOf,
             typeof(UnityEngine.PlayerLoop.PostLateUpdate),
             PostLateUpdate);
+
+        if (alsoTraceAround is { } system) {
+            PlayerLoopSystemHelper.Register(typeof(TasMod),
+                InsertPosition.Before,
+                system,
+                TraceBefore);
+            PlayerLoopSystemHelper.Register(typeof(TasMod),
+                InsertPosition.After,
+                system,
+                TraceAfter);
+        }
     }
 
     private void EarlyUpdate() {
         if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
             AttributeUtils.Invoke<BeforeActiveTasFrame>();
         }
+
+        TasTracer.TraceVarsThroughFrame("EarlyUpdate");
     }
 
     private void FixedUpdate() {
+        TasTracer.TraceVarsThroughFrame("FixedUpdate");
     }
 
+    private static void TraceBefore() => TasTracer.TraceVarsThroughFrame($"TraceBefore-{alsoTraceAround}");
+    private static void TraceAfter() => TasTracer.TraceVarsThroughFrame($"TraceAfter-{alsoTraceAround}");
+
+    
     private static void FirstUpdate() {
+        TasTracer.TraceVarsThroughFrame("FirstUpdate");
+        
         if (Physics2D.simulationMode != SimulationMode2D.Script) return;
 
         // TODO: do better
@@ -119,12 +152,34 @@ public class TasMod : BaseUnityPlugin {
         }
     }
 
-    private static void LastUpdate() {
+    private static void LastUpdate() => TasTracer.TraceVarsThroughFrame("LastUpdate");
+
+    private void LateUpdate() {
+        TasTracer.TraceVarsThroughFrame("LateUpdate");
+        TasTracer.LateUpdate();
     }
 
     private void PostLateUpdate() {
+        TasTracer.TraceVarsThroughFrame("PostLateUpdate");
+
         try {
             GameInfo.Update();
+
+            if (Manager.Running) {
+                try {
+                    if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
+                        TasTracer.TraceFrame();
+                    } else {
+                        if (TasTracer.TracePauseMode == TracePauseMode.Reduced) {
+                            TasTracer.TraceFramePause();
+                        } else if (TasTracer.TracePauseMode == TracePauseMode.Full) {
+                            TasTracer.TraceFrame();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.LogException("Error trying to collect trace data");
+                }
+            }
 
             AttributeUtils.Invoke<BeforeTasFrame>();
 
