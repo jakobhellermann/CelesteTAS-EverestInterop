@@ -676,6 +676,14 @@ public static class TargetQuery {
                 yield return new CommandAutoCompleteEntry { Name = $"{shortName}@{modName}.", Extra = type.Namespace ?? string.Empty, Prefix = queryPrefix, IsDone = false };
             } else if (AllTypes[$"{shortName}@{assemblyName}"].Count == 1) {
                 yield return new CommandAutoCompleteEntry { Name = $"{shortName}@{assemblyName}.", Extra = type.Namespace ?? string.Empty, Prefix = queryPrefix, IsDone = false };
+            } else {
+                foreach (var possibleType in AllTypes[shortName]) {
+                    if (possibleType == type) {
+                        if (queryPrefix.TrimEnd('.') == (possibleType.Namespace ?? "")) {
+                            yield return new CommandAutoCompleteEntry { Name = $"{shortName}.", Extra = type.Namespace ?? string.Empty, Prefix = queryPrefix, IsDone = false };
+                        }
+                    }
+                }
             }
         }
     }
