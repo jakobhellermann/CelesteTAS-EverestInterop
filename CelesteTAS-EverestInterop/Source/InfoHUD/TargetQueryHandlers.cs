@@ -382,8 +382,6 @@ internal class FilterableQueryHandler : TargetQuery.Handler {
 
                     if (!value.name.Contains(key)) {
                         values[valueIdx] = TargetQuery.InvalidValue;
-
-                        Log.Info($"MonoBehaviour doesn't match '{key}'. Found {value.name}");
                     }
                 }
 

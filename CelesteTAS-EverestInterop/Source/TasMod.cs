@@ -24,6 +24,7 @@ public class TasMod : BaseUnityPlugin {
 
     internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
     internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
+    internal ConfigEntry<bool> ConfigTasTraceClearOnStart = null!;
 
     private ConfigEntry<bool> configAutoHeal = null!;
     private ConfigEntry<bool> configAutoSkipCutscenes = null!;
@@ -57,6 +58,7 @@ public class TasMod : BaseUnityPlugin {
 
         try {
             ConfigTasTraceFrameHistory = Config.Bind("Tracer", "Frame History", false);
+            ConfigTasTraceClearOnStart = Config.Bind("Tracer", "Clear on start", false);
             ConfigTasTraceFilter = Config.Bind("Tracer",
                 "Frame History Filter",
                 TasTracerFilter.Random | TasTracerFilter.Movement
@@ -207,6 +209,9 @@ public class TasMod : BaseUnityPlugin {
                 }
             }
         }
+        
+        TasTracerState.TraceVarsThroughFrame("PreUpdate-end");
+        
     }
 
     private void OnDestroy() {
