@@ -7,6 +7,7 @@ using System.Linq;
 using HarmonyLib;
 using JetBrains.Annotations;
 using NineSolsAPI;
+using NineSolsAPI.Utils;
 using RCGMaker.Test;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
@@ -70,6 +71,19 @@ public static class TasTracerState {
     };
 
     private static (string, Func<object?>)[] traceVarsThroughFrame = [
+        ("monsterMoveScaler", () => {
+            if (MonsterManager.Instance.ClosetMonster is not { } monster) return null;
+
+            var moveScaler = monster.animator.transform.Find("LogicRoot/MoveScale").GetComponent<AnimationMoveScaler>();
+
+            return new object?[] {
+                moveScaler.GetFieldValue<float>("_moveXScale"),
+                moveScaler.IsContinuousUpdate,
+                moveScaler.EvaluateOffset,
+                moveScaler.MoveXMinScale,
+                moveScaler.MoveXMaxScale,
+            };
+        }),
         // ("foo", () => MonsterManager.Instance.ClosetMonster.animator.transform.localPosition),
         // ("foo", () => Player.i.fooAttackWasPressedCondition.FalseTimer),
         /*("closest", () => {
@@ -213,19 +227,28 @@ public static class TasTracerState {
     [HarmonyPatch(typeof(Timer),
         nameof(Timer.AddTask),
         [typeof(Timer), typeof(Action), typeof(float), typeof(MonoBehaviour), typeof(string)])]
-    [HarmonyPatch(typeof(MonsterBase), "AfterAnimationUpdate")]
+    // [HarmonyPatch(typeof(MonsterBase), "AfterAnimationUpdate")]
     // [HarmonyPatch(typeof(FSMStateMachineRunner), "UpdateProxy")]
-    [HarmonyPatch(typeof(EffectDealer), "HitEffectReceiverCheck")]
-    [HarmonyPatch(typeof(AbstractEmitter), "Update")]
+    // [HarmonyPatch(typeof(EffectDealer), "HitEffectReceiverCheck")]
     [HarmonyPatch(typeof(Physics), nameof(Physics2D.Simulate))]
     [HarmonyPatch(typeof(Physics2D), nameof(Physics2D.SyncTransforms))]
     [HarmonyPatch(typeof(Physics), nameof(Physics.SyncTransforms))]
-    [HarmonyPatch(typeof(Actor), nameof(Actor.OnRebindAnimatorMove))]
-    [HarmonyPatch(typeof(MonsterBase), nameof(MonsterBase.OnRebindAnimatorMove))]
+    // [HarmonyPatch(typeof(Actor), nameof(Actor.OnRebindAnimatorMove))]
+    // [HarmonyPatch(typeof(MonsterBase), nameof(MonsterBase.OnRebindAnimatorMove))]
     [HarmonyPatch(typeof(Health), nameof(Health.BecomeInvincible))]
     [HarmonyPatch(typeof(Health), nameof(Health.RemoveInvincible))]
     [HarmonyPatch(typeof(Player), "EnablePushSlowCheck")]
-    [HarmonyPatch(typeof(Player), "DisablePushSlowCheck")]
+    // [HarmonyPatch(typeof(Player), "DisablePushSlowCheck")]
+    [HarmonyPatch(typeof(FxPlayer), nameof(FxPlayer.OnEnableInvoke))]
+    [HarmonyPatch(typeof(FxPlayer), nameof(FxPlayer.OnEnable))]
+    [HarmonyPatch(typeof(FxPlayer), nameof(FxPlayer.PlayCustomAt), typeof(Vector3), typeof(Vector3), typeof(Transform))]
+    [HarmonyPatch(typeof(PoolObject), "PoolObjectResetAndStart")]
+    [HarmonyPatch(typeof(GeneralState), nameof(GeneralState.OnStateEnter))]
+    [HarmonyPatch(typeof(AnimationMoveScaler), "EvaluateUpdate")]
+    [HarmonyPatch(typeof(FooManager), nameof(FooManager.AutoExplode))]
+    [HarmonyPatch(typeof(FooDeposit), nameof(FooDeposit.Explode))]
+    [HarmonyPatch(typeof(PlayerBaseState), nameof(PlayerBaseState.OnStateEnter))]
+    [HarmonyPatch(typeof(EffectReceiver), nameof(EffectReceiver.OnHitEnter))]
     //[HarmonyPatch(typeof(TriggerDetector), "UpdateImplement")]
     // [HarmonyPatch(typeof(EffectReceiver), "OnHitEnter")]
     // [HarmonyPatch(typeof(EffectDealer), "DelayShootEffect")]
@@ -297,8 +320,16 @@ public static class TasTracerState {
     private static void FrameHistoryTimerComplete(Timer.DelayTask __instance) {
         if (!ShouldTrace()) return;
 
-        AddFrameHistory(["DelayTask.Complete", new StackTrace()]);
+        AddFrameHistory("DelayTask.Complete", new StackTrace());
     }
+    
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(FxPlayer), nameof(FxPlayer.OnEnableInvoke))]
+    private static void Wipp(FxPlayer __instance) {
+        // WIP HACk TODO
+        // __instance.SetFieldValue("lastPlayTime", 0f);
+    }
+    
 
     /*[HarmonyPrefix]
     [HarmonyPatch(typeof(AnimationMoveScaler), "AnimatorMoved")]
@@ -443,14 +474,7 @@ public static class TasTracerState {
     private static void PlayerUpdate() {
         if (!ShouldTrace(TasTracerFilter.Miscellaneous)) return;
 
-        AddFrameHistory([
-            "Player.Update",
-            Time.deltaTime,
-
-            TimePauseManager.GamePlayTimeScaleModifier.finalTimeScale,
-            TimePauseManager.UITimeScaleModifier.finalTimeScale,
-            TimePauseManager.GlobalSimulationSpeed,
-        ]);
+        AddFrameHistory("Player.Update", Time.deltaTime);
     }
 
     [HarmonyPrefix]
