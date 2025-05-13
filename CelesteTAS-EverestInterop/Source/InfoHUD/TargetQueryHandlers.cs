@@ -6,15 +6,16 @@ using System.Text.RegularExpressions;
 using System.Reflection;
 using TAS.Utils;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace TAS.InfoHUD;
 
-internal class MonobehaviourQueryHandler : TargetQuery.Handler {
+internal class MonobehaviourQueryHandler : FilterableQueryHandler {
     public override bool CanResolveInstances(Type type) => type.IsSameOrSubclassOf(typeof(MonoBehaviour));
 
     public override object[] ResolveInstances(Type type) {
-        var entityInstances =
-            UnityEngine.Object.FindObjectsByType(type, FindObjectsInactive.Exclude, FindObjectsSortMode.InstanceID);
+        const FindObjectsInactive findDisabled = FindObjectsInactive.Include;
+        var entityInstances = Object.FindObjectsByType(type, findDisabled, FindObjectsSortMode.InstanceID);
         // ReSharper disable once CoVariantArrayConversion
         return entityInstances;
     }
@@ -327,6 +328,58 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
         }
 
         return false;
+    }
+}
+
+internal class FilterableQueryHandler : TargetQuery.Handler {
+    private static readonly Regex FilterRegex = new(@"^(.+)(?:\[(.+)])(.*)$", RegexOptions.Compiled);
+
+    private const string SpecialSeparator = "___";
+    private const string EntityNameKey = "EntityFilter";
+
+    /// Splits `Type[Name]` on the base type before `CollectionQueryHandler` takes the brackets as an index
+    public override IEnumerable<string> ProcessQueryArguments(IEnumerable<string> queryArgs, bool isAutoComplete) {
+        var isBaseType = true;
+        foreach (string arg in queryArgs) {
+            if (isBaseType && FilterRegex.Match(arg) is { Success: true } match) {
+                yield return match.Groups[1].Value;
+                yield return $"{EntityNameKey}{SpecialSeparator}{match.Groups[2]}";
+            } else {
+                yield return arg;
+            }
+            isBaseType = false;
+        }
+    }
+
+    public override Result<bool, TargetQuery.QueryError> ResolveMemberValues(ref object?[] values, ref int memberIdx,
+        string[] memberArgs) {
+        string[] parts = memberArgs[memberIdx].Split(SpecialSeparator);
+        if (parts.Length == 1) {
+            return Result<bool, TargetQuery.QueryError>.Ok(false);
+        }
+
+        switch (parts[0]) {
+            case EntityNameKey:
+                var key = parts[1];
+
+                for (var valueIdx = 0; valueIdx < values.Length; valueIdx++) {
+                    if (values[valueIdx] is not Object value) {
+                        values[valueIdx] = TargetQuery.InvalidValue;
+                        continue;
+                    }
+
+                    if (!value.name.Contains(key)) {
+                        values[valueIdx] = TargetQuery.InvalidValue;
+
+                        Log.Info($"MonoBehaviour doesn't match '{key}'. Found {value.name}");
+                    }
+                }
+
+
+                return Result<bool, TargetQuery.QueryError>.Ok(true);
+        }
+
+        return Result<bool, TargetQuery.QueryError>.Ok(false);
     }
 }
 
