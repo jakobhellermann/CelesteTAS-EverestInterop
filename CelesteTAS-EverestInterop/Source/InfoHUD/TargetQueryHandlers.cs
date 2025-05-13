@@ -35,7 +35,7 @@ abstract internal class FilterableQueryHandler : TargetQuery.Handler {
     private const string SpecialSeparator = "___";
     private const string EntityNameKey = "EntityFilter";
 
-    public override (List<Type> Types, string[] MemberArgs)? ResolveBaseTypes(string[] queryArgs) {
+    public override (HashSet<Type> Types, string[] MemberArgs)? ResolveBaseTypes(string[] queryArgs) {
         if (queryArgs.Length == 0) return null;
         if (!queryArgs[0].Contains('[')) return null;
 
@@ -70,8 +70,6 @@ abstract internal class FilterableQueryHandler : TargetQuery.Handler {
 
                     if (!value.name.Contains(key)) {
                         values[valueIdx] = TargetQuery.InvalidValue;
-
-                        Log.Info($"MonoBehaviour doesn't match '{key}'. Found {value.name}");
                     }
                 }
 

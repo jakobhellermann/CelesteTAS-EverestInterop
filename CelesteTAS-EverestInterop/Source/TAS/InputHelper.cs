@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using InControl;
+using NineSolsAPI;
 using NineSolsAPI.Utils;
 using RCGMaker.Core;
 using StudioCommunication;
@@ -45,10 +46,15 @@ public static class InputHelper {
     // HACK
     [HarmonyPatch(typeof(PushAwayWall), "Update")]
     [HarmonyPrefix]
-    public static bool DontRunAtStart(MethodBase __originalMethod) {
+    public static bool DontRunAtStart(PushAwayWall __instance) {
         if (!Manager.Running) return true;
 
-        return Manager.Controller.CurrentFrameInTas > 6;
+        var wouldHave = __instance.playerSensor.IsPlayerInside;
+        if (wouldHave) {
+            ToastManager.Toast($"would have pushawaywall'd {Manager.Controller.CurrentFrameInTas}");
+        }
+
+        return Manager.Controller.CurrentFrameInTas > 12;
     }
 
     [HarmonyPatch(typeof(LoadingLoopIcon), nameof(LoadingLoopIcon.ShowLoadingLoopIcon))]

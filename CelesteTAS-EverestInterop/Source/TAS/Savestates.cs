@@ -112,6 +112,10 @@ public static class Savestates {
             ToastManager.Toast($"Warning: Savestate has {tweenCount} running tweens, which are not restored.\n" +
                                "Enable Debug > DebugInfo > Tweens to find a better frame.");
         }
+
+        if (FooManager.Instance.deposits.Count > 0) {
+            ToastManager.Toast( $"Warning: Savestate has {FooManager.Instance.deposits.Count} talisman deposits, which cannot be restored");
+        }
     }
 
     public static void SaveState(bool byBreakpoint) {

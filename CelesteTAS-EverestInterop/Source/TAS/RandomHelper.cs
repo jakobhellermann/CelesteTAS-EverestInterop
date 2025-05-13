@@ -1,5 +1,6 @@
 using HarmonyLib;
 using JetBrains.Annotations;
+using NineSolsAPI;
 using System.Diagnostics;
 using System.Reflection;
 using UnityEngine;
@@ -40,7 +41,7 @@ public static class RandomHelper {
 
 
     [HarmonyPatch(typeof(DropTable), nameof(DropTable.GetDropList))]
-    private class RandomP {
+    private class Random0 {
         [HarmonyPrefix]
         [UsedImplicitly]
         private static void Prefix(out Random.State? __state) {
@@ -48,7 +49,6 @@ public static class RandomHelper {
                 __state = null;
                 return;
             }
-
             __state = Random.state;
         }
 
@@ -61,4 +61,28 @@ public static class RandomHelper {
             Random.state = state;
         }
     }
+    
+    [HarmonyPatch(typeof(_2dxFX_Distortion), "OnEnable")]
+    private class Random1 {
+        [HarmonyPrefix]
+        [UsedImplicitly]
+        private static void Prefix(out Random.State? __state) {
+            if (!Manager.Running) {
+                __state = null;
+                return;
+            }
+            __state = Random.state;
+        }
+
+
+        [HarmonyPostfix]
+        [UsedImplicitly]
+        private static void Postfix(Random.State? __state) {
+            if (__state is not { } state) return;
+            ToastManager.Toast("restored");
+
+            Random.state = state;
+        }
+    }
+    
 }
