@@ -1,3 +1,4 @@
+using NineSolsAPI;
 using System;
 using System.IO;
 using System.Linq;
@@ -130,6 +131,52 @@ internal static class MetadataCommands {
         // dummy
     }
 
+    
+    // `&& monster` also rejects destroyed monsters, which C# patterns still see as non-null
+    private static MonsterBase? DamageSectionTarget => MonsterManager.Instance.ClosetMonster is { } monster && monster ? monster : null;
+
+    public static void UpdateDamageSection() {
+        damageSectionStart = DamageSectionTarget is { } target ? SectionOf(target) : null;
+    }
+
+    private static DamageSection SectionOf(MonsterBase monster) => new(
+        Manager.Controller.CurrentFrameInTas,
+        monster.postureSystem.PostureValue,
+        monster.postureSystem.InternalInjury
+    );
+
+    internal record struct DamageSection(int Frame, float HpBase, float HpInternal);
+
+    private static DamageSection? damageSectionStart;
+
+    [TasCommand("Damage:", CalcChecksum = false)]
+    private static void DamageCommand(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
+        if (DamageSectionTarget is not { } monster) {
+            AbortTas("Damage: no monster nearby");
+            return;
+        }
+
+        var before = damageSectionStart ?? new DamageSection(0, monster.postureSystem.MaxPostureValue, 0);
+        var after = SectionOf(monster);
+        damageSectionStart = after;
+
+        var time = after.Frame - before.Frame;
+        var diffBase = before.HpBase - after.HpBase;
+        var diffInternal = after.HpInternal - before.HpInternal;
+        var diffRegular = diffBase - diffInternal;
+
+        var dps = diffBase / time * InputHelper.CurrentTasFramerate;
+
+        var damageText = $"{diffRegular}";
+        if (diffInternal != 0) damageText += $" (+{diffInternal})";
+        damageText += $" in {time}f = {dps:0.00} DPS";
+
+        UpdateAllMetadata(
+            "Damage:",
+            _ => damageText,
+            Manager.Controller.CurrentCommands.Contains);
+    }
+
     /*
     [TasCommand("MidwayFileTime", Aliases = ["MidwayFileTime:", "MidwayFileTime："], CalcChecksum = false)]
     private static void MidwayFileTimeCommand(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
@@ -190,7 +237,7 @@ internal static class MetadataCommands {
 
                 return true;
             })
-            .ToDictionary(command => command.StudioLine, command => $"{command.Attribute.Name}: {getMetadata(command)}");
+            .ToDictionary(command => command.StudioLine, command => $"{command.Attribute.Name}{(command.Attribute.Name.EndsWith(":")?"":":")} {getMetadata(command)}");
 
         if (updateLines.IsEmpty()) {
             return;
@@ -222,4 +269,13 @@ internal static class MetadataCommands {
             command => (int.Parse(command.Args.FirstOrDefault() ?? "0") + 1).ToString(),
             command => int.TryParse(command.Args.FirstOrDefault() ?? "0", out _));
     }
+
+    [DisableRun]
+    private static void Disable() {
+        damageSectionStart = null;
+    }
+}
+
+static class PostureSystemExtensions {
+    public static float TotalHealth(this PostureSystem postureSystem) => postureSystem.PostureValue + postureSystem.InternalInjury;
 }
