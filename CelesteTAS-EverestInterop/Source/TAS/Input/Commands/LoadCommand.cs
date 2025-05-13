@@ -48,6 +48,7 @@ public static class LoadCommand {
     [TasCommand("load", MetaDataProvider = typeof(LoadMeta))]
     private static void Load(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
         IsLoading = true;
+
         Log.TasTrace("Executing Load Command");
         TasTracerState.AddFrameHistory("Executing load command");
 
@@ -128,7 +129,7 @@ public static class LoadCommand {
             projectile.ReturnToPool();
         }
 
-
+        MetadataCommands.UpdateDamageSection();
         IsLoading = false;
     }
 
