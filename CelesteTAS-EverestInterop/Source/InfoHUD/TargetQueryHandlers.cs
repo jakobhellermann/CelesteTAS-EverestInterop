@@ -8,6 +8,16 @@ using Object = UnityEngine.Object;
 
 namespace TAS.InfoHUD;
 
+internal class ScriptableObjectHandler : FilterableQueryHandler {
+    public override bool CanResolveInstances(Type type) => type.IsSameOrSubclassOf(typeof(ScriptableObject));
+
+    public override object[] ResolveInstances(Type type) {
+        var resources = Resources.FindObjectsOfTypeAll(type);
+        // ReSharper disable once CoVariantArrayConversion
+        return resources;
+    }
+}
+
 internal class MonobehaviourQueryHandler : FilterableQueryHandler {
     public override bool CanResolveInstances(Type type) => type.IsSameOrSubclassOf(typeof(MonoBehaviour));
 
