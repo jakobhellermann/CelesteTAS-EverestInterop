@@ -26,8 +26,8 @@ namespace TAS;
 [SuppressMessage("Method Declaration", "Harmony003:Harmony non-ref patch parameters modified")]
 public static class DebugInfo {
     // private static float lastDeltaTime;
-    private static float? lastBossHp;
-    private static float? lastBossHpDiff;
+    private static (float, float)? lastBossHp;
+    private static (float, float)? lastBossHpDiff;
     private static float? lastDeltaTime;
 
     [Flags]
@@ -591,8 +591,8 @@ public static class DebugInfo {
         var text = "";
         foreach (var monster in MonsterManager.Instance.monsterDict.Values) {
             if (!monster.isActiveAndEnabled) {
-                // text += "(disabled) ";
-                continue;
+                text += "(disabled) ";
+                // continue;
             }
 
             text += GetMonsterInfotext(monster, filter) + "\n";
@@ -619,16 +619,16 @@ public static class DebugInfo {
         text += "\n";
 
         // text += $"HP:  {monster.health.currentValue:0.00}\n";
-        var newBossHp = monster.postureSystem.CurrentHealthValue + monster.postureSystem.CurrentInternalInjury;
+        var newBossHp = (monster.postureSystem.CurrentHealthValue, monster.postureSystem.CurrentInternalInjury);
         if (lastBossHp != null && lastBossHp != newBossHp) {
-            lastBossHpDiff = newBossHp - lastBossHp;
+            lastBossHpDiff = (newBossHp.CurrentHealthValue - lastBossHp.Value.Item1, newBossHp.CurrentInternalInjury - lastBossHp.Value.Item2);
         }
 
         lastBossHp = newBossHp;
 
         text +=
             $"HP:  {monster.postureSystem.CurrentHealthValue} (+{FormatNumber(monster.postureSystem.InternalInjury)})";
-        if (lastBossHpDiff != null) text += $" | {lastBossHpDiff:0}";
+        if (lastBossHpDiff is var (hpDiff, hpDiffInternal)) text += $" | {hpDiff:0} {hpDiffInternal:0}";
         text += "\n";
         // text += $"Area: {monster.pathFindAgent.currentArea}\n";
         // text +=
@@ -895,10 +895,11 @@ public static class DebugInfo {
     private static string ClipText<T>(AnimationClip clip, AnimatorStateInfo info) {
         var text = "";
         text += "Clip:\n";
+
         text += $"+ {info.normalizedTime:0.00}\n";
         foreach (var evt in clip.events) {
             var e = Enum.ToObject(typeof(T), evt.intParameter);
-            text += $"- {evt.time:0.00}: {e}\n";
+            text += $"- {evt.functionName} {evt.time:0.00}: {e}\n";
         }
 
         return text;
