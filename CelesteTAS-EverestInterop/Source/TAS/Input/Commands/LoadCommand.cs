@@ -129,7 +129,7 @@ public static class LoadCommand {
             projectile.ReturnToPool();
         }
 
-
+        MetadataCommands.UpdateDamageSection();
         IsLoading = false;
     }
 
