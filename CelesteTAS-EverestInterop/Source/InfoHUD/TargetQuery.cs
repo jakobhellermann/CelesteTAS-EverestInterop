@@ -103,6 +103,7 @@ public static class TargetQuery {
     internal static readonly Dictionary<string, (HashSet<Type> Types, string[] MemberArgs)> BaseTypeCache = [];
 
     private static readonly Handler[] Handlers = [
+        new ScriptableObjectHandler(),
         new MonobehaviourQueryHandler(),
         new SingletonBehaviourResolver(),
     ];
