@@ -3,6 +3,7 @@ using DG.Tweening;
 using EverestInterop;
 using HarmonyLib;
 using MonsterLove.StateMachine;
+using Newtonsoft.Json;
 using NineSolsAPI;
 using NineSolsAPI.Utils;
 using System.Collections.Generic;
@@ -293,11 +294,19 @@ public static class LoadCommand {
         var moveScaler = monsterBase.animator.transform.Find("LogicRoot/MoveScale")
             ?.GetComponent<AnimationMoveScaler>();
         if (moveScaler != null) {
-            moveScaler.ClearEvaluate();
-            moveScaler.EvaluatePosition();
+            moveScaler.IsContinuousUpdate = true;
+            moveScaler.EvaluateOffset = 120;
+            moveScaler.MoveXMinScale = 0.1f;
+            moveScaler.MoveXMaxScale = 1.5f;
             moveScaler.RefDisRemain = 1f;
             moveScaler.ReferenceDistance = 0;
+            moveScaler.ClearEvaluate();
+            moveScaler.EvaluatePosition();
+            moveScaler.SetFieldValue("_moveXScale", 0.1f);
         }
+        
+        TasTracerState.AddFrameHistory(JsonUtility.ToJson(moveScaler), moveScaler?.GetFieldValue<float>("_moveXScale"));
+        
 
         NormalizeFsm(monsterBase.fsm);
         foreach (var entry in monsterBase.fsm._stateMapping.getAllStates) {

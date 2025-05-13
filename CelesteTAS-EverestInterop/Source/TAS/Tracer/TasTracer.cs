@@ -99,7 +99,9 @@ internal static class TasTracer {
     private static void Initialize() {
         AttributeUtils.CollectAllMethods<TasTraceAddState>(typeof(TraceData));
 
-        ClearOldTraces();
+        if (TasMod.Instance.ConfigTasTraceClearOnStart.Value) {
+            ClearOldTraces();
+        }
     }
 
 
