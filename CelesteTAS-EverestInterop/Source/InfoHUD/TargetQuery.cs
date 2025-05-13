@@ -1558,12 +1558,13 @@ public static class TargetQuery {
                     return Result<MethodInfo?, string>.Fail(builder.ToString());
                 }
                 default: {
-                    var builder = new StringBuilder($"Ambiguous overload of method '{member}' on type '{type}' with {argumentCount} argument(s). Found");
+                    /*var builder = new StringBuilder($"Ambiguous overload of method '{member}' on type '{type}' with {argumentCount} argument(s). Found");
                     foreach (var candidate in type.GetMethods().Where(method => method.Name == member)) {
                         builder.AppendLine($"- {candidate}");
                     }
 
-                    return Result<MethodInfo?, string>.Fail(builder.ToString());
+                    return Result<MethodInfo?, string>.Fail(builder.ToString());*/
+                    return Result<MethodInfo?, string>.Ok(methods[0]);
                 }
             }
         }
