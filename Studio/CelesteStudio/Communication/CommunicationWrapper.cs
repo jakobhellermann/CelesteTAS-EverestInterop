@@ -115,6 +115,8 @@ public static class CommunicationWrapper {
     }
 
     public static void SendPath(string path) {
+        LibTasCommunication.Instance?.SendPath(path);
+        
         if (Connected) {
             comm!.WritePath(path);
         }
@@ -125,7 +127,6 @@ public static class CommunicationWrapper {
         }
     }
     public static void SendHotkey(HotkeyID hotkey) {
-        Console.WriteLine($"Got hotkey {hotkey}");
         LibTasCommunication.Instance?.SendHotkey(hotkey);
         
         if (Connected) {
@@ -188,13 +189,13 @@ public static class CommunicationWrapper {
     public static GameSettings GameSettings => settings;
     public static CommandInfo[] Commands => commands;
 
-    public static int CurrentLine => State.CurrentLine ;
+    public static int CurrentLine => State.CurrentLine;
     public static string CurrentLineSuffix => State.CurrentLineSuffix;
-    public static int CurrentFrameInTas =>  State.CurrentFrameInTas ;
-    public static int CurrentFrameInInput =>  State.CurrentFrameInInput ;
-    public static int TotalFrames =>  State.TotalFrames ;
-    public static int SaveStateLine =>  State.SaveStateLines ;
-    public static bool PlaybackRunning =>  State.PlaybackRunning ;
+    public static int CurrentFrameInTas =>  State.CurrentFrameInTas;
+    public static int CurrentFrameInInput =>  State.CurrentFrameInInput;
+    public static int TotalFrames =>  State.TotalFrames;
+    public static int[] SaveStateLines =>  State.SaveStateLines;
+    public static bool PlaybackRunning =>  State.PlaybackRunning;
 
     public static string GameInfo => State.GameInfo;
     public static string LevelName => Connected ? State.LevelName : string.Empty;

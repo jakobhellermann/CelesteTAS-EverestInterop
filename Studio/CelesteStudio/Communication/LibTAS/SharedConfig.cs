@@ -1,15 +1,33 @@
 using MemoryPack;
+using System;
 
 #pragma warning disable CS0169 // Field is never used
 
 namespace CelesteStudio.Communication.LibTAS;
 
+[Flags]
+public enum SaveStateFlags {
+    Incremental = 0x01, Ram = 0x02, Compressed = 0x08, Present = 0x10, Fork = 0x20,
+}
+
+[Flags]
+public enum FastForwardMode {
+    Sleep = 0x1,
+    Mixing = 0x02,
+}
+[Flags]
+public enum FastForwardRender {
+    All,
+    Some,
+    No,
+}
+
 // ReSharper disable UnusedVariable
 [MemoryPackable]
 public partial struct SharedConfig {
     public int SpeedDivisor = 1;
-    public int FastforwardMode = 0x01 | 0x02;
-    public int FastforwardRender = 1;
+    public FastForwardMode FastForwardMode = FastForwardMode.Sleep | FastForwardMode.Mixing;
+    public FastForwardRender FastforwardRender = FastForwardRender.Some;
     public int Recording = 0;
     public ulong MovieFramecount = 0;
     public int LoggingStatus = 1;
@@ -65,7 +83,9 @@ public partial struct SharedConfig {
     public int SleepHandling = 1;
     public int GameSpecificTiming = 0;
     public int GameSpecificSync = 0;
-    public int SavestateSettings = 0x08;
+
+
+    public SaveStateFlags SavestateSettings = SaveStateFlags.Compressed;
     public ulong BusyLoopHash = 0;
     public bool Running = false;
     public bool Fastforward = false;
@@ -80,7 +100,7 @@ public partial struct SharedConfig {
     public bool AudioMute = true;
     public bool AudioDisabled = false;
     public bool OpenalSoft = true;
-    public bool VirtualSte = false;
+    public bool VirtualSteam = false;
     public bool OpenglSoft = false;
     public bool OpenglPerformance = false;
     public bool BusyloopDetection = false;
