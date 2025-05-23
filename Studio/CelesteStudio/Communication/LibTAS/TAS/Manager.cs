@@ -1,22 +1,13 @@
+using CelesteStudio.Communication;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using Celeste;
-using Celeste.Mod;
-using Celeste.Mod.UI;
-using Celeste.Pico8;
 using JetBrains.Annotations;
-using Monocle;
 using StudioCommunication;
-using System.Threading.Tasks;
-using TAS.Communication;
 using TAS.EverestInterop;
 using TAS.Input;
-using TAS.Input.Commands;
-using TAS.ModInterop;
 using TAS.Module;
 using TAS.Playback;
-using TAS.Tools;
 using TAS.Utils;
 
 namespace TAS;
@@ -29,7 +20,7 @@ public class DisableRunAttribute(int priority = 0) : EventAttribute(priority);
 
 /// Causes the method to be called every real-time frame, even if a TAS is currently running / paused
 [AttributeUsage(AttributeTargets.Method), MeansImplicitUse]
-public class UpdateMetaAttribute(int priority = 0) : EventAttribute(priority);
+public class UpdateMetaAttribute : Attribute;
 
 /// Main controller, which manages how the TAS is played back
 public static class Manager {
@@ -66,29 +57,14 @@ public static class Manager {
     // Hot-reloading support
     [Load]
     private static void RestoreStudioTasFilePath() {
-        if (Engine.Instance.GetDynamicDataInstance().Get<string>("CelesteTAS_FilePath") is { } filePath) {
+        /*if (Engine.Instance.GetDynamicDataInstance().Get<string>("CelesteTAS_FilePath") is { } filePath) {
             Controller.FilePath = filePath;
-        }
+        }*/
 
-        // Stop TAS to avoid blocking reload
-        typeof(AssetReloadHelper)
-            .GetMethodInfo(nameof(AssetReloadHelper.Do), [typeof(string), typeof(Func<bool, Task>), typeof(bool), typeof(bool)])!
-            .IlHook((cursor, _) => {
-                var start = cursor.MarkLabel();
-                cursor.MoveBeforeLabels();
-
-                cursor.EmitLdarg2(); // bool silent
-
-                // Only disable TAS for non-silent reload actions
-                cursor.EmitBrtrue(start);
-                cursor.EmitDelegate(DisableRun);
-            });
     }
 
     [Unload]
     private static void SaveStudioTasFilePath() {
-        Engine.Instance.GetDynamicDataInstance().Set("CelesteTAS_FilePath", Controller.FilePath);
-
         Controller.Stop();
         Controller.Clear();
     }
@@ -108,7 +84,7 @@ public static class Manager {
         if (Controller.Inputs.Count == 0) {
             // Empty / Invalid file
             CurrState = NextState = State.Disabled;
-            SyncChecker.ReportRunFinished();
+            // SyncChecker.ReportRunFinished();
             return;
         }
 
@@ -118,6 +94,7 @@ public static class Manager {
     }
 
     public static void DisableRun() {
+        Console.WriteLine($"Disablerun called");
         if (!Running) {
             return;
         }
@@ -125,7 +102,7 @@ public static class Manager {
         "Stopping TAS".Log();
 
         AttributeUtils.Invoke<DisableRunAttribute>();
-        SyncChecker.ReportRunFinished();
+        // SyncChecker.ReportRunFinished();
         CurrState = NextState = State.Disabled;
         Controller.Stop();
     }
@@ -156,12 +133,12 @@ public static class Manager {
             return;
         }
 
-        if (CriticalErrorHandler.CurrentHandler != null) {
+        /*if (CriticalErrorHandler.CurrentHandler != null) {
             // Always prevent execution inside crash handler, even with Unsafe
             // TODO: Move this after executing the first frame, once Everest fixes scene changes from the crash handler
             DisableRun();
             return;
-        }
+        }*/
 
         if (Controller.HasFastForward) {
             NextState = State.Running;
@@ -186,7 +163,7 @@ public static class Manager {
         }
 
         // Prevent executing unsafe actions unless explicitly allowed
-        if (SafeCommand.DisallowUnsafeInput && Controller.CurrentFrameInTas > 1) {
+        /*TODO if (SafeCommand.DisallowUnsafeInput && Controller.CurrentFrameInTas > 1) {
             // Only allow specific scenes
             if (Engine.Scene is not (Level or LevelLoader or LevelExit or Emulator or LevelEnter)) {
                 SyncChecker.ReportUnsafeAction();
@@ -205,7 +182,7 @@ public static class Manager {
                     DisableRun();
                 }
             }
-        }
+        }*/
     }
 
     /// Updates everything around the TAS itself, like hotkeys, studio-communication, etc.
@@ -246,12 +223,12 @@ public static class Manager {
             return;
         }
 
-        if (TASRecorderInterop.IsRecording) {
+        /*if (TASRecorderInterop.IsRecording) {
             // Force recording at 1x playback
             NextState = State.Running;
             PlaybackSpeed = 1.0f;
             return;
-        }
+        }*/
 
         switch (CurrState) {
             case State.Running:
@@ -286,11 +263,12 @@ public static class Manager {
         }
 
         // Allow altering the playback speed with the right thumb-stick
-        float normalSpeed = Hotkeys.RightThumbSticksX switch {
+        /*float normalSpeed = Hotkeys.RightThumbSticksX switch {
             >=  0.001f => Hotkeys.RightThumbSticksX * TasSettings.FastForwardSpeed,
             <= -0.001f => (1 + Hotkeys.RightThumbSticksX) * TasSettings.SlowForwardSpeed,
             _          => 1.0f,
-        };
+        };*/
+        float normalSpeed = 1.0f;
 
         // Apply fast / slow forwarding
         switch (NextState) {
@@ -327,7 +305,8 @@ public static class Manager {
 
     /// TAS-execution is paused during loading screens
     public static bool IsLoading() {
-        return Engine.Scene switch {
+        return false; // TODO
+        /*return Engine.Scene switch {
             Level level => level.IsAutoSaving() && level.Session.Level == "end-cinematic",
             SummitVignette summit => !summit.ready,
             Overworld overworld => overworld.Current is OuiFileSelect { SlotIndex: >= 0 } slot && slot.Slots[slot.SlotIndex].StartingGame ||
@@ -335,7 +314,7 @@ public static class Manager {
                                    overworld.Next is OuiMainMenu && (UserIO.Saving || Everest._SavingSettings),
             Emulator emulator => emulator.game == null,
             _ => Engine.Scene is LevelExit or LevelLoader or GameLoader || Engine.Scene.GetType().Name == "LevelExitToLobby",
-        };
+        };*/
     }
 
     /// Whether the game is currently truly loading, i.e. waiting an undefined amount of time
@@ -345,21 +324,22 @@ public static class Manager {
             return true;
         }
 
-        return Engine.Scene switch {
+        return false;
+        /*return Engine.Scene switch {
             Level level => level.IsAutoSaving(),
             SummitVignette summit => !summit.ready,
             Overworld overworld => overworld.Next is OuiChapterSelect && UserIO.Saving ||
                                    overworld.Next is OuiMainMenu && (UserIO.Saving || Everest._SavingSettings),
             LevelExit exit => exit.mode == LevelExit.Mode.Completed && !exit.completeLoaded || UserIO.Saving,
             _ => Engine.Scene is LevelLoader or GameLoader || Engine.Scene.GetType().Name == "LevelExitToLobby" && UserIO.Saving,
-        };
+        };*/
     }
 
     /// Determine if current TAS file is a draft
     private static bool IsDraft() {
-        if (TASRecorderInterop.IsRecording) {
+        /*if (TASRecorderInterop.IsRecording) {
             return false;
-        }
+        }*/
 
         // Require any *Time, alternatively Midway*Time at the end for the TAS to be counted as finished
         return Controller.Commands.Values
@@ -386,14 +366,15 @@ public static class Manager {
             FileNeedsReload = Controller.NeedsReload,
             TotalFrames = Controller.Inputs.Count,
 
-            GameInfo = GameInfo.StudioInfo,
-            LevelName = GameInfo.LevelName,
-            ChapterTime = GameInfo.ChapterTime,
+            // GameInfo = GameInfo.StudioInfo,
+            GameInfo = "yo ho",
+            // LevelName = GameInfo.LevelName,
+            // ChapterTime = GameInfo.ChapterTime,
 
-            ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator && Engine.Scene is Level or Emulator,
+            // ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator && Engine.Scene is Level or Emulator,
         };
 
-        if (Engine.Scene is Level level && level.GetPlayer() is { } player) {
+        /*if (Engine.Scene is Level level && level.GetPlayer() is { } player) {
             state.PlayerPosition = (player.Position.X, player.Position.Y);
             state.PlayerPositionRemainder = (player.PositionRemainder.X, player.PositionRemainder.Y);
             state.PlayerSpeed = (player.Speed.X, player.Speed.Y);
@@ -403,51 +384,8 @@ public static class Manager {
             state.PlayerSpeed = (classicPlayer.spd.X, classicPlayer.spd.Y);
         }
 
-        CommunicationWrapper.SendState(state);
-    }
+        CommunicationWrapper.SendState(state);*/
 
-    [Monocle.Command("dump_tas", "Dumps the parsed TAS file into the console (CelesteTAS)"), UsedImplicitly]
-    private static void CmdDumpTas() {
-        if (Controller.NeedsReload) {
-            if (Running) {
-                "Cannot dump TAS file while running it with unparsed changes".Log(LogLevel.Error);
-                return;
-            }
-
-            // Pretend to start a TAS. so that AbortTas detection works
-            NextState = State.Running;
-            Controller.RefreshInputs(forceRefresh: true);
-            if (NextState == State.Disabled) {
-                "TAS contains errors. Cannot dump to console".ConsoleLog(LogLevel.Error);
-                return;
-            }
-            NextState = State.Disabled;
-        }
-
-        $"TAS file dump for '{Controller.FilePath}':".Log();
-
-        var writer = Console.Out;
-        for (int i = 0; i < Controller.Inputs.Count;) {
-            foreach (var comment in Controller.Comments.GetValueOrDefault(i, [])) {
-                writer.WriteLine($"#{comment.Text}");
-            }
-            foreach (var command in Controller.Commands.GetValueOrDefault(i, [])) {
-                if (command.Attribute.ExecuteTiming == ExecuteTiming.Parse) {
-                    // Comment-out parse-only commands
-                    writer.WriteLine($"# {command.CommandLine.ToString()}");
-                } else {
-                    writer.WriteLine(command.CommandLine.ToString());
-                }
-            }
-            if (Controller.FastForwards.TryGetValue(i, out var fastForward)) {
-                writer.WriteLine(fastForward.ToString());
-            }
-
-            writer.WriteLine(Controller.Inputs[i]);
-            i += Controller.Inputs[i].Frames;
-        }
-        writer.Flush();
-
-        "Successfully dumped TAS file to console".ConsoleLog();
+        CommunicationWrapper.OnStateChanged(state);
     }
 }
