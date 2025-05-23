@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using CelesteStudio.Communication;
+using CelesteStudio.Communication.LibTAS;
 using CelesteStudio.Dialog;
 using CelesteStudio.Editing;
 using CelesteStudio.Migration;
@@ -241,6 +242,8 @@ public sealed class Studio : Form {
         };
 
         CommunicationWrapper.Start();
+
+        LibTasCommunication.Start();
     }
 
     /// Properly registers a window
