@@ -1,11 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using Celeste;
-using Monocle;
 using System;
 using TAS.EverestInterop;
 using TAS.Input;
-using TAS.ModInterop;
 using TAS.Module;
 using TAS.Utils;
 
@@ -15,7 +12,7 @@ namespace TAS.Playback;
 internal static class SavestateManager {
     public readonly record struct Savestate(InputController Controller, int Checksum, bool SavedByBreakpoint) {
         /// SpeedrunTool slot, which is used for this save-state
-        public readonly string Slot = $"{SpeedrunToolInterop.DefaultSlot}_{Checksum}";
+        public readonly string Slot = $"CelesteTAS_{Checksum}";
 
         public int Frame => Controller.CurrentFrameInTas;
         public int StudioLine =>
@@ -53,7 +50,7 @@ internal static class SavestateManager {
     private static readonly List<Savestate> BreakpointSavestates = [];
 
     [Unload]
-    private static void Unload() {
+    public static void Unload() {
         ManualSavestate?.Clear();
         ManualSavestate = null;
 
@@ -85,7 +82,7 @@ internal static class SavestateManager {
         }
 
         // Autoload state after entering the level, if the TAS was started outside the level
-        if (Manager.Running && Engine.Scene is Level) {
+        if (Manager.Running /*&& Engine.Scene is Level*/) {
             foreach (var state in AllSavestates.Reverse()) {
                 if (Manager.Controller.CurrentFrameInTas >= state.Frame || Manager.Controller.FilePath != state.Controller.FilePath || state.BreakpointCommented) {
                     continue;
@@ -137,11 +134,11 @@ internal static class SavestateManager {
         }
     }
 
-    internal const int EnableRunPriority = BindingHelper.EnableRunPriority + 1;
+    internal const int EnableRunPriority = 1;
 
     [EnableRun(EnableRunPriority)]
     internal static void EnableRun() {
-        if (SpeedrunToolInterop.Installed && Engine.Scene is Level) {
+        if (SpeedrunToolInterop.Installed) {
             foreach (var state in AllSavestates.Reverse()) {
                 if (state.BreakpointCommented) {
                     continue;
@@ -174,9 +171,9 @@ internal static class SavestateManager {
     }
     private static bool Load(Savestate savestate) {
         // Don't load save-states while recording
-        if (TASRecorderInterop.IsRecording) {
+        /*if (TASRecorderInterop.IsRecording) {
             return false;
-        }
+        }*/
 
         if (savestate.BreakpointDeleted || savestate.Checksum != Manager.Controller.CalcChecksum(savestate.Controller.CurrentFrameInTas)) {
             return false; // Invalid
@@ -212,7 +209,7 @@ internal static class SavestateManager {
         }
     }
     private static void UpdateStudio() {
-        GameInfo.Update();
+        // GameInfo.Update();
         Manager.SendStudioState();
     }
 }

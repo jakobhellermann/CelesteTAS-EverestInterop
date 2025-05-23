@@ -36,6 +36,9 @@ public enum Actions {
     UpMoveOnly = 1 << 25,
     DownMoveOnly = 1 << 26,
     PressedKey = 1 << 27,
+    Escape = 1 << 28,
+    Inventory = 1 << 29,
+    Foo = 1 << 30, // unused
 }
 
 public static class ActionsUtils {
@@ -60,7 +63,10 @@ public static class ActionsUtils {
             {'A', Actions.DashOnly},
             {'M', Actions.MoveOnly},
             {'P', Actions.PressedKey},
-            {'F', Actions.Feather},
+            {'F', Actions.Foo},
+            {'E', Actions.Escape},
+            {'I', Actions.Inventory},
+            {'?', Actions.Feather},
         });
 
     public static readonly ReadOnlyDictionary<char, Actions> DashOnlyChars = new(
@@ -104,7 +110,10 @@ public static class ActionsUtils {
             'A' => Actions.DashOnly,
             'M' => Actions.MoveOnly,
             'P' => Actions.PressedKey,
-            'F' => Actions.Feather,
+            'F' => Actions.Foo,
+            'E' => Actions.Escape,
+            'I' => Actions.Inventory,
+            '?' => Actions.Feather,
             _ => Actions.None,
         };
 
@@ -129,7 +138,10 @@ public static class ActionsUtils {
             Actions.DashOnly => 'A',
             Actions.MoveOnly => 'M',
             Actions.PressedKey => 'P',
-            Actions.Feather => 'F',
+            Actions.Feather => '?',
+            Actions.Escape => 'E',
+            Actions.Inventory => 'I',
+            Actions.Foo => 'F',
             _ => ' ',
         };
 
@@ -154,6 +166,9 @@ public static class ActionsUtils {
         Actions.MoveOnly,
         Actions.PressedKey,
         Actions.Feather,
+        Actions.Escape,
+        Actions.Inventory,
+        Actions.Foo,
     }.Where(e => actions.HasFlag(e));
 
     public static Actions ToggleAction(this Actions actions, Actions other, bool removeMutuallyExclusive) {

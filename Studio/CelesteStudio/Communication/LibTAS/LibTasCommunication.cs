@@ -1,6 +1,4 @@
 using CelesteStudio.Communication.LibTAS.TAS;
-using CelesteStudio.Editing.ContextActions;
-using CelesteStudio.Tool;
 using MemoryPack;
 using StudioCommunication;
 using System;
@@ -13,6 +11,7 @@ using System.Threading.Tasks;
 using TAS;
 using TAS.EverestInterop;
 using TAS.Module;
+using TAS.Playback;
 using TAS.Utils;
 
 // ReSharper disable UnusedVariable
@@ -23,18 +22,24 @@ public sealed class LibTasCommunication(
     Socket socket,
     NetworkStream stream,
     BinaryReader reader,
-    BinaryWriter writer
+    BinaryWriter writer,
+    LuaEnv lua
 ) : IDisposable {
     private const string SocketPath = "/tmp/libTAS.socket";
 
     private bool configChanged;
-    private SharedConfig config = new();
+    public SharedConfig Config = new();
+
+    public int? Pid;
 
     public static LibTasCommunication? Instance;
 
-    public void SendHotkey(HotkeyID hotkey) {
-        configChanged = true;
+    public void SendPath(string path) {
+        Manager.Controller.FilePath = path;
+        Manager.EnableRunLater();
+    }
 
+    public void SendHotkey(HotkeyID hotkey) {
         Hotkeys.AllHotkeys[hotkey].OverrideCheck = true;
     }
 
@@ -42,6 +47,7 @@ public sealed class LibTasCommunication(
         action();
         configChanged = true;
     }
+
 
     public static void Start() {
         new CelesteTasSettings();
@@ -56,7 +62,6 @@ public sealed class LibTasCommunication(
         // AttributeUtils.CollectOwnMethods<UnloadAttribute>();
         AttributeUtils.Invoke<InitializeAttribute>();
 
-
         Task.Run(() => {
             while (true) {
                 try {
@@ -65,9 +70,13 @@ public sealed class LibTasCommunication(
                     Instance.GameLoop();
                     Instance = null;
                 } catch (Exception e) {
-                    if (e is not SocketException { ErrorCode: 111}) {
-                        Console.WriteLine($"eption in libTAS thread: {e.GetType().Name}, restarting in 1s");
+                    if (e is not SocketException { ErrorCode: 111 }) {
+                        Console.WriteLine($"Exception in libTAS thread: {e.GetType().Name}, restarting in 1s");
+                        Manager.DisableRun();
                     }
+
+                    // TODO don't need to
+                    SavestateManager.Unload();
 
                     Thread.Sleep(1000);
                 }
@@ -85,7 +94,14 @@ public sealed class LibTasCommunication(
         var reader = new BinaryReader(stream, Encoding.UTF8);
         var writer = new BinaryWriter(stream);
 
-        return new LibTasCommunication(s, stream, reader, writer);
+        var lua = new LuaEnv();
+        try {
+            lua.Load().Wait();
+        } catch (Exception e) {
+            Console.WriteLine($"lua error: {e}");
+        }
+
+        return new LibTasCommunication(s, stream, reader, writer, lua);
     }
 
 
@@ -93,54 +109,69 @@ public sealed class LibTasCommunication(
         InitProcessMessages();
 
         while (true) {
-            bool exit = StartFrameMessages();
-            if (exit) {
-                LoopExit();
-                break;
-            }
+            if (GameLoopInner()) break;
+        }
+    }
 
-            if ( /* game_window */ true) {
-                while (true) {
-                    // waitpid check if game running
-                    Manager.UpdateMeta();
+    private bool GameLoopInner() {
+        bool exit = StartFrameMessages();
+        if (exit) {
+            LoopExit();
+            return true;
+        }
 
-                    // bool endInnerLoop = config.Running; // || frameAdvance || quitting
-                    if (Manager.CurrState != Manager.NextState) {
-                        Console.WriteLine($"{Manager.CurrState} -> {Manager.NextState}");
-                    }
+        if ( /* game_window */ true) {
+            while (true) {
+                // waitpid check if game running
+                Manager.UpdateMeta();
 
-                    bool endInnerLoop = Manager.NextState is Manager.State.Running or Manager.State.FrameAdvance;
-
-                    Manager.Update();
-
-                    WriterMarker($"frame: {Manager.Controller.FilePath} {Manager.Controller.CurrentFrameInTas + 1}");
-
-                    if (endInnerLoop) {
-                        break;
-                    }
-
-                    SleepSendPreview();
+                // bool endInnerLoop = config.Running; // || frameAdvance || quitting
+                if (Manager.CurrState != Manager.NextState) {
+                    Console.WriteLine($"{Manager.CurrState} -> {Manager.NextState}");
                 }
+
+                bool endInnerLoop = Manager.NextState is Manager.State.Running or Manager.State.FrameAdvance;
+
+                Manager.Update();
+
+                SendMarker($"frame: {Manager.Controller.FilePath} {Manager.Controller.CurrentFrameInTas + 1}");
+
+                if (endInnerLoop) {
+                    break;
+                }
+
+                SleepSendPreview();
             }
+        }
+
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
+        bool shouldFastForward = Manager.PlaybackSpeed != 1;
+        if (shouldFastForward != Config.Fastforward) {
+            Config.Fastforward = shouldFastForward;
+            configChanged = true;
+        }
 
 
-            bool managerRunning = Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance;
-            if (managerRunning != config.Running) {
-                Console.WriteLine($"exporting running: {managerRunning}");
-                UpdateConfig(() => config.Running = managerRunning);
-            }
+        /*bool managerRunning = Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance;
+        Console.WriteLine($"manager running: {managerRunning}");
+        if (managerRunning != config.Running) {
+            Console.WriteLine($"exporting running: {managerRunning}");
+            UpdateConfig(() => config.Running = managerRunning);
+        }*/
 
-            var inputFrame = InputHelper.LastInputFrame;
-
+        if (InputHelper.LastInputFrame is { } inputFrame) {
             uint[] keys = inputFrame.Actions.Sorted()
                 .Select(ActionToXcbSym)
                 .OfType<uint>()
                 .ToArray();
 
-            SendInput(keys);
-
-            EndFrameMessages();
+            uint? framerate = InputHelper.Framerate;
+            SendInput(keys, InputHelper.Framerate ?? DefaultFramerate);
         }
+
+        EndFrameMessages();
+        
+        return false;
     }
 
     private uint? ActionToXcbSym(Actions action) {
@@ -151,19 +182,26 @@ public sealed class LibTasCommunication(
             Actions.Right => 0xff53,
             Actions.Up => 0xff52,
             Actions.Down => 0xff54,
+            Actions.Confirm => 0xff0d, // Return
+            Actions.Escape => 0xff1b,
+            Actions.Inventory => 0x0041 + ('I' - 'A'),
+            Actions.Jump => 0x0041 + ('Z' - 'A'),
+            Actions.Dash => 0x0041 + ('C' - 'A'),
+            Actions.DashOnly => 0x0041 + ('X' - 'A'),
             _ => null,
         };
         if (key is null) {
             Console.WriteLine($"Unhandled key: {action}");
         }
+
         return key;
     }
-    
+
 
     private void LoopExit() {
     }
 
-    private void SendInput(uint[] keys, bool preview = false) {
+    private void SendInput(uint[] keys, uint framerate, bool preview = false) {
         WriteMessage(preview ? MessageId.MSGN_PREVIEW_INPUTS : MessageId.MSGN_ALL_INPUTS);
 
         const int maxkeys = 16;
@@ -178,7 +216,20 @@ public sealed class LibTasCommunication(
 
         // pointer inputs
         // controller rinputs
-        // misc inputs
+
+        if (framerate != DefaultFramerate) { // TODO
+            Console.WriteLine("send updated framerate");
+            // uint framerateNum = newFramerate ?? 100; // TODO
+            WriteMessage(MessageId.MSGN_MISC_INPUTS);
+            const uint flags = 0;
+            writer.Write(flags);
+            writer.Write(1u);
+            writer.Write(framerate);
+            // TODO realtime
+            writer.Write(0u);
+            writer.Write(0u);
+        }
+
         // events
 
 
@@ -193,9 +244,9 @@ public sealed class LibTasCommunication(
 
             switch (message) {
                 case MessageId.MSGB_PID_ARCH:
-                    int pid = reader.ReadInt32();
+                    Pid = reader.ReadInt32();
                     int addrSize = reader.ReadInt32();
-                    Console.WriteLine($"Arch: {pid} {addrSize}");
+                    Console.WriteLine($"Arch: {Pid} {addrSize}");
                     break;
                 case MessageId.MSGB_GIT_COMMIT:
                     string commit = ReceiveString();
@@ -211,16 +262,25 @@ public sealed class LibTasCommunication(
         }
 
         // config.Running = true;
-        config.Osd = true;
-        Manager.EnableRun();
-        Manager.CurrState = Manager.NextState = Manager.State.Paused;
+        Config.Osd = true;
+        Config.Fastforward = false;
+        Config.InitialFramerateNum = DefaultFramerate;
+        Config.Running = true;
+        Config.FastforwardRender = FastForwardRender.Some;
+        Config.VirtualSteam = true;
+        // Manager.EnableRun();
+        // Manager.CurrState = Manager.NextState = Manager.State.Paused;
 
-        WriteConfig(config);
+        WriteConfig(Config);
 
         WriteMessage(MessageId.MSGN_END_INIT);
     }
 
+    public uint DefaultFramerate = 100;
+
     private bool StartFrameMessages() {
+        bool drawFrame = true;
+        bool skipDrawFrame = false;
         // TODO
 
         var message = ReceiveMessage();
@@ -235,11 +295,7 @@ public sealed class LibTasCommunication(
                     Console.WriteLine($"Alert: {alert}");
                     break;
                 case MessageId.MSGB_FRAMECOUNT_TIME:
-                    ulong framecount = reader.ReadUInt64();
-                    ulong currentTimeSec = reader.ReadUInt64();
-                    ulong currentTimeNs = reader.ReadUInt64();
-                    ulong currentRealtimeSec = reader.ReadUInt64();
-                    ulong currentRealtimeNs = reader.ReadUInt64();
+                    ReadDataFramecountTime();
                     // Console.WriteLine($"Frame count: {framecount}");
                     break;
                 case MessageId.MSGB_GAMEINFO:
@@ -266,12 +322,25 @@ public sealed class LibTasCommunication(
                     Console.WriteLine($"LuaPixel({x}, {y}, {color})");
                     break;
 
+                case MessageId.MSGB_NONDRAW_FRAME:
+                    drawFrame = false;
+                    break;
+                case MessageId.MSGB_SKIPDRAW_FRAME:
+                    skipDrawFrame = true;
+                    break;
+                case MessageId.MSGN_USERQUIT:
+                    break;
+
                 default:
                     Console.WriteLine($"Unhandled frame message: {message}");
                     break;
             }
 
             message = ReceiveMessage();
+        }
+
+        if (drawFrame && !skipDrawFrame) {
+            lua.OnPaint();
         }
 
         WriteMessage(MessageId.MSGN_START_FRAMEBOUNDARY);
@@ -281,9 +350,9 @@ public sealed class LibTasCommunication(
 
     private void EndFrameMessages() {
         if (configChanged) {
-            WriteConfig(config);
+            WriteConfig(Config);
             configChanged = false;
-            Console.WriteLine($"updating config {config.Running}");
+            Console.WriteLine($"updating config ff={Config.Fastforward}");
         }
 
         WriteMessage(MessageId.MSGN_END_FRAMEBOUNDARY);
@@ -297,7 +366,7 @@ public sealed class LibTasCommunication(
         WriteMessage(MessageId.MSGN_EXPOSE);
     }
 
-    private void WriteMessage(MessageId message) {
+    public void WriteMessage(MessageId message) {
         writer.Write((int)message);
     }
 
@@ -306,12 +375,123 @@ public sealed class LibTasCommunication(
         writer.Write(Encoding.UTF8.GetBytes(msg));
     }
 
-    private void WriterMarker(string msg) {
+    public void SendMarker(string msg) {
         WriteMessage(MessageId.MSGN_MARKER);
         WriteString(msg);
     }
 
-    private void WriteConfig(SharedConfig config) {
+    public void SendOsdMessage(string msg) {
+        WriteMessage(MessageId.MSGN_OSD_MSG);
+        WriteString(msg);
+    }
+
+    public void SendSavestatePath(string path) {
+        WriteMessage(MessageId.MSGN_SAVESTATE_PATH);
+        WriteString(path);
+    }
+
+    public void SendSavestateIndex(int index) {
+        WriteMessage(MessageId.MSGN_SAVESTATE_INDEX);
+        writer.Write(index);
+    }
+
+    public bool SendSavestate() {
+        WriteMessage(MessageId.MSGN_SAVESTATE);
+        return ReceiveMessage() == MessageId.MSGB_SAVING_SUCCEEDED;
+    }
+
+    public bool SendLoadstate() {
+        WriteMessage(MessageId.MSGN_LOADSTATE);
+        var message = ReceiveMessage();
+
+        if (message != MessageId.MSGB_LOADING_SUCCEEDED) {
+            return false;
+        }
+
+        WriteConfig(Config);
+        message = ReceiveMessage();
+        if (message != MessageId.MSGB_FRAMECOUNT_TIME) {
+            throw new Exception($"Got {message} instead of framecount after loading state");
+        }
+
+        ReadDataFramecountTime();
+
+        return true;
+    }
+
+    public void SendExpose() {
+        WriteMessage(MessageId.MSGN_EXPOSE);
+    }
+
+    public (int, int) LuaResolution() {
+        WriteMessage(MessageId.MSGN_LUA_RESOLUTION);
+        var message = ReceiveMessage();
+        if (message != MessageId.MSGB_LUA_RESOLUTION) {
+            Console.WriteLine($"Expected MSGB_LUA_RESOLUTION, got {message}");
+            return (-1, -1);
+        }
+
+        int w = reader.ReadInt32();
+        int h = reader.ReadInt32();
+        return (w, h);
+    }
+
+    public void LuaText(
+        float x,
+        float y,
+        string text,
+        int? color = null,
+        float? anchorX = null,
+        float? anchorY = null,
+        float? fontSize = null,
+        bool? monospace = null
+    ) {
+        WriteMessage(MessageId.MSGN_LUA_TEXT);
+        writer.Write(x);
+        writer.Write(y);
+        WriteString(text);
+        writer.Write(color ?? int.MaxValue);
+        writer.Write(anchorX ?? 0);
+        writer.Write(anchorY ?? 0);
+        writer.Write(fontSize ?? 16);
+        writer.Write(monospace ?? false);
+    }
+
+    public void LuaLine(
+        float x0,
+        float y0,
+        float x1,
+        float y1,
+        int? color
+    ) {
+        WriteMessage(MessageId.MSGN_LUA_LINE);
+        writer.Write(x0);
+        writer.Write(y0);
+        writer.Write(x1);
+        writer.Write(y1);
+        writer.Write(color ?? int.MaxValue);
+    }
+
+    public void LuaEllipse(float centerX, float centerY, float radiusX, float radiusY, float? thickness, int? color, int? filled) {
+        WriteMessage(MessageId.MSGN_LUA_ELLIPSE);
+        writer.Write(centerX);
+        writer.Write(centerY);
+        writer.Write(radiusX);
+        writer.Write(radiusY);
+        writer.Write(thickness ?? 1);
+        writer.Write(color ?? int.MaxValue);
+        writer.Write(filled ?? 0);
+    }
+
+    private void ReadDataFramecountTime() {
+        ulong framecount = reader.ReadUInt64();
+        ulong currentTimeSec = reader.ReadUInt64();
+        ulong currentTimeNs = reader.ReadUInt64();
+        ulong currentRealtimeSec = reader.ReadUInt64();
+        ulong currentRealtimeNs = reader.ReadUInt64();
+    }
+
+    public void WriteConfig(SharedConfig config) {
         WriteMessage(MessageId.MSGN_CONFIG);
         byte[] bin = MemoryPackSerializer.Serialize(config);
         writer.Write(bin);
@@ -322,7 +502,7 @@ public sealed class LibTasCommunication(
         return Encoding.UTF8.GetString(reader.ReadBytes((int)size));
     }
 
-    private MessageId ReceiveMessage() {
+    public MessageId ReceiveMessage() {
         return (MessageId)reader.ReadInt32();
     }
 
@@ -332,10 +512,11 @@ public sealed class LibTasCommunication(
         stream.Dispose();
         socket.Dispose();
     }
+
 }
 
 // ReSharper disable InconsistentNaming
-internal enum MessageId {
+public enum MessageId {
     MSGB_START_FRAMEBOUNDARY,
     MSGN_START_FRAMEBOUNDARY,
     MSGB_FRAMECOUNT_TIME,

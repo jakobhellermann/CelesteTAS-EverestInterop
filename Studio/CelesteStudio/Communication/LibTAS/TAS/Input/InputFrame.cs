@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 using StudioCommunication;
+using System.Numerics;
 using TAS.Utils;
 
 namespace TAS.Input;
+
+using Vector2Short = Vector2;
+using Keys = Eto.Forms.Keys;
 
 /// Represents a fully parsed input-line in a TAS file
 public record InputFrame {
@@ -61,7 +63,8 @@ public record InputFrame {
 
         actionLineString = actionLine.ToString();
         checksum = actionLineString.GetHashCode();
-
+        
+        /* TODO
         if (Actions.Has(Actions.Feather)) {
             if (float.TryParse(actionLine.FeatherAngle, out float angle)) {
                 float magnitude = float.TryParse(actionLine.FeatherMagnitude, out float m) ? m : 1.0f;
@@ -70,7 +73,7 @@ public record InputFrame {
                 // Fallback to 0°
                 (StickPosition, StickPositionShort) = AnalogHelper.ComputeAngleVector(0.0f, 1.0f);
             }
-        }
+        }*/
 
         if (Actions.Has(Actions.LeftDashOnly)) {
             DashOnlyStickPosition.X = -1.0f;

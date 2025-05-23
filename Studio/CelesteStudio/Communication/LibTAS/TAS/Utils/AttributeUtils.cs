@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Celeste.Mod;
-using Celeste.Mod.Helpers;
 using JetBrains.Annotations;
-using TAS.Module;
 
 namespace TAS.Utils;
 

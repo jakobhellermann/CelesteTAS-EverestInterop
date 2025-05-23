@@ -1,13 +1,10 @@
+using CelesteStudio.Communication.LibTAS.TAS;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Celeste.Mod;
 using JetBrains.Annotations;
-using Monocle;
 using StudioCommunication;
-using TAS.Entities;
-using TAS.Input.Commands;
 using TAS.Module;
 using TAS.Utils;
 
@@ -76,7 +73,9 @@ public class InputController {
     /// Whether the TAS should be paused on this frame
     public bool Break => CurrentFastForward?.Frame == CurrentFrameInTas || FastForwards.Any(entry => entry.Key == CurrentFrameInTas && entry.Value.ForceStop);
 
-    private static readonly string DefaultFilePath = Path.Combine(Everest.PathEverest, "Celeste.tas");
+    // private static readonly string DefaultFilePath = Path.Combine(Everest.PathEverest, "Celeste.tas");
+    // private static readonly string DefaultFilePath = "/tmp/default.tas";
+    private static readonly string DefaultFilePath = "/home/jakob/Downloads/any.tas";
 
     private string filePath = string.Empty;
     public string FilePath {
@@ -137,7 +136,8 @@ public class InputController {
                 AttributeUtils.Invoke<ParseFileEndAttribute>();
 
                 if (!firstRun && lastChecksum != Checksum) {
-                    MetadataCommands.UpdateRecordCount(this);
+                    // TODO
+                    // MetadataCommands.UpdateRecordCount(this);
                 }
             }
         } else {
@@ -156,7 +156,7 @@ public class InputController {
 
         foreach (var command in CurrentCommands) {
             if (command.Attribute.ExecuteTiming.Has(ExecuteTiming.Runtime)
-                && (!EnforceLegalCommand.EnabledWhenRunning || command.Attribute.LegalInFullGame)
+                // TODO && (!EnforceLegalCommand.EnabledWhenRunning || command.Attribute.LegalInFullGame)
             ) {
                 command.Invoke();
             }
@@ -175,7 +175,7 @@ public class InputController {
         // Validate that room labels are correct, to catch desyncs and ensure they're not accidentally messed up
         // Check comments of previous frame, since during the first frame of a transition, the room name won't be updated yet
         // However semantically, it is perfectly valid to do so, from a TAS perspective
-        foreach (var comment in Comments.GetValueOrDefault(CurrentFrameInTas - 1) ?? []) {
+        /*foreach (var comment in Comments.GetValueOrDefault(CurrentFrameInTas - 1) ?? []) {
             if (CommentLine.RoomLabelRegex.Match($"#{comment.Text}") is { Success: true } match) {
                 if (Engine.Scene.GetSession() is { } session) {
                     if (match.Groups[1].ValueSpan.SequenceEqual(session.Level)) {
@@ -193,15 +193,16 @@ public class InputController {
                                       """);
                 }
             }
-        }
+        }*/
 
         if (!CanPlayback) {
             return;
         }
 
-        ExportGameInfo.ExportInfo();
-        StunPauseCommand.UpdateSimulateSkipInput();
+        // ExportGameInfo.ExportInfo();
+        // StunPauseCommand.UpdateSimulateSkipInput();
         InputHelper.FeedInputs(Current!);
+        // TODO
 
         // Increment if it's still the same input
         if (CurrentFrameInInput == 0 || Current!.StudioLine == Previous!.StudioLine && Current.RepeatIndex == Previous.RepeatIndex && Current.FrameOffset == Previous.FrameOffset) {
@@ -221,6 +222,8 @@ public class InputController {
             }
 
             UsedFiles.Add(path);
+            
+            Console.WriteLine(File.ReadLines(path).Count());
             ReadLines(File.ReadLines(path).Take(endLine), path, startLine, studioLine, repeatIndex, repeatCount);
 
             return true;
@@ -288,7 +291,7 @@ public class InputController {
                 Comments[CurrentParsingFrame] = comments = [];
             }
             comments.Add(new Comment(CurrentParsingFrame, path, fileLine, studioLine, lineText));
-        } else if (!AutoInputCommand.TryInsert(path, fileLine, lineText, studioLine, repeatIndex, repeatCount)) {
+        } else if (/* TODO !AutoInputCommand.TryInsert(path, fileLine, lineText, studioLine, repeatIndex, repeatCount)*/ true) {
             AddFrames(lineText, path, fileLine, studioLine, repeatIndex, repeatCount);
         }
 
@@ -308,7 +311,7 @@ public class InputController {
             Inputs.Add(inputFrame);
         }
 
-        LibTasHelper.WriteLibTasFrame(inputFrame);
+        // TODO LibTasHelper.WriteLibTasFrame(inputFrame);
     }
 
     /// Fast-forwards to the next label / breakpoint

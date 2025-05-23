@@ -1,5 +1,3 @@
-using Celeste.Mod;
-using Celeste.Mod.Helpers;
 using JetBrains.Annotations;
 using StudioCommunication;
 using System;
@@ -7,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using TAS.Communication;
 using TAS.Module;
 using TAS.Utils;
 
@@ -143,7 +140,7 @@ public readonly record struct Command(
                 return attr;
             }));
 
-        CommunicationWrapper.SendCommandList();
+        // TODO CommunicationWrapper.SendCommandList();
     }
 
     internal static ITasCommandMeta? GetMeta(string commandName) {
