@@ -1,22 +1,10 @@
-using System.Collections.Generic;
-using System.Linq;
-using Celeste.Mod;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using Monocle;
 using StudioCommunication;
-using TAS.Communication;
+using System;
 using TAS.EverestInterop;
-using TAS.EverestInterop.Hitboxes;
-using TAS.Gameplay;
-using TAS.Gameplay.Hitboxes;
-using TAS.ModInterop;
-using YamlDotNet.Serialization;
-using Camera = TAS.Gameplay.CenterCamera;
 
 namespace TAS.Module;
 
-public class CelesteTasSettings : EverestModuleSettings {
+public class CelesteTasSettings {
     public static CelesteTasSettings Instance { get; private set; } = null!;
 
     public CelesteTasSettings() {
@@ -27,8 +15,11 @@ public class CelesteTasSettings : EverestModuleSettings {
 
     // Settings which are shared / controllable from Studio
     internal GameSettings StudioShared = new();
-    private void SyncSettings() => CommunicationWrapper.SendSettings(StudioShared);
+    private void SyncSettings() {
+        // TODO
+    }
 
+    /*
     #region Hitboxes
 
     [YamlIgnore]
@@ -99,77 +90,79 @@ public class CelesteTasSettings : EverestModuleSettings {
 
     #endregion
 
+*/
     #region HotKey
 
-    [SettingName("TAS_KEY_START_STOP")]
-    [DefaultButtonBinding([0], [Keys.RightControl])]
+    // [SettingName("TAS_KEY_START_STOP")]
+    // [DefaultButtonBinding([0], [Keys.RightControl])]
     public ButtonBinding KeyStart { get; set; } = null!;
 
-    [SettingName("TAS_KEY_RESTART")]
-    [DefaultButtonBinding([0], [Keys.OemPlus])]
+    // [SettingName("TAS_KEY_RESTART")]
+    // [DefaultButtonBinding([0], [Keys.OemPlus])]
     public ButtonBinding KeyRestart { get; set; } = null!;
 
-    [SettingName("TAS_KEY_FAST_FORWARD")]
-    [DefaultButtonBinding([0], [Keys.RightShift])]
+    // [SettingName("TAS_KEY_FAST_FORWARD")]
+    // [DefaultButtonBinding([0], [Keys.RightShift])]
     public ButtonBinding KeyFastForward { get; set; } = null!;
 
-    [SettingName("TAS_KEY_FAST_FORWARD_COMMENT")]
-    [DefaultButtonBinding([0], [Keys.RightAlt, Keys.RightShift])]
+    // [SettingName("TAS_KEY_FAST_FORWARD_COMMENT")]
+    // [DefaultButtonBinding([0], [Keys.RightAlt, Keys.RightShift])]
     public ButtonBinding KeyFastForwardComment { get; set; } = null!;
 
-    [SettingName("TAS_KEY_SLOW_FORWARD")]
-    [DefaultButtonBinding([0], [Keys.OemPipe])]
+    // [SettingName("TAS_KEY_SLOW_FORWARD")]
+    // [DefaultButtonBinding([0], [Keys.OemPipe])]
     public ButtonBinding KeySlowForward { get; set; } = null!;
 
-    [SettingName("TAS_KEY_FRAME_ADVANCE")]
-    [DefaultButtonBinding([0], [Keys.OemOpenBrackets])]
+    // [SettingName("TAS_KEY_FRAME_ADVANCE")]
+    // [DefaultButtonBinding([0], [Keys.OemOpenBrackets])]
     public ButtonBinding KeyFrameAdvance { get; set; } = null!;
 
-    [SettingName("TAS_KEY_FRAME_STEP_BACK")]
-    [DefaultButtonBinding([0], [Keys.LeftControl, Keys.OemOpenBrackets])]
+    // [SettingName("TAS_KEY_FRAME_STEP_BACK")]
+    // [DefaultButtonBinding([0], [Keys.LeftControl, Keys.OemOpenBrackets])]
     public ButtonBinding KeyFrameStepBack { get; set; } = null!;
 
-    [SettingName("TAS_KEY_PAUSE_RESUME")]
-    [DefaultButtonBinding([0], [Keys.OemCloseBrackets])]
+    // [SettingName("TAS_KEY_PAUSE_RESUME")]
+    // [DefaultButtonBinding([0], [Keys.OemCloseBrackets])]
     public ButtonBinding KeyPause { get; set; } = null!;
 
-    [SettingName("TAS_KEY_HITBOXES")]
-    [DefaultButtonBinding([0], [Keys.LeftControl, Keys.B])]
+    // [SettingName("TAS_KEY_HITBOXES")]
+    // [DefaultButtonBinding([0], [Keys.LeftControl, Keys.B])]
     public ButtonBinding KeyHitboxes { get; set; } = null!;
 
-    [SettingName("TAS_KEY_TRIGGER_HITBOXES")]
-    [DefaultButtonBinding([0], [Keys.LeftAlt, Keys.T])]
+    // [SettingName("TAS_KEY_TRIGGER_HITBOXES")]
+    // [DefaultButtonBinding([0], [Keys.LeftAlt, Keys.T])]
     public ButtonBinding KeyTriggerHitboxes { get; set; } = null!;
 
-    [SettingName("TAS_KEY_SIMPLIFIED_GRAPHICS")]
-    [DefaultButtonBinding([0], [Keys.LeftControl, Keys.N])]
+    // [SettingName("TAS_KEY_SIMPLIFIED_GRAPHICS")]
+    // [DefaultButtonBinding([0], [Keys.LeftControl, Keys.N])]
     public ButtonBinding KeyGraphics { get; set; } = null!;
 
-    [SettingName("TAS_KEY_CENTER_CAMERA")]
-    [DefaultButtonBinding([0], [Keys.LeftControl, Keys.M])]
+    // [SettingName("TAS_KEY_CENTER_CAMERA")]
+    // [DefaultButtonBinding([0], [Keys.LeftControl, Keys.M])]
     public ButtonBinding KeyCamera { get; set; } = null!;
 
-    [SettingName("TAS_KEY_LOCK_CAMERA")]
-    [DefaultButtonBinding([0], [Keys.LeftControl, Keys.H])]
+    // [SettingName("TAS_KEY_LOCK_CAMERA")]
+    // [DefaultButtonBinding([0], [Keys.LeftControl, Keys.H])]
     public ButtonBinding KeyLockCamera { get; set; } = null!;
 
-    [SettingName("TAS_KEY_SAVE_STATE")]
-    [DefaultButtonBinding([0], [Keys.RightAlt, Keys.OemMinus])]
+    // [SettingName("TAS_KEY_SAVE_STATE")]
+    // [DefaultButtonBinding([0], [Keys.RightAlt, Keys.OemMinus])]
     public ButtonBinding KeySaveState { get; set; } = null!;
 
-    [SettingName("TAS_KEY_CLEAR_STATE")]
-    [DefaultButtonBinding([0], [Keys.RightAlt, Keys.Back])]
+    // [SettingName("TAS_KEY_CLEAR_STATE")]
+    // [DefaultButtonBinding([0], [Keys.RightAlt, Keys.Back])]
     public ButtonBinding KeyClearState { get; set; } = null!;
 
-    [SettingName("TAS_KEY_INFO_HUD")]
-    [DefaultButtonBinding([0], [Keys.LeftControl])]
+    // [SettingName("TAS_KEY_INFO_HUD")]
+    // [DefaultButtonBinding([0], [Keys.LeftControl])]
     public ButtonBinding KeyInfoHud { get; set; } = null!;
 
-    [SettingName("TAS_KEY_FREE_CAMERA")]
-    [DefaultButtonBinding([0], [Keys.LeftAlt])]
+    // [SettingName("TAS_KEY_FREE_CAMERA")]
+    // [DefaultButtonBinding([0], [Keys.LeftAlt])]
     public ButtonBinding KeyFreeCamera { get; set; } = null!;
 
     #endregion
+    /*
 
     #region SimplifiedGraphics
 
@@ -184,14 +177,7 @@ public class CelesteTasSettings : EverestModuleSettings {
     [YamlIgnore]
     public bool SimplifiedGraphics {
         get => Enabled && _SimplifiedGraphics;
-        set {
-            if (_SimplifiedGraphics == value) {
-                return;
-            }
-
-            _SimplifiedGraphics = value;
-            Gameplay.SimplifiedGraphics.OnSpinnerColorChanged();
-        }
+        set => _SimplifiedGraphics = value;
     }
 
     [YamlMember(Alias = "ShowGameplay")]
@@ -426,10 +412,11 @@ public class CelesteTasSettings : EverestModuleSettings {
         }
     }
 
+*/
     public int FastForwardSpeed {
         get => StudioShared.FastForwardSpeed;
         set {
-            StudioShared.FastForwardSpeed = Calc.Clamp(value, 2, 30);
+            StudioShared.FastForwardSpeed = Math.Clamp(value, 2, 30);
             SyncSettings();
         }
     }
@@ -437,11 +424,12 @@ public class CelesteTasSettings : EverestModuleSettings {
     public float SlowForwardSpeed {
         get => StudioShared.SlowForwardSpeed;
         set {
-            StudioShared.SlowForwardSpeed = Calc.Clamp(value, 0.01f, 0.9f);
+            StudioShared.SlowForwardSpeed = Math.Clamp(value, 0.01f, 0.9f);
             SyncSettings();
         }
     }
 
+    /*
     #endregion
 
     #region More Options
@@ -478,11 +466,12 @@ public class CelesteTasSettings : EverestModuleSettings {
         }
     }
 
+*/
     public bool RestoreSettings { get; set; } = true;
     public bool AutoPauseDraft { get; set; } = true;
     public bool LaunchStudioAtBoot { get; set; } = false;
     public bool ShowStudioUpdateBanner { get; set; } = true;
-
+/*
     [YamlMember(Alias = "AttemptConnectStudio")]
     public bool _AttemptConnectStudio { get; set; } = true;
 
@@ -500,11 +489,11 @@ public class CelesteTasSettings : EverestModuleSettings {
         set => _BetterInvincible = value;
     }
 
-    public StudioEnableCondition ForceAllowAccessibilityTools = StudioEnableCondition.WhileStudioConnected;
-    public GameplayEnableCondition PreventSkinModGameplayChanges = GameplayEnableCondition.DuringTAS;
+    public EnableCondition ForceAllowAccessibilityTools = EnableCondition.WhileStudioConnected;
 
     public bool HideFreezeFrames { get; set; } = false;
     public bool IgnoreGcCollect { get; set; } = true;
 
     #endregion
+    */
 }

@@ -1,15 +1,12 @@
+using CelesteStudio.Communication.LibTAS.TAS;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Celeste.Mod;
 using JetBrains.Annotations;
-using Monocle;
 using StudioCommunication;
-using TAS.Input.Commands;
 using TAS.Module;
 using TAS.Playback;
-using TAS.Tools;
 using TAS.Utils;
 
 namespace TAS.Input;
@@ -82,7 +79,8 @@ public class InputController {
     // TODO: Convert into parameter while parsing
     internal bool EnableBreakpointParsing = true;
 
-    private static readonly string DefaultFilePath = Path.Combine(Everest.PathEverest, "Celeste.tas");
+    // private static readonly string DefaultFilePath = Path.Combine(Everest.PathEverest, "Celeste.tas");
+    private static readonly string DefaultFilePath = "/home/jakob/Downloads/any.tas";
 
     private string filePath = string.Empty;
     public string FilePath {
@@ -143,7 +141,8 @@ public class InputController {
                 AttributeUtils.Invoke<ParseFileEndAttribute>();
 
                 if (!firstRun && lastChecksum != Checksum) {
-                    MetadataCommands.UpdateRecordCount(this);
+                    // TODO
+                    // MetadataCommands.UpdateRecordCount(this);
                 }
             }
         } else {
@@ -162,7 +161,7 @@ public class InputController {
 
         foreach (var command in CurrentCommands) {
             if (command.Attribute.ExecuteTiming.Has(ExecuteTiming.Runtime)
-                && (!EnforceLegalCommand.EnabledWhenRunning || command.Attribute.LegalInFullGame)
+                // TODO && (!EnforceLegalCommand.EnabledWhenRunning || command.Attribute.LegalInFullGame)
             ) {
                 command.Invoke();
             }
@@ -178,6 +177,7 @@ public class InputController {
             }
         }
 
+        /*
         // Validate that room labels are correct, to catch desyncs and ensure they're not accidentally messed up
         // Check comments of previous frame, since during the first frame of a transition, the room name won't be updated yet
         // However semantically, it is perfectly valid to do so, from a TAS perspective
@@ -204,14 +204,16 @@ public class InputController {
                 Manager.DisableRunLater();
             }
         }
+        */
 
         if (!CanPlayback) {
             return;
         }
 
-        ExportGameInfo.ExportInfo();
-        StunPauseCommand.UpdateSimulateSkipInput();
+        // ExportGameInfo.ExportInfo();
+        // StunPauseCommand.UpdateSimulateSkipInput();
         InputHelper.FeedInputs(Current!);
+        // TODO
 
         // Increment if it's still the same input
         if (CurrentFrameInInput == 0 || Current!.StudioLine == Previous!.StudioLine && Current.RepeatIndex == Previous.RepeatIndex && Current.FrameOffset == Previous.FrameOffset) {
@@ -231,6 +233,8 @@ public class InputController {
             }
 
             UsedFiles.Add(path);
+            
+            Console.WriteLine(File.ReadLines(path).Count());
             ReadLines(File.ReadLines(path).Take(endLine), path, startLine, studioLine, repeatIndex, repeatCount);
 
             return true;
@@ -302,7 +306,7 @@ public class InputController {
                 Comments[CurrentParsingFrame] = comments = [];
             }
             comments.Add(new Comment(CurrentParsingFrame, path, fileLine, studioLine, lineText));
-        } else if (!AutoInputCommand.TryInsert(path, fileLine, lineText, studioLine, repeatIndex, repeatCount)) {
+        } else if (/* TODO !AutoInputCommand.TryInsert(path, fileLine, lineText, studioLine, repeatIndex, repeatCount)*/ true) {
             AddFrames(lineText, path, fileLine, studioLine, repeatIndex, repeatCount);
         }
 
@@ -322,7 +326,7 @@ public class InputController {
             Inputs.Add(inputFrame);
         }
 
-        LibTasHelper.WriteLibTasFrame(inputFrame);
+        // TODO LibTasHelper.WriteLibTasFrame(inputFrame);
     }
 
     /// Fast-forwards to the next label / breakpoint
@@ -396,9 +400,11 @@ public class InputController {
 
     /// Create file-system-watchers for all TAS-files used, to detect changes
     public void StartWatchers() {
+        /*
         if (SyncChecker.Active) {
             return; // Avoid reloading TASes during sync-check
         }
+        */
 
         foreach (string path in UsedFiles) {
             string fullPath = Path.GetFullPath(path);

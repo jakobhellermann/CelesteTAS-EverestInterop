@@ -11,7 +11,7 @@ using StudioCommunication.Util;
 namespace CelesteStudio.Communication;
 
 public static class CommunicationWrapper {
-    public static bool Connected => comm is { Connected: true };
+    public static bool Connected => true;
 
     public static event Action? ConnectionChanged;
     public static event Action<StudioState, StudioState>? StateUpdated;
@@ -115,6 +115,8 @@ public static class CommunicationWrapper {
     }
 
     public static void SendPath(string path) {
+        LibTasCommunication.Instance?.SendPath(path);
+        
         if (Connected) {
             comm!.WritePath(path);
         }
@@ -193,7 +195,7 @@ public static class CommunicationWrapper {
     public static int CurrentFrameInTas =>  State.CurrentFrameInTas ;
     public static int CurrentFrameInInput =>  State.CurrentFrameInInput ;
     public static int TotalFrames =>  State.TotalFrames ;
-    public static int SaveStateLine =>  State.SaveStateLines ;
+    public static int[] SaveStateLines =>  State.SaveStateLines ;
     public static bool PlaybackRunning =>  State.PlaybackRunning ;
 
     public static string GameInfo => State.GameInfo;

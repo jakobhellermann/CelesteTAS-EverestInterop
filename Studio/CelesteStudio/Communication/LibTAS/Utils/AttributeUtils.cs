@@ -2,10 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Celeste.Mod;
-using Celeste.Mod.Helpers;
 using JetBrains.Annotations;
-using TAS.Module;
 
 namespace TAS.Utils;
 
@@ -22,7 +19,7 @@ public static class AttributeUtils {
     /// Gathers all static, parameterless methods with attribute T
     /// Only searches through CelesteTAS itself
     public static void CollectOwnMethods<T>(params Type[] parameterTypes) where T : Attribute {
-        attributeMethods[typeof(T)] = typeof(CelesteTasModule).Assembly
+        attributeMethods[typeof(T)] = typeof(AttributeUtils).Assembly
             .GetTypesSafe()
             .SelectMany(type => type.Collect<T>(parameterTypes))
             // Invoke higher priorities later in the chain (i.e. on top of everything else)

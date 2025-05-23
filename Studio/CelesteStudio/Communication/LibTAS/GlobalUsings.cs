@@ -1,6 +1,4 @@
 global using static TAS.GlobalVariables;
-global using MonocleCommand = Monocle.Command;
-using Celeste.Mod;
 using TAS.Input;
 using TAS.Module;
 using TAS.Playback;
@@ -18,9 +16,10 @@ public static class GlobalVariables {
 #endif
 
         if (log) {
-            PopupToast.ShowAndLog(message, duration, LogLevel.Error);
+            // TODO
+            // PopupToast.ShowAndLog(message, duration, LogLevel.Error);
         } else {
-            PopupToast.Show(message, duration);
+            // PopupToast.Show(message, duration);
         }
 
         Manager.DisableRunLater();

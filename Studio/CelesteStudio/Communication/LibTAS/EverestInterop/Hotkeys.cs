@@ -1,33 +1,29 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Celeste;
-using Celeste.Mod;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using Monocle;
 using StudioCommunication;
-using TAS.Communication;
-using TAS.ModInterop;
+using System.Numerics;
 using TAS.Module;
 using TAS.Utils;
-using InputKeys = Microsoft.Xna.Framework.Input.Keys;
-using InputButtons = Microsoft.Xna.Framework.Input.Buttons;
-using Hud = TAS.EverestInterop.InfoHUD.InfoHud;
+
+using Keys = Eto.Forms.Keys;
+using InputKeys = Eto.Forms.Keys;
+using InputButtons = Eto.Forms.MouseButtons;
+
 
 namespace TAS.EverestInterop;
+
+public record ButtonBinding(List<InputButtons> Buttons, List<Keys> Keys) {}
+
+public enum ButtonState {
+    Pressed
+}
 
 /// Manages hotkeys for controlling TAS playback
 /// Cannot use MInput, since that isn't updated while paused and already used for TAS inputs
 public static class Hotkeys {
-    private static readonly Lazy<FieldInfo?> f_CelesteNetClientModule_Instance = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance"));
-    private static readonly Lazy<FieldInfo?> f_CelesteNetClientModule_Context = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context"));
-    private static readonly Lazy<FieldInfo?> f_CelesteNetClientContext_Chat = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat"));
-    private static readonly Lazy<PropertyInfo?> p_CelesteNetChatComponent_Active = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active"));
-
-    private static KeyboardState kbState;
-    private static GamePadState padState;
+    // private static KeyboardState kbState;
+    // private static GamePadState padState;
 
     public static Hotkey StartStop { get; private set; } = null!;
     public static Hotkey Restart { get; private set; } = null!;
@@ -54,7 +50,7 @@ public static class Hotkeys {
     public static Hotkey CameraZoomOut { get; private set; } = null!;
     public static Hotkey OpenConsole { get; private set; } = null!;
 
-    public static float RightThumbSticksX => padState.ThumbSticks.Right.X;
+    // public static float RightThumbSticksX => padState.ThumbSticks.Right.X;
 
     public static readonly Dictionary<HotkeyID, Hotkey> AllHotkeys = new();
     public static Dictionary<HotkeyID, List<Keys>> StudioHotkeys = new();
@@ -69,7 +65,7 @@ public static class Hotkeys {
     ];
 
     /// Checks if the CelesteNet chat is open
-    private static bool CelesteNetChatting {
+    /*private static bool CelesteNetChatting {
         get {
             if (f_CelesteNetClientModule_Instance.Value?.GetValue(null) is not { } instance) {
                 return false;
@@ -83,9 +79,9 @@ public static class Hotkeys {
 
             return p_CelesteNetChatComponent_Active.Value?.GetValue(chat) as bool? == true;
         }
-    }
+    }*/
 
-    internal static bool Initialized { get; private set; } = false;
+    internal static bool Initialized { get; private set; } = true;
 
     [Initialize]
     private static void Initialize() {
@@ -107,14 +103,14 @@ public static class Hotkeys {
         AllHotkeys[HotkeyID.ClearState] = ClearState = BindingToHotkey(TasSettings.KeyClearState);
         AllHotkeys[HotkeyID.InfoHud] = InfoHud = BindingToHotkey(TasSettings.KeyInfoHud);
         AllHotkeys[HotkeyID.FreeCamera] = FreeCamera = BindingToHotkey(TasSettings.KeyFreeCamera);
-        AllHotkeys[HotkeyID.CameraUp] = CameraUp = BindingToHotkey(new ButtonBinding(0, Keys.Up));
+        /*AllHotkeys[HotkeyID.CameraUp] = CameraUp = BindingToHotkey(new ButtonBinding(0, Keys.Up));
         AllHotkeys[HotkeyID.CameraDown] = CameraDown = BindingToHotkey(new ButtonBinding(0, Keys.Down));
         AllHotkeys[HotkeyID.CameraLeft] = CameraLeft = BindingToHotkey(new ButtonBinding(0, Keys.Left));
         AllHotkeys[HotkeyID.CameraRight] = CameraRight = BindingToHotkey(new ButtonBinding(0, Keys.Right));
         AllHotkeys[HotkeyID.CameraZoomIn] = CameraZoomIn = BindingToHotkey(new ButtonBinding(0, Keys.Home));
-        AllHotkeys[HotkeyID.CameraZoomOut] = CameraZoomOut = BindingToHotkey(new ButtonBinding(0, Keys.End));
+        AllHotkeys[HotkeyID.CameraZoomOut] = CameraZoomOut = BindingToHotkey(new ButtonBinding(0, Keys.End));*/
 
-        var debugConsole = Celeste.Mod.Core.CoreModule.Settings.DebugConsole;
+        /*var debugConsole = Celeste.Mod.Core.CoreModule.Settings.DebugConsole;
         var toggleDebugConsole = Celeste.Mod.Core.CoreModule.Settings.ToggleDebugConsole;
         AllHotkeys[HotkeyID.OpenConsole] = OpenConsole = new Hotkey(
             debugConsole.Keys.Union(toggleDebugConsole.Keys).ToList(),
@@ -144,13 +140,16 @@ public static class Hotkeys {
         CommunicationWrapper.SendCurrentBindings();
 
         return;
+        */
 
-        static Hotkey BindingToHotkey(ButtonBinding binding, bool held = false) {
+        static Hotkey BindingToHotkey(ButtonBinding? binding, bool held = false) {
+            if (binding == null) return new Hotkey([], [], false, held);
+            
             return new(binding.Keys, binding.Buttons, true, held);
         }
     }
 
-    private static GamePadState GetGamePadState() {
+    /*private static GamePadState GetGamePadState() {
         for (int i = 0; i < 4; i++) {
             var state = GamePad.GetState((PlayerIndex) i);
             if (state.IsConnected) {
@@ -161,10 +160,12 @@ public static class Hotkeys {
         // No controller connected
         return default;
     }
+    */
     internal static void UpdateMeta() {
         // Only update if the keys aren't already used for something else
         bool updateKey = true, updateButton = true;
 
+        /*
         // Prevent triggering hotkeys while writing text
         if (Engine.Commands.Open) {
             updateKey = false;
@@ -197,6 +198,7 @@ public static class Hotkeys {
 
         kbState = Keyboard.GetState();
         padState = GetGamePadState();
+        */
         foreach (var hotkey in AllHotkeys.Values) {
             if (hotkey == InfoHud) {
                 hotkey.Update(); // Always update Info HUD
@@ -212,7 +214,7 @@ public static class Hotkeys {
     }
 
     private static void AfterUpdate() {
-        if (Engine.Scene is Level level && (!level.Paused || level.PauseMainMenuOpen || Manager.Running)) {
+        /*if (Engine.Scene is Level level && (!level.Paused || level.PauseMainMenuOpen || Manager.Running)) {
             if (Hitboxes.Pressed) {
                 TasSettings.ShowHitboxes = !TasSettings.ShowHitboxes;
                 CelesteTasModule.Instance.SaveSettings();
@@ -234,7 +236,7 @@ public static class Hotkeys {
             }
         }
 
-        Hud.Toggle();
+        Hud.Toggle();*/
     }
 
     [DisableRun]
@@ -302,18 +304,20 @@ public static class Hotkeys {
         }
 
         private bool IsKeyDown() {
-            if (Keys.Count == 0 || kbState == default) {
+            /*if (Keys.Count == 0 || kbState == default) {
                 return false;
             }
 
-            return keyCombo ? Keys.All(kbState.IsKeyDown) : Keys.Any(kbState.IsKeyDown);
+            return keyCombo ? Keys.All(kbState.IsKeyDown) : Keys.Any(kbState.IsKeyDown);*/
+            return false; // TODO
         }
         private bool IsButtonDown() {
-            if (Buttons.Count == 0 || padState == default) {
+            /*if (Buttons.Count == 0 || padState == default) {
                 return false;
             }
 
-            return keyCombo ? Buttons.All(padState.IsButtonDown) : Buttons.Any(padState.IsButtonDown);
+            return keyCombo ? Buttons.All(padState.IsButtonDown) : Buttons.Any(padState.IsButtonDown);*/
+            return false; // TODO
         }
 
         public override string ToString() {
@@ -396,7 +400,8 @@ internal static class MouseInput {
 
     [UpdateMeta]
     private static void UpdateMeta() {
-        // Avoid checking mouse inputs while fast forwarding for performance
+        /*
+         * // Avoid checking mouse inputs while fast forwarding for performance
         if (Manager.FastForwarding) {
             lastPosition = Position;
             Left.Update(ButtonState.Released);
@@ -420,5 +425,6 @@ internal static class MouseInput {
         Left.Update(mouseState.LeftButton);
         Middle.Update(mouseState.MiddleButton);
         Right.Update(mouseState.RightButton);
+        */
     }
 }

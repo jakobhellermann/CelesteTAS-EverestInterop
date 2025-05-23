@@ -7,6 +7,7 @@ public enum LogLevel {
     Debug,
     Info,
     Verbose,
+    Warn,
     Error,
 }
 
@@ -29,4 +30,11 @@ public static class FakeAssembly {
 }
 public static class Everest {
     public static string PathEverest = "/tmp/";
+}
+public static class Calc {
+    public static int Clamp(int value, int min, int max) => Math.Max(min, Math.Min(max, value));
+}
+public static class Core {
+    // TODO
+    public static float PlaybackDeltaTime => 0;
 }

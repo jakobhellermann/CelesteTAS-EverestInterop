@@ -1,13 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using Celeste;
-using JetBrains.Annotations;
-using Monocle;
 using System;
-using System.IO;
 using TAS.EverestInterop;
 using TAS.Input;
-using TAS.ModInterop;
+using TAS.Module;
 using TAS.Utils;
 
 namespace TAS.Playback;
@@ -16,7 +12,7 @@ namespace TAS.Playback;
 internal static class SavestateManager {
     public readonly record struct Savestate(InputController Controller, int Checksum, bool SavedByBreakpoint) {
         /// SpeedrunTool slot, which is used for this save-state
-        public readonly string Slot = $"{SpeedrunToolInterop.DefaultSlot}_{Checksum}";
+        public readonly string Slot = $"CelesteTAS_{Checksum}";
 
         public int Frame => Controller.CurrentFrameInTas;
         public int StudioLine =>
@@ -53,8 +49,8 @@ internal static class SavestateManager {
     private static Savestate? ManualSavestate;
     private static readonly List<Savestate> BreakpointSavestates = [];
 
-    [UsedImplicitly] // Only included in hot-reloading support
-    public static void ClearAllSavestates() {
+    [Unload]
+    public static void Unload() {
         ManualSavestate?.Clear();
         ManualSavestate = null;
 
@@ -66,29 +62,14 @@ internal static class SavestateManager {
 
     /// Update for each TAS frame
     public static void Update() {
-        var controller = Manager.Controller;
-
-        if (Manager.CurrState != Manager.State.Running) {
-            // Only savestate while TAS is actively running and not while paused
-            return;
-        }
         if (!SpeedrunToolInterop.Installed) {
-            // Validate that no savestate breakpoints are used
-            if (controller.FastForwards.GetValueOrDefault(controller.CurrentFrameInTas) is { SaveState: true} fastForward) {
-                PopupToast.ShowAndLog($"""
-                                       {Path.GetFileName(fastForward.FilePath)} line {fastForward.FileLine}:
-                                       Found savestate breakpoint '{fastForward.Format()}'. 
-                                       The 'Speedrun Tool' mod is required to use savestates with CelesteTAS.
-                                       """, timeout: 5.0f);
-            }
-
             return;
         }
 
         // Only save-state when the current breakpoint is new
-        if (controller.CurrentFrameInTas < controller.Inputs.Count
-            && controller.FastForwards.GetValueOrDefault(controller.CurrentFrameInTas) is { SaveState: true } currentFastForward
-            && controller.CurrentFrameInTas == currentFastForward.Frame
+        if (Manager.Controller.CurrentFrameInTas < Manager.Controller.Inputs.Count
+            && Manager.Controller.FastForwards.GetValueOrDefault(Manager.Controller.CurrentFrameInTas) is { SaveState: true } currentFastForward
+            && Manager.Controller.CurrentFrameInTas == currentFastForward.Frame
             && Save(byBreakpoint: true, out var savestate)
         ) {
             if (SpeedrunToolInterop.MultipleSaveSlotsSupported) {
@@ -101,33 +82,13 @@ internal static class SavestateManager {
         }
 
         // Autoload state after entering the level, if the TAS was started outside the level
-        if (Engine.Scene is Level) {
-            // Load ideal savestate to start playing from for frame step back
-            if (Manager.FrameStepBackTargetFrame > 0) {
-                foreach (var state in AllSavestates.Reverse()) {
-                    if (state.Frame > Manager.FrameStepBackTargetFrame || state.Frame <= controller.CurrentFrameInTas) {
-                        continue;
-                    }
-
-                    state.Load();
-                    return;
-                }
-
-                // No viable state found
-                return;
-            }
-
+        if (Manager.Running /*&& Engine.Scene is Level*/) {
             foreach (var state in AllSavestates.Reverse()) {
-                if (state.Frame <= controller.CurrentFrameInTas
-                    || Manager.Controller.FastForwards.Values.Any(val => val.Frame >= controller.CurrentFrameInTas && val.Frame < state.Frame && val.ForceStop)
-                    || controller.FilePath != state.Controller.FilePath || state.BreakpointCommented) {
+                if (Manager.Controller.CurrentFrameInTas >= state.Frame || Manager.Controller.FilePath != state.Controller.FilePath || state.BreakpointCommented) {
                     continue;
                 }
 
                 state.Load();
-                if (state.Frame == controller.CurrentFrameInTas) {
-                    Manager.CurrState = Manager.NextState = Manager.State.Paused;
-                }
                 return;
             }
         }
@@ -158,74 +119,34 @@ internal static class SavestateManager {
         }
 
         if (Manager.Running) {
-            ClearDeletedSavestates();
-        }
-    }
-
-    /// Clean-up deleted breakpoint savestates, to free unused memory
-    private static void ClearDeletedSavestates() {
-        if (SpeedrunToolInterop.MultipleSaveSlotsSupported) {
-            foreach (var state in BreakpointSavestates) {
-                if (state.BreakpointDeleted) {
-                    state.Clear();
+            // Purge deleted breakpoint savestates
+            if (SpeedrunToolInterop.MultipleSaveSlotsSupported) {
+                foreach (var state in BreakpointSavestates) {
+                    if (state.BreakpointDeleted) {
+                        state.Clear();
+                    }
                 }
+                BreakpointSavestates.RemoveAll(state => state.BreakpointDeleted);
+            } else if (ManualSavestate is { SavedByBreakpoint: true, BreakpointDeleted: true } manual) {
+                manual.Clear();
+                ManualSavestate = null;
             }
-            BreakpointSavestates.RemoveAll(state => state.BreakpointDeleted);
-        } else if (ManualSavestate is { SavedByBreakpoint: true, BreakpointDeleted: true } manual) {
-            manual.Clear();
-            ManualSavestate = null;
         }
     }
 
-    internal const int EnableRunPriority = BindingHelper.EnableRunPriority + 1;
+    internal const int EnableRunPriority = 1;
 
     [EnableRun(EnableRunPriority)]
     internal static void EnableRun() {
-        if (!SpeedrunToolInterop.Installed || Engine.Scene is not Level) {
-            return;
-        }
-
-        // If the file was changed, there might be leftover breakpoints
-        ClearDeletedSavestates();
-
-        // Load ideal savestate to start playing from for frame step back
-        if (Manager.FrameStepBackTargetFrame > 0) {
+        if (SpeedrunToolInterop.Installed) {
             foreach (var state in AllSavestates.Reverse()) {
-                if (state.Frame > Manager.FrameStepBackTargetFrame) {
+                if (state.BreakpointCommented) {
                     continue;
                 }
 
-                if (!state.Load()) {
-                    continue;
-                }
-                if (state.Frame == Manager.FrameStepBackTargetFrame) {
-                    Manager.CurrState = Manager.NextState = Manager.State.Paused;
-                }
+                state.Load();
                 return;
             }
-
-            // No viable state found
-            return;
-        }
-
-        foreach (var state in AllSavestates.Reverse()) {
-            if (state.BreakpointCommented
-                || Manager.Controller.FastForwards.Any(entry => entry.Value.Frame < state.Frame && entry.Value.ForceStop)
-            ) {
-                continue;
-            }
-
-            if (!state.Load()) {
-                continue;
-            }
-
-            // Pause TAS if latest breakpoint
-            if (Manager.Controller.FastForwards.LastOrDefault().Value?.Frame <= state.Frame) {
-                Manager.CurrState = Manager.NextState = Manager.State.Paused;
-            } else {
-                Manager.CurrState = Manager.NextState = Manager.State.Running;
-            }
-            return;
         }
     }
 
@@ -244,13 +165,15 @@ internal static class SavestateManager {
         }
 
         UpdateStudio();
+        SetTasState();
+
         return true;
     }
     private static bool Load(Savestate savestate) {
         // Don't load save-states while recording
-        if (TASRecorderInterop.IsRecording) {
+        /*if (TASRecorderInterop.IsRecording) {
             return false;
-        }
+        }*/
 
         if (savestate.BreakpointDeleted || savestate.Checksum != Manager.Controller.CalcChecksum(savestate.Controller.CurrentFrameInTas)) {
             return false; // Invalid
@@ -269,6 +192,7 @@ internal static class SavestateManager {
         Manager.Controller.CopyProgressFrom(savestate.Controller);
 
         UpdateStudio();
+        SetTasState();
         return true;
     }
     private static void Clear(Savestate savestate) {
@@ -277,8 +201,15 @@ internal static class SavestateManager {
         UpdateStudio();
     }
 
+    private static void SetTasState() {
+        if (Manager.Controller.HasFastForward) {
+            Manager.CurrState = Manager.NextState = Manager.State.Running;
+        } else {
+            Manager.CurrState = Manager.NextState = Manager.State.Paused;
+        }
+    }
     private static void UpdateStudio() {
-        GameInfo.Update();
+        // GameInfo.Update();
         Manager.SendStudioState();
     }
 }
