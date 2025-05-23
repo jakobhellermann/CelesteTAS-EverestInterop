@@ -1,3 +1,4 @@
+using CelesteStudio.Communication.LibTAS;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -102,6 +103,8 @@ public static class CommunicationWrapper {
         }
     }
     public static void SendHotkey(HotkeyID hotkey) {
+        LibTasCommunication.Instance?.SendHotkey(hotkey);
+        
         if (Connected) {
             comm!.WriteHotkey(hotkey, false);
         }
