@@ -60,7 +60,7 @@ public static class CommunicationWrapper {
 
         Application.Instance.AsyncInvoke(() => ConnectionChanged?.Invoke());
     }
-    private static void OnStateChanged(StudioState newState) {
+    internal static void OnStateChanged(StudioState newState) {
         var prevState = State;
         State = newState;
         Application.Instance.AsyncInvoke(() => StateUpdated?.Invoke(prevState, newState));
@@ -103,6 +103,7 @@ public static class CommunicationWrapper {
         }
     }
     public static void SendHotkey(HotkeyID hotkey) {
+        Console.WriteLine($"Got hotkey {hotkey}");
         LibTasCommunication.Instance?.SendHotkey(hotkey);
         
         if (Connected) {
@@ -165,15 +166,15 @@ public static class CommunicationWrapper {
     public static GameSettings GameSettings => settings;
     public static CommandInfo[] Commands => commands;
 
-    public static int CurrentLine => Connected ? State.CurrentLine : -1;
-    public static string CurrentLineSuffix => Connected ? State.CurrentLineSuffix : string.Empty;
-    public static int CurrentFrameInTas => Connected ? State.CurrentFrameInTas : -1;
-    public static int CurrentFrameInInput => Connected ? State.CurrentFrameInInput : -1;
-    public static int TotalFrames => Connected ? State.TotalFrames : -1;
-    public static int SaveStateLine => Connected ? State.SaveStateLine : -1;
-    public static bool PlaybackRunning => Connected ? State.PlaybackRunning : false;
+    public static int CurrentLine => State.CurrentLine ;
+    public static string CurrentLineSuffix => State.CurrentLineSuffix;
+    public static int CurrentFrameInTas =>  State.CurrentFrameInTas ;
+    public static int CurrentFrameInInput =>  State.CurrentFrameInInput ;
+    public static int TotalFrames =>  State.TotalFrames ;
+    public static int SaveStateLine =>  State.SaveStateLine ;
+    public static bool PlaybackRunning =>  State.PlaybackRunning ;
 
-    public static string GameInfo => Connected ? State.GameInfo : string.Empty;
+    public static string GameInfo => State.GameInfo;
     public static string LevelName => Connected ? State.LevelName : string.Empty;
     public static string ChapterTime => Connected ? State.ChapterTime : string.Empty;
 
