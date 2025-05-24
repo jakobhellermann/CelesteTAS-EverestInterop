@@ -1,12 +1,19 @@
+using CelesteStudio.Communication.LibTAS.TAS;
+using CelesteStudio.Editing.ContextActions;
+using CelesteStudio.Tool;
 using MemoryPack;
 using StudioCommunication;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TAS;
+using TAS.EverestInterop;
+using TAS.Module;
+using TAS.Utils;
 
 // ReSharper disable UnusedVariable
 
@@ -27,11 +34,8 @@ public sealed class LibTasCommunication(
 
     public void SendHotkey(HotkeyID hotkey) {
         configChanged = true;
-        switch (hotkey) {
-            case HotkeyID.Pause:
-                UpdateConfig(() => config.Running = !config.Running);
-                break;
-        }
+
+        Hotkeys.AllHotkeys[hotkey].OverrideCheck = true;
     }
 
     private void UpdateConfig(Action action) {
@@ -40,6 +44,19 @@ public sealed class LibTasCommunication(
     }
 
     public static void Start() {
+        new CelesteTasSettings();
+
+        AttributeUtils.CollectOwnMethods<LoadAttribute>();
+        AttributeUtils.CollectOwnMethods<LoadContentAttribute>();
+        AttributeUtils.CollectOwnMethods<UnloadAttribute>();
+        AttributeUtils.CollectOwnMethods<InitializeAttribute>();
+
+        AttributeUtils.Invoke<LoadAttribute>();
+        AttributeUtils.Invoke<LoadContentAttribute>();
+        // AttributeUtils.CollectOwnMethods<UnloadAttribute>();
+        AttributeUtils.Invoke<InitializeAttribute>();
+
+
         Task.Run(() => {
             while (true) {
                 try {
@@ -48,7 +65,10 @@ public sealed class LibTasCommunication(
                     Instance.GameLoop();
                     Instance = null;
                 } catch (Exception e) {
-                    Console.WriteLine($"Exception in libTAS thread: {e.Message}, restarting in 1s");
+                    if (e is not SocketException { ErrorCode: 111}) {
+                        Console.WriteLine($"eption in libTAS thread: {e.GetType().Name}, restarting in 1s");
+                    }
+
                     Thread.Sleep(1000);
                 }
             }
@@ -78,12 +98,22 @@ public sealed class LibTasCommunication(
                 LoopExit();
                 break;
             }
-            
+
             if ( /* game_window */ true) {
                 while (true) {
                     // waitpid check if game running
+                    Manager.UpdateMeta();
 
-                    bool endInnerLoop = config.Running; // || frameAdvance || quitting
+                    // bool endInnerLoop = config.Running; // || frameAdvance || quitting
+                    if (Manager.CurrState != Manager.NextState) {
+                        Console.WriteLine($"{Manager.CurrState} -> {Manager.NextState}");
+                    }
+
+                    bool endInnerLoop = Manager.NextState is Manager.State.Running or Manager.State.FrameAdvance;
+
+                    Manager.Update();
+
+                    WriterMarker($"frame: {Manager.Controller.FilePath} {Manager.Controller.CurrentFrameInTas + 1}");
 
                     if (endInnerLoop) {
                         break;
@@ -93,24 +123,57 @@ public sealed class LibTasCommunication(
                 }
             }
 
-            SendInput();
+
+            bool managerRunning = Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance;
+            if (managerRunning != config.Running) {
+                Console.WriteLine($"exporting running: {managerRunning}");
+                UpdateConfig(() => config.Running = managerRunning);
+            }
+
+            var inputFrame = InputHelper.LastInputFrame;
+
+            uint[] keys = inputFrame.Actions.Sorted()
+                .Select(ActionToXcbSym)
+                .OfType<uint>()
+                .ToArray();
+
+            SendInput(keys);
 
             EndFrameMessages();
         }
     }
 
+    private uint? ActionToXcbSym(Actions action) {
+        // https://www.cl.cam.ac.uk/~mgk25/ucs/keysymdef.h
+        uint? key = action switch {
+            Actions.None => null,
+            Actions.Left => 0xff51,
+            Actions.Right => 0xff53,
+            Actions.Up => 0xff52,
+            Actions.Down => 0xff54,
+            _ => null,
+        };
+        if (key is null) {
+            Console.WriteLine($"Unhandled key: {action}");
+        }
+        return key;
+    }
+    
+
     private void LoopExit() {
     }
 
-    private void SendInput(bool preview = false) {
+    private void SendInput(uint[] keys, bool preview = false) {
         WriteMessage(preview ? MessageId.MSGN_PREVIEW_INPUTS : MessageId.MSGN_ALL_INPUTS);
 
         const int maxkeys = 16;
-        uint[] kb = new uint[maxkeys];
-        kb[0] = 0xff51;
+
+        if (keys.Length > maxkeys) {
+            Console.WriteLine("More keys than allowed per frame");
+        }
 
         byte[] byteArray = new byte[maxkeys * 4];
-        Buffer.BlockCopy(kb, 0, byteArray, 0, kb.Length * 4);
+        Buffer.BlockCopy(keys, 0, byteArray, 0, keys.Length * 4);
         writer.Write(byteArray);
 
         // pointer inputs
@@ -147,7 +210,11 @@ public sealed class LibTasCommunication(
             message = ReceiveMessage();
         }
 
-        config.Running = true;
+        // config.Running = true;
+        config.Osd = true;
+        Manager.EnableRun();
+        Manager.CurrState = Manager.NextState = Manager.State.Paused;
+
         WriteConfig(config);
 
         WriteMessage(MessageId.MSGN_END_INIT);
@@ -155,7 +222,7 @@ public sealed class LibTasCommunication(
 
     private bool StartFrameMessages() {
         // TODO
-        
+
         var message = ReceiveMessage();
         while (message != MessageId.MSGB_START_FRAMEBOUNDARY) {
             switch (message) {
@@ -232,6 +299,16 @@ public sealed class LibTasCommunication(
 
     private void WriteMessage(MessageId message) {
         writer.Write((int)message);
+    }
+
+    private void WriteString(string msg) {
+        writer.Write(msg.Length);
+        writer.Write(Encoding.UTF8.GetBytes(msg));
+    }
+
+    private void WriterMarker(string msg) {
+        WriteMessage(MessageId.MSGN_MARKER);
+        WriteString(msg);
     }
 
     private void WriteConfig(SharedConfig config) {
