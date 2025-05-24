@@ -3767,7 +3767,7 @@ public sealed class Editor : SkiaDrawable {
         }
 
         // Draw suffix text
-        if (CommunicationWrapper.Connected &&
+        if (// CommunicationWrapper.Connected &&
             CommunicationWrapper.CurrentLine != -1 &&
             CommunicationWrapper.CurrentLine < actualToVisualRows.Length)
         {
@@ -3867,7 +3867,7 @@ public sealed class Editor : SkiaDrawable {
                 fillPaint);
 
             // Highlight playing / savestate line
-            if (CommunicationWrapper.Connected) {
+            if (/*CommunicationWrapper.Connected*/ true) {
                 if (CommunicationWrapper.CurrentLine != -1 && CommunicationWrapper.CurrentLine < actualToVisualRows.Length) {
                     fillPaint.ColorF = Settings.Instance.Theme.PlayingLineBg.ToSkia();
                     canvas.DrawRect(
