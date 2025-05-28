@@ -1,9 +1,10 @@
-using MemoryPack;
+
+using MessagePack;
 
 namespace StudioCommunication;
 
-[MemoryPackable]
-public partial record struct LevelInfo {
+[MessagePackObject(keyAsPropertyName: true)]
+public record struct LevelInfo {
     public int? WakeupTime;
     public string ModUrl;
 }
