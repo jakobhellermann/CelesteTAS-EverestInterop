@@ -1,9 +1,9 @@
+using MessagePack;
 using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using MemoryPack;
 
 namespace StudioCommunication.Util;
 
@@ -83,7 +83,7 @@ public static class BinaryHelper {
             return;
         }
 
-        var buffer = MemoryPackSerializer.Serialize(value.GetType(), value);
+        var buffer = MessagePackSerializer.Serialize(value.GetType(), value);
         writer.Write7BitEncodedInt(buffer.Length);
         writer.Write(buffer);
     }
@@ -167,6 +167,6 @@ public static class BinaryHelper {
         }
 
         var buffer = reader.ReadBytes(length);
-        return MemoryPackSerializer.Deserialize(type, buffer)!;
+        return MessagePackSerializer.Deserialize(type, buffer)!;
     }
 }

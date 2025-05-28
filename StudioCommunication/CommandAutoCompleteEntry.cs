@@ -1,8 +1,9 @@
-using MemoryPack;
+using MessagePack;
 
 namespace StudioCommunication;
 
-[MemoryPackable]
+
+[MessagePackObject(keyAsPropertyName: true)]
 public partial struct CommandAutoCompleteEntry() {
     /// Entry name, displayed in the auto-complete menu
     public required string Name;
