@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using HarmonyLib;
 using StudioCommunication;
 using System;
-using System.Reflection;
 using TAS.Input;
 using UnityEngine;
 
@@ -27,7 +26,7 @@ public static class InputHelper {
     [HarmonyPrefix]
     public static bool DontRunInTAS(MethodBase __originalMethod) => !Manager.Running;*/
 
-    private const int DefaultTasFramerate = 60;
+    private const int DefaultTasFramerate = 100;
     public static int CurrentTasFramerate = DefaultTasFramerate;
 
     private record FramerateState(int TargetFramerate, int VsyncCount) {
@@ -68,7 +67,7 @@ public static class InputHelper {
         Time.fixedDeltaTime = 1f / 60f;
         // Physics.simulationMode = SimulationMode.FixedUpdate;
 
-        Physics2D.simulationMode = SimulationMode2D.Script;
+        // Physics2D.simulationMode = SimulationMode2D.Script;
     }
 
     [DisableRun]
@@ -88,13 +87,15 @@ public static class InputHelper {
 
 
     private static Dictionary<Actions, KeyCode> actionKeyMap = new() {
-        { Actions.Up, KeyCode.W },
-        { Actions.Down, KeyCode.S },
-        { Actions.Left, KeyCode.A },
-        { Actions.Right, KeyCode.D },
+        { Actions.Up, KeyCode.UpArrow },
+        { Actions.Down, KeyCode.DownArrow },
+        { Actions.Left, KeyCode.LeftArrow },
+        { Actions.Right, KeyCode.RightArrow },
 
-        { Actions.Jump, KeyCode.Space },
-        { Actions.Dash, KeyCode.LeftShift },
+        { Actions.Jump, KeyCode.Y },
+        { Actions.Dash, KeyCode.Z },
+        
+        { Actions.DashOnly, KeyCode.X },
     };
 
     [HarmonyPatch(typeof(UnityEngine.Input), nameof(UnityEngine.Input.GetKey), [typeof(KeyCode)])]
