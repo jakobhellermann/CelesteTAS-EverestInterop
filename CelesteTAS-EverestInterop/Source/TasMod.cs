@@ -5,6 +5,7 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using PlayerLoopHelper;
 using TAS.Communication;
+using TAS.EverestInterop.Hitboxes;
 using TAS.Module;
 using TAS.Tracer;
 using TAS.Utils;
@@ -21,6 +22,8 @@ public class TasMod : BaseUnityPlugin {
 
     internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
     internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
+
+    internal HitboxModule HitboxModule = null!;
 
     // private ConfigEntry<bool> configOpenStudioOnLaunch = null!;
     // private ConfigEntry<KeyboardShortcut> configOpenStudioShortcut = null!;
@@ -74,6 +77,9 @@ public class TasMod : BaseUnityPlugin {
             AttributeUtils.Invoke<InitializeAttribute>();
 
             harmony = Harmony.CreateAndPatchAll(typeof(TasMod).Assembly);
+
+            HitboxModule = new GameObject().AddComponent<HitboxModule>();
+            DontDestroyOnLoad(HitboxModule.gameObject);
 
             if (TasSettings.AttemptConnectStudio) CommunicationWrapper.Start();
         } catch (Exception e) {
@@ -202,6 +208,8 @@ public class TasMod : BaseUnityPlugin {
         AttributeUtils.Invoke<UnloadAttribute>();
         if (Manager.Running) Manager.DisableRun();
         harmony?.UnpatchSelf();
+
+        if (HitboxModule?.gameObject) Destroy(HitboxModule!.gameObject);
 
         CommunicationWrapper.SendReset();
         CommunicationWrapper.Stop();
