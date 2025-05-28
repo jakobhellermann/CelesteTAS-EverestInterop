@@ -34,14 +34,14 @@ public static class InfoCustom {
 
     // Fake-command to provide auto-complete support for info-templates, using the same system
     internal class InfoMeta : ITasCommandMeta {
-        public string Insert => string.Empty;
-        public bool HasArguments => false;
+        public override string Insert => string.Empty;
+        public override bool HasArguments => false;
 
-        public int GetHash(string[] args, string filePath, int fileLine) {
+        public override int GetHash(string[] args, string filePath, int fileLine) {
             return TargetQuery.GetQueryArgs(args, 0).Aggregate(new StableHashCode(), (argHash, arg) => argHash.Append(arg)).ToHashCode();
         }
 
-        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
+        public override IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
             // Target
             string[] targetQueryArgs = args.Length > 0 ? args[0].Split('.') : [];
             using var enumerator = TargetQuery.ResolveAutoCompleteEntries(targetQueryArgs, TargetQuery.Variant.Get);
