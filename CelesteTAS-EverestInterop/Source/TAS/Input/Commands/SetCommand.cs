@@ -11,10 +11,10 @@ namespace TAS.Input.Commands;
 
 public static class SetCommand {
     internal class SetMeta : ITasCommandMeta {
-        public string Insert => $"Set{CommandInfo.Separator}[0;Query]{CommandInfo.Separator}[1;Value]";
-        public bool HasArguments => true;
+        public override string Insert => $"Set{CommandInfo.Separator}[0;Query]{CommandInfo.Separator}[1;Value]";
+        public override bool HasArguments => true;
 
-        public int GetHash(string[] args, string filePath, int fileLine) {
+        public override int GetHash(string[] args, string filePath, int fileLine) {
             var hash = new HashCode();
             hash.Add(GetQueryArgs(args, 0).Aggregate(new HashCode(), (argHash, arg) => argHash.Append(arg.GetStableHashCode())).ToHashCode());
             hash.Add(GetQueryArgs(args, 1).Aggregate(new HashCode(), (argHash, arg) => argHash.Append(arg.GetStableHashCode())).ToHashCode());
@@ -22,7 +22,7 @@ public static class SetCommand {
             return hash.ToHashCode();
         }
 
-        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
+        public override IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
             // Target
             string[] targetQueryArgs = GetQueryArgs(args, 0).ToArray();
             if (args.Length <= 1) {

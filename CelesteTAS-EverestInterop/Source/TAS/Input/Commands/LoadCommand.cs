@@ -11,12 +11,12 @@ namespace TAS.Input.Commands;
 [SuppressMessage("Method Declaration", "Harmony003:Harmony non-ref patch parameters modified")]
 public static class LoadCommand {
     private class LoadMeta : ITasCommandMeta {
-        public string Insert =>
+        public override string Insert =>
             $"load{CommandInfo.Separator}[0;Scene]{CommandInfo.Separator}[1;X]{CommandInfo.Separator}[2;Y]";
 
-        public bool HasArguments => true;
+        public override bool HasArguments => true;
 
-        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath,
+        public override IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath,
             int fileLine) {
             if (!InGame()) yield break;
 
