@@ -8,7 +8,7 @@ namespace TAS.Input.Commands;
 
 public static class AutoInputCommand {
     private class Meta : ITasCommandMeta {
-        public string Insert => $"""
+        public override string Insert => $"""
                                  AutoInput{CommandInfo.Separator}[0;2]
                                     1,S,N
                                    10,O
@@ -16,7 +16,7 @@ public static class AutoInputCommand {
                                      [1]
                                  EndAutoInput
                                  """;
-        public bool HasArguments => true;
+        public override bool HasArguments => true;
     }
 
     public record Arguments {

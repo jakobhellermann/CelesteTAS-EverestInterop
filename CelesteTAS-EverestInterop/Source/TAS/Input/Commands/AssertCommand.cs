@@ -9,10 +9,10 @@ namespace TAS.Input.Commands;
 
 public static class AssertCommand {
     private class Meta : ITasCommandMeta {
-        public string Insert => $"Assert{CommandInfo.Separator}[0;Condition]{CommandInfo.Separator}\"[1;Expected]\"{CommandInfo.Separator}\"[2;Actual]\"";
-        public bool HasArguments => true;
+        public override string Insert => $"Assert{CommandInfo.Separator}[0;Condition]{CommandInfo.Separator}\"[1;Expected]\"{CommandInfo.Separator}\"[2;Actual]\"";
+        public override bool HasArguments => true;
 
-        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
+        public override IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
             if (args.Length != 1) {
                 yield break;
             }

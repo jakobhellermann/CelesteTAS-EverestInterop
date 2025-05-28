@@ -90,8 +90,8 @@ internal static class MetadataCommands {
 */
 
     private class RecordCountMeta : ITasCommandMeta {
-        public string Insert => "RecordCount: 1";
-        public bool HasArguments => false;
+        public override string Insert => "RecordCount: 1";
+        public override bool HasArguments => false;
     }
 
     [TasCommand("RecordCount", Aliases = ["RecordCount:", "RecordCount："], CalcChecksum = false, MetaDataProvider = typeof(RecordCountMeta))]

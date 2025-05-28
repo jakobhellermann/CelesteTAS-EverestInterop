@@ -13,10 +13,10 @@ namespace TAS.Input.Commands;
 
 public static class InvokeCommand {
     private class InvokeMeta : ITasCommandMeta {
-        public string Insert => $"Invoke{CommandInfo.Separator}[0;Query]{CommandInfo.Separator}[1;Parameters]";
-        public bool HasArguments => true;
+        public override string Insert => $"Invoke{CommandInfo.Separator}[0;Query]{CommandInfo.Separator}[1;Parameters]";
+        public override bool HasArguments => true;
 
-        public int GetHash(string[] args, string filePath, int fileLine) {
+        public override int GetHash(string[] args, string filePath, int fileLine) {
             var hash = new HashCode();
             hash.Add(SetCommand.SetMeta.GetQueryArgs(args, 0).Aggregate(new HashCode(), (argHash, arg) => argHash.Append(arg.GetStableHashCode())).ToHashCode());
             for (int i = 1; i < args.Length; i++) {
@@ -26,7 +26,7 @@ public static class InvokeCommand {
             return hash.ToHashCode();
         }
 
-        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
+        public override IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
             // Target
             string[] targetQueryArgs = SetCommand.SetMeta.GetQueryArgs(args, 0).ToArray();
             if (args.Length <= 1) {
