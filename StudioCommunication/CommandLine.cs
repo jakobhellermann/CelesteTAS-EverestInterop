@@ -61,7 +61,7 @@ public readonly record struct CommandLine(
         int currentArgIndex = separatorMatch.Index + separator.Length + leadingWhitespace;
 
         for (int i = currentArgIndex; i < line.Length; i++) {
-            string subLine = line[i..];
+            string subLine = line.Substring(i);
 
             if (groupStack.Count == 0 && subLine.StartsWith(separator)) {
                 arguments.Add(currentArg.ToString());
@@ -162,7 +162,7 @@ public readonly record struct CommandLine(
             } else if (CommandInfo.CommandOrder.FirstOrDefault(cmdName => string.Equals(cmdName, commandLine.Command, StringComparison.OrdinalIgnoreCase)) is var name
                        && !string.IsNullOrEmpty(name)
             ) {
-                commandName = name;
+                commandName = name!;
             } else {
                 commandName = Command;
             }
