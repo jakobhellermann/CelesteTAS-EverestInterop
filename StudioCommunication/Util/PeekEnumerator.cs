@@ -65,7 +65,7 @@ public class PeekEnumerator<T>(IEnumerable<T> enumerable) : IEnumerator, IDispos
 
         return queue.Peek(distance);
     }
-    public bool TryPeek([MaybeNullWhen(false)] out T value, uint distance = 0) {
+    public bool TryPeek(/* [MaybeNullWhen(false)] */ out T value, uint distance = 0) {
         queue ??= new();
 
         if (queue.Count > distance) {
