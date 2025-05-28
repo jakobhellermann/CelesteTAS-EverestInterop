@@ -57,7 +57,7 @@ public static class AssertCommand {
                 AbortTas($"{prefix}Lack of actual value");
             }
         } else {
-            var condition = Enum.Parse<AssertCondition>(args[0], ignoreCase: true); // Must succeed, since this was checked in Parse
+            var condition = Enum.Parse(typeof(AssertCondition), args[0], ignoreCase: true); // Must succeed, since this was checked in Parse
             string expected = args[1];
             string actualTemplate = args[2];
             string? failureMessage = args.Length >= 4 ? args[3] : null;
