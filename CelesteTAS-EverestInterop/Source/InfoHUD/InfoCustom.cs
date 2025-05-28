@@ -29,7 +29,7 @@ public static class InfoCustom {
 
     /// Returns the parsed info for the current template
     public static string GetInfo(int? decimals = null, bool forceAllowCodeExecution = false) {
-        return string.Join('\n', ParseTemplate(TasSettings.InfoCustomTemplate.SplitLines(), decimals ?? TasSettings.CustomInfoDecimals, forceAllowCodeExecution));
+        return string.Join("\n", ParseTemplate(TasSettings.InfoCustomTemplate.SplitLines(), decimals ?? TasSettings.CustomInfoDecimals, forceAllowCodeExecution));
     }
 
     // Fake-command to provide auto-complete support for info-templates, using the same system
@@ -73,7 +73,7 @@ public static class InfoCustom {
                 yield return new CommandAutoCompleteEntry {
                     Name = formatter,
                     Extra = "Formatter",
-                    Prefix = string.Join('.', targetQueryArgs[..^1]) + ".",
+                    Prefix = string.Join(".", targetQueryArgs[..^1]) + ".",
                     Suggestion = true,
                     IsDone = true,
                 };
@@ -372,8 +372,10 @@ public static class InfoCustom {
         var valueOccurrences = new Dictionary<string, int>();
         foreach (object value in enumerable) {
             string str = value.ToString() ?? "null";
-            if (!valueOccurrences.TryAdd(str, 1)) {
+            if (valueOccurrences.ContainsKey(str)) {
                 valueOccurrences[str]++;
+            } else {
+                valueOccurrences.Add(str, 1);
             }
         }
 

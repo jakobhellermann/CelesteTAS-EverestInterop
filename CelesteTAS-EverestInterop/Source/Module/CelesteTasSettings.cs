@@ -2,6 +2,7 @@ using BepInEx.Configuration;
 using System;
 using TAS.Communication;
 using TAS.EverestInterop.Hitboxes;
+using UnityEngine;
 
 namespace TAS.Module;
 
@@ -61,7 +62,7 @@ public class CelesteTasSettings {
     public int PositionDecimals {
         get => StudioShared.PositionDecimals;
         set {
-            StudioShared.PositionDecimals = Math.Clamp(value, GameSettings.MinDecimals, GameSettings.MaxDecimals);
+            StudioShared.PositionDecimals = Mathf.Clamp(value, GameSettings.MinDecimals, GameSettings.MaxDecimals);
             GameInfo.Update();
             SyncSettings();
         }
@@ -70,7 +71,7 @@ public class CelesteTasSettings {
     public int SpeedDecimals {
         get => StudioShared.SpeedDecimals;
         set {
-            StudioShared.SpeedDecimals = Math.Clamp(value, GameSettings.MinDecimals, GameSettings.MaxDecimals);
+            StudioShared.SpeedDecimals = Mathf.Clamp(value, GameSettings.MinDecimals, GameSettings.MaxDecimals);
             GameInfo.Update();
             SyncSettings();
         }
@@ -79,7 +80,7 @@ public class CelesteTasSettings {
     public int VelocityDecimals {
         get => StudioShared.VelocityDecimals;
         set {
-            StudioShared.VelocityDecimals = Math.Clamp(value, GameSettings.MinDecimals, GameSettings.MaxDecimals);
+            StudioShared.VelocityDecimals = Mathf.Clamp(value, GameSettings.MinDecimals, GameSettings.MaxDecimals);
             GameInfo.Update();
             SyncSettings();
         }
@@ -88,7 +89,7 @@ public class CelesteTasSettings {
     public int CustomInfoDecimals {
         get => StudioShared.CustomInfoDecimals;
         set {
-            StudioShared.CustomInfoDecimals = Math.Clamp(value, GameSettings.MinDecimals, GameSettings.MaxDecimals);
+            StudioShared.CustomInfoDecimals = Mathf.Clamp(value, GameSettings.MinDecimals, GameSettings.MaxDecimals);
             GameInfo.Update();
             SyncSettings();
         }
@@ -110,7 +111,7 @@ public class CelesteTasSettings {
     public int FastForwardSpeed {
         get => StudioShared.FastForwardSpeed;
         set {
-            StudioShared.FastForwardSpeed = Math.Clamp(value, 2, 30);
+            StudioShared.FastForwardSpeed = Math.Min(Math.Max(value, 2), 30);
             SyncSettings();
         }
     }
@@ -118,7 +119,7 @@ public class CelesteTasSettings {
     public float SlowForwardSpeed {
         get => StudioShared.SlowForwardSpeed;
         set {
-            StudioShared.SlowForwardSpeed = Math.Clamp(value, 0.01f, 0.9f);
+            StudioShared.SlowForwardSpeed = Math.Min(Math.Max(value, 0.01f), 0.9f);
             SyncSettings();
         }
     }

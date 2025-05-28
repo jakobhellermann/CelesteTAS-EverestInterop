@@ -1,8 +1,6 @@
 // ReSharper disable once CheckNamespace
 // ReSharper disable UnusedType.Global
 
-using TAS.Utils;
-
 namespace System.Runtime.CompilerServices {
     // Enable `string property { get; init; }`
     internal static class IsExternalInit;
@@ -19,6 +17,11 @@ namespace System.Runtime.CompilerServices {
 namespace System.Diagnostics.CodeAnalysis {
     public class SetsRequiredMembersAttribute : Attribute;
 
+#if !NETSTANDARD2_1_OR_GREATER
+#pragma warning disable CS9113 // Parameter is unread.
+    public class NotNullWhenAttribute(bool returnValue) : Attribute;
+#pragma warning restore CS9113 // Parameter is unread.
+#endif
 
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, Inherited = false)]
     internal sealed class MemberNotNullWhenAttribute(bool returnValue, params string[] members) : Attribute {
