@@ -11,10 +11,10 @@ public static class SetCommand {
     public const string CommandName = "Set";
     
     internal class SetMeta : ITasCommandMeta {
-        public string Insert => $"{CommandName}{CommandInfo.Separator}[0;Query]{CommandInfo.Separator}[1;Value]";
-        public bool HasArguments => true;
+        public override string Insert => $"{CommandName}{CommandInfo.Separator}[0;Query]{CommandInfo.Separator}[1;Value]";
+        public override bool HasArguments => true;
 
-        public int GetHash(string[] args, string filePath, int fileLine) {
+        public override int GetHash(string[] args, string filePath, int fileLine) {
             var hash = new StableHashCode();
             hash.Add(TargetQuery.GetQueryArgs(args, 0).Aggregate(new StableHashCode(), (argHash, arg) => argHash.Append(arg)).ToHashCode());
             hash.Add(TargetQuery.GetQueryArgs(args, 1).Aggregate(new StableHashCode(), (argHash, arg) => argHash.Append(arg)).ToHashCode());
@@ -22,7 +22,7 @@ public static class SetCommand {
             return hash.ToHashCode();
         }
 
-        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
+        public override IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
             // Target
             string[] targetQueryArgs = args.Length > 0 ? args[0].Split('.') : [];
             if (args.Length <= 1) {

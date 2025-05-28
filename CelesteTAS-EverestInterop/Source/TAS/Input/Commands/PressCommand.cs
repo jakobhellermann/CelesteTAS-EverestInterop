@@ -8,10 +8,10 @@ namespace TAS.Input.Commands;
 
 public static class PressCommand {
     private class PressMeta : ITasCommandMeta {
-        public string Insert => $"Press{CommandInfo.Separator}[0;Key1{CommandInfo.Separator}Key2...]";
-        public bool HasArguments => true;
+        public override string Insert => $"Press{CommandInfo.Separator}[0;Key1{CommandInfo.Separator}Key2...]";
+        public override bool HasArguments => true;
 
-        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
+        public override IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
             if (args.Length != 1) {
                 yield break;
             }

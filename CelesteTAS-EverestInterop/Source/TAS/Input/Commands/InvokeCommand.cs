@@ -14,10 +14,10 @@ public static class InvokeCommand {
     public const string CommandName = "Invoke";
     
     private class InvokeMeta : ITasCommandMeta {
-        public string Insert => $"{CommandName}{CommandInfo.Separator}[0;Query]{CommandInfo.Separator}[1;Parameters]";
-        public bool HasArguments => true;
+        public override string Insert => $"{CommandName}{CommandInfo.Separator}[0;Query]{CommandInfo.Separator}[1;Parameters]";
+        public override bool HasArguments => true;
 
-        public int GetHash(string[] args, string filePath, int fileLine) {
+        public override int GetHash(string[] args, string filePath, int fileLine) {
             var hash = new StableHashCode();
             hash.Add(TargetQuery.GetQueryArgs(args, 0).Aggregate(new StableHashCode(), (argHash, arg) => argHash.Append(arg.GetStableHashCode())).ToHashCode());
             for (int i = 1; i < args.Length; i++) {
@@ -27,7 +27,7 @@ public static class InvokeCommand {
             return hash.ToHashCode();
         }
 
-        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
+        public override IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
             // Target
             string[] targetQueryArgs = args.Length > 0 ? args[0].Split('.') : [];
             if (args.Length <= 1) {
