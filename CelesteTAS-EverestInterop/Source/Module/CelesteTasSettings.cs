@@ -1,6 +1,7 @@
 using BepInEx.Configuration;
 using System;
 using TAS.Communication;
+using TAS.EverestInterop.Hitboxes;
 
 namespace TAS.Module;
 
@@ -8,6 +9,14 @@ using GameSettings = StudioCommunication.GameSettings;
 
 public class CelesteTasSettings {
     public CelesteTasSettings(ConfigFile config) {
+        ShowHitboxes = config.Bind("Hitboxes", "Visible", false);
+        ShowHitboxes.SettingChanged += (_, _) => {
+            _studioShared.Hitboxes = ShowHitboxes.Value;
+            SyncSettings();
+        };
+        ShowHitboxes.SettingChanged += (_, _) => TasMod.Instance.HitboxModule.Reload();
+        HitboxFilter = config.Bind("Hitboxes", "Hitbox Filter", HitboxType.Default);
+        HitboxFilter.SettingChanged += (_, _) => ShowHitboxes.Value = true;
         CenterCamera = config.Bind("More options", "Center Camera", false);
         CenterCamera.SettingChanged += (_, _) => {
             _studioShared.CenterCamera = CenterCamera.Value;
@@ -23,6 +32,7 @@ public class CelesteTasSettings {
         set {
             _studioShared = value;
             updating = true;
+            ShowHitboxes.Value = value.Hitboxes;
             CenterCamera.Value = value.CenterCamera;
             updating = false;
         }
@@ -35,6 +45,13 @@ public class CelesteTasSettings {
 
         CommunicationWrapper.SendSettings(StudioShared);
     }
+
+    #region Hitboxes
+
+    public readonly ConfigEntry<bool> ShowHitboxes;
+    public readonly ConfigEntry<HitboxType> HitboxFilter;
+
+    #endregion
 
     #region Round Values
 
