@@ -10,21 +10,21 @@ public record struct FastForwardLine(bool ForceStop, bool SaveState, string Spee
         fastForwardLine = default;
 
         var lineTrimmed = line.TrimStart();
-        if (!lineTrimmed.StartsWith("***")) {
+        if (!lineTrimmed.StartsWith("***".AsSpan())) {
             return false;
         }
 
-        var modifiers = lineTrimmed["***".Length..];
-        if (modifiers.StartsWith("!", StringComparison.OrdinalIgnoreCase)) {
+        var modifiers = lineTrimmed.Slice("***".Length);
+        if (modifiers.StartsWith("!".AsSpan(), StringComparison.OrdinalIgnoreCase)) {
             fastForwardLine.ForceStop = true;
-            modifiers = modifiers["!".Length..];
+            modifiers = modifiers.Slice("!".Length);
         } else {
             fastForwardLine.ForceStop = false;
         }
 
-        if (modifiers.StartsWith("S", StringComparison.OrdinalIgnoreCase)) {
+        if (modifiers.StartsWith("S".AsSpan(), StringComparison.OrdinalIgnoreCase)) {
             fastForwardLine.SaveState = true;
-            modifiers = modifiers["S".Length..];
+            modifiers = modifiers.Slice("S".Length);
         } else {
             fastForwardLine.SaveState = false;
         }
