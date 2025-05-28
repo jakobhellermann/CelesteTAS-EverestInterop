@@ -8,8 +8,7 @@ internal class MonobehaviourQueryHandler : TargetQuery.Handler {
     public override bool CanResolveInstances(Type type) => type.IsSameOrSubclassOf(typeof(MonoBehaviour));
 
     public override object[] ResolveInstances(Type type) {
-        var entityInstances =
-            UnityEngine.Object.FindObjectsByType(type, FindObjectsInactive.Exclude, FindObjectsSortMode.InstanceID);
+        var entityInstances = UnityEngine.Object.FindObjectsOfType(type);
         // ReSharper disable once CoVariantArrayConversion
         return entityInstances;
     }
