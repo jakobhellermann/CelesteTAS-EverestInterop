@@ -49,6 +49,7 @@ public class TasMod : BaseUnityPlugin {
         Instance = this;
 
         try {
+            PlayMakerPrefs.LogPerformanceWarnings = false;
             ConfigTasTraceFrameHistory = Config.Bind("Tracer", "Frame History", false);
             ConfigTasTraceFilter = Config.Bind("Tracer",
                 "Frame History Filter",
@@ -141,6 +142,10 @@ public class TasMod : BaseUnityPlugin {
 
     private void FixedUpdate() {
         TasTracer.TraceVarsThroughFrame("FixedUpdate");
+        
+        if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
+            DebugInfo.FixedUpdate();
+        }
     }
 
     private static void TraceBefore() => TasTracer.TraceVarsThroughFrame($"TraceBefore-{alsoTraceAround}");
@@ -158,7 +163,13 @@ public class TasMod : BaseUnityPlugin {
         }
     }
 
-    private static void LastUpdate() => TasTracer.TraceVarsThroughFrame("LastUpdate");
+    private static void LastUpdate() {
+        TasTracer.TraceVarsThroughFrame("LastUpdate");
+
+        if (Instance.TasSettings.CenterCamera.Value && HeroController.UnsafeInstance is { } player) {
+            GameManager.instance.cameraCtrl.SnapTo(player.transform.position.x, player.transform.position.y);
+        }
+    }
 
     private void LateUpdate() {
         TasTracer.TraceVarsThroughFrame("LateUpdate");
@@ -167,6 +178,11 @@ public class TasMod : BaseUnityPlugin {
 
     private void PostLateUpdate() {
         TasTracer.TraceVarsThroughFrame("PostLateUpdate");
+        
+        if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
+            DebugInfo.PostLateUpdate();
+        }
+        
 
         try {
             GameInfo.Update();

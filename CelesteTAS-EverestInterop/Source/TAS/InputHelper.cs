@@ -24,7 +24,7 @@ public static class InputHelper {
     [HarmonyPrefix]
     public static bool DontRunInTAS(MethodBase __originalMethod) => !Manager.Running;*/
 
-    private const int DefaultTasFramerate = 60;
+    private const int DefaultTasFramerate = 100;
     public static int CurrentTasFramerate = DefaultTasFramerate;
     
     private const int DefaultFixedFramerate = 60;
