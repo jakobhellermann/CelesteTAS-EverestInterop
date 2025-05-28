@@ -76,10 +76,12 @@ public abstract class CommunicationAdapterBase : IDisposable {
         LogInfo("Starting communication...");
 
         // Get or create the shared mutex
-        mutex = new Mutex(initiallyOwned: false, MutexName, out bool created);
-        if (!created) {
-            mutex = Mutex.OpenExisting(MutexName);
-        }
+        // mutex = new Mutex(initiallyOwned: false, MutexName, out bool created);
+        // mutex = new Mutex(initiallyOwned: true, MutexName, out bool created);
+        mutex = new Mutex(initiallyOwned: false);
+        // if (!created) {
+        //   mutex = Mutex.OpenExisting(MutexName);
+        //}
 
         // Set up the memory mapped files
         string writeName = $"CelesteTAS_{(location == Location.Celeste ? "C2S" : "S2C")}";
