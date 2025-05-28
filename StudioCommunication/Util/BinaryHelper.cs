@@ -70,12 +70,14 @@ public static class BinaryHelper {
                     writer.WriteObject(values[i]);
                 }
                 return;
+#if NETSTANDARD2_1_OR_GREATER
             case ITuple v:
                 writer.Write7BitEncodedInt(v.Length);
                 for (int i = 0; i < v.Length; i++) {
                     writer.WriteObject(v[i]);
                 }
                 return;
+#endif
         }
 
         if (value == null) {
@@ -144,6 +146,7 @@ public static class BinaryHelper {
 
             return list;
         }
+#if NETSTANDARD2_1_OR_GREATER
         if (typeof(ITuple).IsAssignableFrom(type) && type.IsGenericType) {
             int count = reader.Read7BitEncodedInt();
 
@@ -154,6 +157,7 @@ public static class BinaryHelper {
 
             return Activator.CreateInstance(type, values)!;
         }
+#endif
 
         bool nullable = !type.IsValueType;
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)) {
