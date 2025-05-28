@@ -1,9 +1,9 @@
-using MemoryPack;
+using MessagePack;
 
 namespace StudioCommunication;
 
-[MemoryPackable]
-public partial record struct GameState {
+[MessagePackObject(keyAsPropertyName: true)]
+public record struct GameState {
     public enum Direction : byte {
         Up,
         Down,
@@ -29,24 +29,31 @@ public partial record struct GameState {
     }
 
     // We can't just use tuples since they lose their names when serializing to JSON
+    [MessagePackObject(keyAsPropertyName: true)]
     public struct Vec2(float x, float y) { public readonly float X = x, Y = y; }
+    [MessagePackObject(keyAsPropertyName: true)]
     public struct RectI(int x, int y, int w, int h) { public readonly int X = x, Y = y, W = w, H = h; }
+    [MessagePackObject(keyAsPropertyName: true)]
     public struct RectF(float x, float y, float w, float h) { public readonly float X = x, Y = y, W = w, H = h; }
 
+    [MessagePackObject(keyAsPropertyName: true)]
     public struct Spike(RectF bounds, Direction direction) {
         public readonly RectF Bounds = bounds;
         public readonly Direction Direction = direction;
     }
+    [MessagePackObject(keyAsPropertyName: true)]
     public struct WindTrigger(RectF bounds, WindPattern pattern) {
         public readonly RectF Bounds = bounds;
         public readonly WindPattern Pattern = pattern;
     }
+    [MessagePackObject(keyAsPropertyName: true)]
     public struct JumpThru(RectF bounds, Direction direction, bool pullsPlayer) {
         public readonly RectF Bounds = bounds;
         public readonly Direction Direction = direction;
         public readonly bool PullsPlayer = pullsPlayer;
     }
 
+    [MessagePackObject(keyAsPropertyName: true)]
     public record struct PlayerState {
         public Vec2 Position;
         public Vec2 PositionRemainder;
@@ -62,6 +69,7 @@ public partial record struct GameState {
         public float MaxFall;
     }
 
+    [MessagePackObject(keyAsPropertyName: true)]
     public record struct LevelState {
         public RectI Bounds;
 
