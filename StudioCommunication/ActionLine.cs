@@ -282,14 +282,14 @@ public struct ActionLine() {
         // Clamp angle / magnitude
         if (actionLine.FeatherAngle is { } angleString) {
             if (float.TryParse(angleString, NumberStyles.Float, CultureInfo.InvariantCulture, out float angle)) {
-                actionLine.FeatherAngle = Math.Clamp(angle, 0.0f, 360.0f).ToString(CultureInfo.InvariantCulture);
+                actionLine.FeatherAngle = Math.Min(Math.Max(angle, 0.0f), 360.0f).ToString(CultureInfo.InvariantCulture);
             } else if (!ignoreInvalidFloats) {
                 return false;
             }
         }
         if (actionLine.FeatherMagnitude is { } magnitudeString) {
             if (float.TryParse(magnitudeString, NumberStyles.Float, CultureInfo.InvariantCulture, out float magnitude)) {
-                actionLine.FeatherMagnitude = Math.Clamp(magnitude, 0.0f, 1.0f).ToString(CultureInfo.InvariantCulture);
+                actionLine.FeatherMagnitude = Math.Min(Math.Max(magnitude, 0.0f), 1.0f).ToString(CultureInfo.InvariantCulture);
             } else if (!ignoreInvalidFloats) {
                 return false;
             }
