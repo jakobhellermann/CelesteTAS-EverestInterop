@@ -11,10 +11,10 @@ namespace TAS.Input.Commands;
 
 public static class ReadCommand {
     private class ReadMeta : ITasCommandMeta {
-        public string Insert => $"Read{CommandInfo.Separator}[0;File Name]{CommandInfo.Separator}[1;Starting Label]{CommandInfo.Separator}[2;(Ending Label)]";
-        public bool HasArguments => true;
+        public override string Insert => $"Read{CommandInfo.Separator}[0;File Name]{CommandInfo.Separator}[1;Starting Label]{CommandInfo.Separator}[2;(Ending Label)]";
+        public override bool HasArguments => true;
 
-        public int GetHash(string[] args, string filePath, int fileLine) {
+        public override int GetHash(string[] args, string filePath, int fileLine) {
             int hash = args[..Math.Max(0, args.Length - 1)]
                 .Aggregate(17, (current, arg) => 31 * current + 17 * arg.GetStableHashCode());
 
@@ -40,7 +40,7 @@ public static class ReadCommand {
             return hash;
         }
 
-        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
+        public override IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
             if (Path.GetDirectoryName(filePath) is not { } fileDir) {
                 yield break;
             }

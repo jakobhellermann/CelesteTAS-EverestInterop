@@ -10,12 +10,12 @@ namespace TAS.Input.Commands;
 /// Repeats everything between "Repeat, N" and "EndRepeat" N times
 internal static class RepeatCommand {
     private class Meta : ITasCommandMeta {
-        public string Insert => $"""
+        public override string Insert => $"""
                                  Repeat{CommandInfo.Separator}[0;2]
                                      [1]
                                  EndRepeat
                                  """;
-        public bool HasArguments => true;
+        public override bool HasArguments => true;
     }
 
     private readonly record struct Arguments(int StartFrame, int Count, string StartFilePath, int StartFileLine);
