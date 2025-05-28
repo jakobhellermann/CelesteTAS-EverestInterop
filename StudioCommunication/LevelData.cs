@@ -1,10 +1,9 @@
-using MemoryPack;
+using MessagePack;
 
 namespace StudioCommunication;
 
-[MemoryPackable]
-public partial record struct LevelInfo {
-    /// URL to the GameBanana page of the mod
+[MessagePackObject(keyAsPropertyName: true)]
+public record struct LevelInfo {
     public string ModUrl;
 
     /// Amount of frames which the intro animation takes, if it could be figured out
