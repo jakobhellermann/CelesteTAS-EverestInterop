@@ -51,7 +51,7 @@ public class TasCommandAttribute(string name) : Attribute {
         $"Validating command '{Name}'...".Log(LogLevel.Debug);
         var executeMethod = typeof(TasCommandAttribute).GetMethodInfo(nameof(Execute))!;
         Debug.Assert(m_Execute != null);
-        Debug.Assert(m_Execute.GetParameters().Length == executeMethod.GetParameters().Length);
+        Debug.Assert(m_Execute!.GetParameters().Length == executeMethod.GetParameters().Length);
         for (int i = 0; i < m_Execute.GetParameters().Length; i++) {
             Debug.Assert(m_Execute.GetParameters()[i].ParameterType == executeMethod.GetParameters()[i].ParameterType);
         }
