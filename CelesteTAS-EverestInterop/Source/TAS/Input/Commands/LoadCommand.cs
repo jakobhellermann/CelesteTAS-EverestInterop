@@ -61,7 +61,13 @@ public static class LoadCommand {
             return;
         }
 
+        Normalize();
+        SceneManager.LoadScene(scene);
+        
+        IsLoading = false;
+    }
+
+    private static void Normalize() {
         Random.InitState(0);
-        UnityEngine.SceneManagement.SceneManager.LoadScene(scene, LoadSceneMode.Single);
     }
 }
