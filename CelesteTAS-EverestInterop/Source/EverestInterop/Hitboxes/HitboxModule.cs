@@ -1,3 +1,4 @@
+using GlobalEnums;
 using System;
 using System.Collections.Generic;
 using TAS.Module;
@@ -12,15 +13,18 @@ public enum HitboxType : uint {
     All = uint.MaxValue,
     Default = LEVEL | ENEMY | PLAYER,
 
-    LEVEL = Terrain | ChangeSceneTrigger,
+    LEVEL = Terrain | ChangeSceneTrigger | Breakable | HazardRespawn,
     Terrain = 1 << 1,
     ChangeSceneTrigger = 1 << 2,
+    HazardRespawn = 1 << 3,
+    Breakable = 1 << 3,
 
     ENEMY = Enemy,
     Enemy = 1 << 6,
 
     PLAYER = Player,
     Player = 1 << 10,
+    Attack = 1 << 11,
 
     Uncategorized = 1u << 31,
 }
@@ -117,7 +121,23 @@ public class HitboxModule : MonoBehaviour {
 
         var go = collider2D.gameObject;
 
-        {
+        if (collider2D.GetComponent<DamageHero>())
+            colliders.AddToKey(HitboxType.Enemy, collider2D);
+        else if (collider2D.GetComponent<HealthManager>())
+            colliders.AddToKey(HitboxType.Player, collider2D);
+        else if (go.layer == (int)PhysLayers.TERRAIN)
+            colliders.AddToKey(HitboxType.Terrain, collider2D);
+        else if (go == HeroController.SilentInstance?.gameObject)
+            colliders.AddToKey(HitboxType.Player, collider2D);
+        else if (collider2D.GetComponent<DamageEnemies>())
+            colliders.AddToKey(HitboxType.Attack, collider2D);
+        else if (collider2D.GetComponent<HazardRespawnTrigger>())
+            colliders.AddToKey(HitboxType.HazardRespawn, collider2D);
+        else if (collider2D.GetComponent<TransitionPoint>())
+            colliders.AddToKey(HitboxType.ChangeSceneTrigger, collider2D);
+        else if (collider2D.GetComponent<Breakable>())
+            colliders.AddToKey(HitboxType.Breakable, collider2D);
+        else {
             colliders.AddToKey(HitboxType.Uncategorized, collider2D);
         }
     }
@@ -141,7 +161,7 @@ public class HitboxModule : MonoBehaviour {
                 foreach (var collider2D in typeColliders) {
                     if (!collider2D) continue;
 
-                    var onScreen = OnScreen(collider2D, camera);
+                    var onScreen = type == HitboxType.Terrain || OnScreen(collider2D, camera);
                     if (onScreen) DrawHitbox(camera, collider2D, type);
                 }
             }
