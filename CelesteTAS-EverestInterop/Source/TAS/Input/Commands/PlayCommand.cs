@@ -9,15 +9,15 @@ namespace TAS.Input.Commands;
 
 public static class PlayCommand {
     private class PlayMeta : ITasCommandMeta {
-        public string Insert => $"Play{CommandInfo.Separator}[0;Starting Label]";
-        public bool HasArguments => true;
+        public override string Insert => $"Play{CommandInfo.Separator}[0;Starting Label]";
+        public override bool HasArguments => true;
 
-        public int GetHash(string[] args, string filePath, int fileLine) {
+        public override int GetHash(string[] args, string filePath, int fileLine) {
             // Only file contents and line matters
             return 31 * File.ReadAllText(filePath).GetStableHashCode() + 17 * fileLine;
         }
 
-        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
+        public override IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath, int fileLine) {
             if (args.Length != 1) {
                 yield break;
             }

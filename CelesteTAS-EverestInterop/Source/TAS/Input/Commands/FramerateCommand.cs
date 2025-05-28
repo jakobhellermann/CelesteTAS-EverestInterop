@@ -4,9 +4,9 @@ namespace TAS.Input.Commands;
 
 public static class FramerateCommand {
     private class FramerateMeta : ITasCommandMeta {
-        public string Insert => $"Framerate{CommandInfo.Separator}[0;60]";
+        public override string Insert => $"Framerate{CommandInfo.Separator}[0;60]";
 
-        public bool HasArguments => false;
+        public override bool HasArguments => false;
     }
 
     [TasCommand("Framerate", MetaDataProvider = typeof(FramerateMeta))]
