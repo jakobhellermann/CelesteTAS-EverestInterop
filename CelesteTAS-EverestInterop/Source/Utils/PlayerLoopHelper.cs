@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 // ReSharper disable InvalidXmlDocComment
 /**
  * PlayerLoopHelper: Simple helper class for registering/unregistering systems in Unity's PlayerLoop.
