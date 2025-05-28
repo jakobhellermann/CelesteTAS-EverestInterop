@@ -10,7 +10,7 @@ using TAS.Module;
 using TAS.Tracer;
 using TAS.Utils;
 using UnityEngine;
-using Object = UnityEngine.Object;
+using UnityEngine.SceneManagement;
 
 namespace TAS;
 
@@ -50,6 +50,7 @@ public class TasMod : BaseUnityPlugin {
         Instance = this;
 
         try {
+            PlayMakerPrefs.LogPerformanceWarnings = false;
             ConfigTasTraceFrameHistory = Config.Bind("Tracer", "Frame History", false);
             ConfigTasTraceFilter = Config.Bind("Tracer",
                 "Frame History Filter",
@@ -81,6 +82,9 @@ public class TasMod : BaseUnityPlugin {
 
             HitboxModule = new GameObject().AddComponent<HitboxModule>();
             DontDestroyOnLoad(HitboxModule.gameObject);
+
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+            TrySkipLoadingScreen(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
 
             if (TasSettings.AttemptConnectStudio) CommunicationWrapper.Start();
         } catch (Exception e) {
@@ -132,6 +136,17 @@ public class TasMod : BaseUnityPlugin {
         }
     }
 
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
+        TrySkipLoadingScreen(scene);
+    }
+
+    private static void TrySkipLoadingScreen(Scene scene) {
+        Log.Info($"Trying to skip main menu {scene.name}");
+        if (scene.name == "Pre_Menu_Intro") {
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Menu_Title");
+        }
+    }
+
     private void EarlyUpdate() {
         if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
             AttributeUtils.Invoke<BeforeActiveTasFrame>();
@@ -148,7 +163,14 @@ public class TasMod : BaseUnityPlugin {
     private static void TraceAfter() => TasTracerState.TraceVarsThroughFrame($"TraceAfter-{alsoTraceAround}");
 
     private static void FirstUpdate() => TasTracerState.TraceVarsThroughFrame("FirstUpdate");
-    private static void LastUpdate() => TasTracerState.TraceVarsThroughFrame("LastUpdate");
+
+    private static void LastUpdate() {
+        TasTracerState.TraceVarsThroughFrame("LastUpdate");
+
+        if (Instance.TasSettings.CenterCamera.Value && HeroController.UnsafeInstance is { } player) {
+            GameManager.instance.cameraCtrl.SnapTo(player.transform.position.x, player.transform.position.y);
+        }
+    }
 
     private void LateUpdate() {
         TasTracerState.TraceVarsThroughFrame("LateUpdate");
@@ -194,6 +216,8 @@ public class TasMod : BaseUnityPlugin {
         PlayerLoopSystemHelper.Unregister(typeof(FirstUpdateSystem));
         PlayerLoopSystemHelper.Unregister(typeof(LastUpdateSystem));
         PlayerLoopSystemHelper.Unregister(typeof(PostLateUpdateSystem));
+
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
 
         AttributeUtils.Invoke<UnloadAttribute>();
         if (Manager.Running) Manager.DisableRun();

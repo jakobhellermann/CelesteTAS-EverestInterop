@@ -89,7 +89,7 @@ internal static class ModUtils {
     
     public static Type[] GetTypes() {
         return new[] {
-            // VanillaAssembly, TODO(unity)
+            typeof(HeroController).Assembly,
             typeof(UnityEngine.Random).Assembly,
         }.SelectMany(x => x.GetTypes()).ToArray();
     }

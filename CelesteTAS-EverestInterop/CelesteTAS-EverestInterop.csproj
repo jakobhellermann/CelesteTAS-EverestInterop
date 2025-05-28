@@ -12,13 +12,12 @@
 
 
         <!-- todo macOS -->
-        <GamePath Condition="'$(OS)' == 'Windows_NT'">C:/Program Files (x86)/Steam/steamapps/common/Nine Sols</GamePath>
-        <GamePath Condition="'$(OS)' != 'Windows_NT'">$(HOME)/.local/share/Steam/steamapps/common/Nine Sols</GamePath>
-        <DllPath>$(GamePath)/NineSols_Data/Managed</DllPath>
+        <GamePath Condition="'$(OS)' == 'Windows_NT'">C:/Program Files (x86)/Steam/steamapps/common/Hollow Knight</GamePath>
+        <GamePath Condition="'$(OS)' != 'Windows_NT'">$(HOME)/.local/share/Steam/steamapps/common/Hollow Knight</GamePath>
+        <DllPath>$(GamePath)/hollow_knight_Data/Managed</DllPath>
 
-        <!-- If you're not using R2Modman/Thunderstore, this can be GamePath as well. Only used in CopyDir -->
-        <ProfileDir Condition="'$(OS)' == 'Windows_NT'">$(AppData)/r2modmanPlus-local/NineSols/profiles/Default</ProfileDir>
-        <ProfileDir Condition="'$(OS)' != 'Windows_NT'">$(HOME)/.config/r2modmanPlus-local/NineSols/profiles/Default</ProfileDir>
+        <ProfileDir Condition="'$(OS)' == 'Windows_NT'">$(GamePath)</ProfileDir>
+        <ProfileDir Condition="'$(OS)' != 'Windows_NT'">$(GamePath)</ProfileDir>
         <!-- After building, copy the dll to this folder. Useful for hot-reloading: https://github.com/BepInEx/BepInEx.Debug/blob/master/README.md#scriptengine -->
         <CopyDir>$(ProfileDir)/BepInEx/scripts</CopyDir>
     </PropertyGroup>
@@ -28,13 +27,17 @@
             <HintPath>$(DllPath)/Assembly-CSharp.dll</HintPath>
             <Private>false</Private>
         </Reference>
+        <Reference Include="PlayMaker">
+            <HintPath>$(DllPath)/PlayMaker.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="BepInEx.Analyzers" Version="1.*" />
         <PackageReference Include="BepInEx.Core" Version="5.*" IncludeAssets="compile" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="UnityEngine.Modules" Version="2021.2.19" IncludeAssets="compile" />
+        <PackageReference Include="UnityEngine.Modules" Version="2020.2.2" IncludeAssets="compile" />
 
         <ProjectReference Include="../StudioCommunication/StudioCommunication.csproj" />
     </ItemGroup>
@@ -45,13 +48,5 @@
         <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(CopyDir)" SkipUnchangedFiles="true" />
 
         <!--        <Copy SourceFiles="$(TargetDir)StudioCommunication.dll" DestinationFolder="$(CopyDir)/../Plugins/" SkipUnchangedFiles="true" />-->
-    </Target>
-
-    <Target Name="PackageMod" AfterTargets="Publish">
-        <Copy SourceFiles="$(TargetPath)" DestinationFolder="../thunderstore/build/dll" SkipUnchangedFiles="true" />
-        <Copy SourceFiles="$(TargetDir)publish/MemoryPack.Core.dll" DestinationFolder="../thunderstore/build/dll" SkipUnchangedFiles="true" />
-        <Copy SourceFiles="$(TargetDir)publish/StudioCommunication.dll" DestinationFolder="../thunderstore/build/dll" SkipUnchangedFiles="true" />
-        <Copy SourceFiles="$(TargetDir)publish/System.Collections.Immutable.dll" DestinationFolder="../thunderstore/build/dll" SkipUnchangedFiles="true" />
-        <Exec Command="tcli build --config-path ../thunderstore/thunderstore.toml" />
     </Target>
 </Project>
