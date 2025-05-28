@@ -174,7 +174,7 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                 string[] commandArgs = reader.ReadObject<string[]>();
                 string filePath = reader.ReadString();
                 int fileLine = reader.ReadInt32();
-                LogVerbose($"Received message RequestCommandAutoComplete: '{commandName}' '{string.Join(' ', commandArgs)}' file '{filePath}' line {fileLine} ({hash})");
+                LogVerbose($"Received message RequestCommandAutoComplete: '{commandName}' '{string.Join(" ", commandArgs)}' file '{filePath}' line {fileLine} ({hash})");
 
                 var meta = Command.GetMeta(commandName);
                 if (meta == null) {

@@ -285,7 +285,7 @@ public class InputController {
                 // It needs to stop reading the current file when it's done to prevent recursion
                 return false;
             }
-        } else if (FastForwardLine.TryParse(lineText, out var fastForwardLine)) {
+        } else if (FastForwardLine.TryParse(lineText.AsSpan(), out var fastForwardLine)) {
             var fastForward = new FastForward(CurrentParsingFrame, studioLine, path, fileLine, fastForwardLine);
             if (FastForwards.TryGetValue(CurrentParsingFrame, out var oldFastForward) && oldFastForward.SaveState && !fastForward.SaveState) {
                 // ignore

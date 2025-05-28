@@ -54,7 +54,9 @@ public static class ReadCommand {
                     yield break;
                 }
 
-                string prefix = Path.GetRelativePath(fileDir, targetDir).Replace('\\', '/') + "/";
+                // TODO
+                // string prefix = Path.GetRelativePath(fileDir, targetDir).Replace('\\', '/') + "/";
+                string prefix = "TODO";
                 if (prefix.StartsWith("./")) {
                     prefix = prefix["./".Length..];
                 }
