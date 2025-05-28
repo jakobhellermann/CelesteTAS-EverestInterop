@@ -1,9 +1,9 @@
-﻿using MemoryPack;
+﻿using MessagePack;
 
 namespace StudioCommunication;
 
-[MemoryPackable]
-public partial struct StudioState() {
+[MessagePackObject(keyAsPropertyName: true)]
+public struct StudioState() {
     public int CurrentLine = -1;
     public string CurrentLineSuffix = string.Empty;
     public int CurrentFrameInTas = -1;
