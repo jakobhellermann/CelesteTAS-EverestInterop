@@ -1,4 +1,5 @@
 using StudioCommunication;
+using UnityEngine;
 
 namespace TAS.EverestInterop;
 
@@ -18,4 +19,6 @@ public static class GameInterop {
         // state.PlayerPositionRemainder = TODO;
         // state.PlayerSpeed = TODO;
     }
+    
+    public static Camera? MainCamera => Camera.main; // TODO: this can usually be done cheaper
 }
