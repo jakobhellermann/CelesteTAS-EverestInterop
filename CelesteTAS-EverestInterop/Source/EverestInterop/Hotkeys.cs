@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using StudioCommunication;
 using TAS.Communication;
+using TAS.EverestInterop;
 using TAS.Utils;
 using UnityEngine;
 using InputKeys = UnityEngine.KeyCode;
@@ -88,7 +89,7 @@ public static class Hotkeys {
         AllHotkeys[HotkeyID.FrameStepBack] = FrameStepBack = Unbound();
         AllHotkeys[HotkeyID.SlowForward] = SlowForward = Unbound();
         AllHotkeys[HotkeyID.Pause] = PauseResume = Unbound();
-        AllHotkeys[HotkeyID.Hitboxes] = Hitboxes = Unbound();
+        AllHotkeys[HotkeyID.Hitboxes] = Hitboxes = BindingToHotkey([InputKeys.LeftControl, InputKeys.B], true);
         AllHotkeys[HotkeyID.TriggerHitboxes] = TriggerHitboxes = Unbound();
         AllHotkeys[HotkeyID.Graphics] = SimplifiedGraphic = Unbound();
         AllHotkeys[HotkeyID.Camera] = CenterCamera = BindingToHotkey([InputKeys.LeftControl, InputKeys.M]);
@@ -208,35 +209,15 @@ public static class Hotkeys {
     }
 
     private static void AfterUpdate() {
-        /*
-         if (Engine.Scene is Level level && (!level.Paused || level.PauseMainMenuOpen || Manager.Running)) {
+        if (GameInterop.IsInsideLevel()) {
             if (Hitboxes.Pressed) {
-                TasSettings.ShowHitboxes = !TasSettings.ShowHitboxes;
-                CelesteTasModule.Instance.SaveSettings();
-            }
-
-            if (TriggerHitboxes.Pressed) {
-                TasSettings.ShowTriggerHitboxes = !TasSettings.ShowTriggerHitboxes;
-                CelesteTasModule.Instance.SaveSettings();
-            }
-
-            if (SimplifiedGraphic.Pressed) {
-                TasSettings.SimplifiedGraphics = !TasSettings.SimplifiedGraphics;
-                CelesteTasModule.Instance.SaveSettings();
-            }
-
-            if (CenterCamera.Pressed) {
-                TasSettings.CenterCamera = !TasSettings.CenterCamera;
-                CelesteTasModule.Instance.SaveSettings();
+                TasSettings.ShowHitboxes.Value = !TasSettings.ShowHitboxes.Value;
             }
             
             if (CenterCamera.Pressed) {
                 TasSettings.CenterCamera.Value = !TasSettings.CenterCamera.Value;
             }
         }
-
-        Hud.Toggle();
-        */
     }
 
     [DisableRun]
