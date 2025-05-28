@@ -1,10 +1,11 @@
-using MemoryPack;
+
+using MessagePack;
 
 namespace StudioCommunication;
 
 /// Describes a TAS command
-[MemoryPackable]
-public partial record struct CommandInfo(
+[MessagePackObject(keyAsPropertyName: true)]
+public record struct CommandInfo(
     // Name of the command
     string Name,
     // Snippet to insert when auto-completing the command

@@ -1,11 +1,11 @@
-using MemoryPack;
 using System;
+using MessagePack;
 
 namespace StudioCommunication;
 
 /// In-Studio configurable game settings
-[MemoryPackable]
-public partial class GameSettings {
+[MessagePackObject(keyAsPropertyName: true)]
+public class GameSettings {
     public const int MinDecimals = 0;
     public const int MaxDecimals = 12;
 
