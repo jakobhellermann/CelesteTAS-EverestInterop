@@ -11,8 +11,7 @@ internal class MonobehaviourQueryHandler : TargetQuery.Handler {
     public override bool CanResolveInstances(Type type) => type.IsSameOrSubclassOf(typeof(MonoBehaviour));
 
     public override object[] ResolveInstances(Type type) {
-        var entityInstances =
-            UnityEngine.Object.FindObjectsByType(type, FindObjectsInactive.Exclude, FindObjectsSortMode.InstanceID);
+        var entityInstances = UnityEngine.Object.FindObjectsOfType(type);
         // ReSharper disable once CoVariantArrayConversion
         return entityInstances;
     }
@@ -28,7 +27,7 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
 
     public override IEnumerable<string> ProcessQueryArguments(IEnumerable<string> queryArgs, bool isAutoComplete) {
         foreach (string arg in queryArgs) {
-            if (arg.EndsWith('*')) {
+            if (arg.EndsWith("*")) {
                 string newArg = arg[..^1];
 
                 if (IndexRegex.Match(newArg) is { Success: true} indexMatch) {
@@ -40,7 +39,7 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
 
                 yield return SpreadKey;
             } else if (IndexRegex.Match(arg) is { Success: true} indexMatch) {
-                if (indexMatch.Groups[1].Value.EndsWith('*')) {
+                if (indexMatch.Groups[1].Value.EndsWith("*")) {
                     yield return indexMatch.Groups[1].Value[..^1];
                     yield return SpreadKey;
                 } else {

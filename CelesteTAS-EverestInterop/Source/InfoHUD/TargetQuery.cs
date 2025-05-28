@@ -471,7 +471,7 @@ public static class TargetQuery {
         // Process query arguments
         queryArgs = Handlers.Aggregate((IEnumerable<string>) queryArgs, (current, handler) => handler.ProcessQueryArguments(current, isAutoComplete: true)).ToArray();
         // Drop last argument for prefix
-        string queryPrefix = queryArgs.Length <= 1 ? string.Empty : string.Join('.', Handlers.Aggregate((IEnumerable<string>) queryArgs[..^1], (current, handler) => handler.FormatQueryArguments(current)));
+        string queryPrefix = queryArgs.Length <= 1 ? string.Empty : string.Join(".", Handlers.Aggregate((IEnumerable<string>) queryArgs[..^1], (current, handler) => handler.FormatQueryArguments(current)));
         string memberQueryPrefix = queryArgs.Length <= 1 ? queryPrefix : $"{queryPrefix}.";
 
         if (variant == Variant.Get && targetTypeFilter != null) {
@@ -635,12 +635,12 @@ public static class TargetQuery {
             }
 
             yield return new CommandAutoCompleteEntry {
-                Name = $"{string.Join('.', ns[(queryArgs.Length - 1)..])}.",
+                Name = $"{string.Join(".", ns[(queryArgs.Length - 1)..])}.",
                 Extra = "Namespace",
                 Prefix = queryPrefix,
                 IsDone = false,
                 StorageKey = $"{variant}",
-                StorageName = string.Join('.', ns[(queryArgs.Length - 1)..]),
+                StorageName = string.Join(".", ns[(queryArgs.Length - 1)..]),
             };
         }
 
@@ -838,7 +838,7 @@ public static class TargetQuery {
             return [];
         }
 
-        string fullQueryArgs = string.Join('.', queryArgs);
+        string fullQueryArgs = string.Join(".", queryArgs);
         if (BaseTypeCache.TryGetValue(fullQueryArgs, out var cache)) {
             memberArgs = cache.MemberArgs;
             return cache.Types;
@@ -859,7 +859,7 @@ public static class TargetQuery {
     /// Parses query-arguments into a list of types, while only searching for generic .NET types
     /// Does not reference any defined special-case handlers
     internal static HashSet<Type> ParseGenericBaseTypes(string[] queryArgs, out string[] memberArgs) {
-        string fullQueryArgs = string.Join('.', queryArgs);
+        string fullQueryArgs = string.Join(".", queryArgs);
 
         if (BaseTypeCache.TryGetValue(fullQueryArgs, out var cache)) {
             memberArgs = cache.MemberArgs;
@@ -871,7 +871,7 @@ public static class TargetQuery {
             bool isFirst = i == queryArgs.Length;
             string typeName = isFirst
                 ? fullQueryArgs
-                : string.Join('.', queryArgs, startIndex: 0, count: i);
+                : string.Join(".", queryArgs, startIndex: 0, count: i);
 
             if (!isFirst && BaseTypeCache.TryGetValue(typeName, out cache) && cache.MemberArgs.Length == 0) {
                 memberArgs = queryArgs[i..];
@@ -1585,9 +1585,18 @@ public static class TargetQuery {
                     continue;
                 }
                 if (targetType.IsEnum) {
+#if NETSTANDARD2_1_OR_GREATER
                     if (!Enum.TryParse(targetType, arg, ignoreCase: true, out object? value)) {
                         return Result<object?[], QueryError>.Fail(new QueryError.InvalidEnumState(targetType, arg));
                     }
+#else
+                    object? value;
+                    try {
+                        value = Enum.Parse(targetType, arg, ignoreCase: true);
+                    } catch (Exception) {
+                        return Result<object?[], QueryError>.Fail(new QueryError.InvalidEnumState(targetType, arg));
+                    }
+#endif
 
                     values[valueIdx++] = value;
                     continue;
