@@ -366,8 +366,8 @@ public static class DictionaryExtensions {
         }
 #endif
 
-        foreach (var (key, value) in other) {
-            dict[key] = value;
+        foreach (var item in other) {
+            dict[item.Key] = item.Value;
         }
     }
 }

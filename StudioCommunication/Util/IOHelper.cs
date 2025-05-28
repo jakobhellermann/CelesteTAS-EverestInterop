@@ -15,7 +15,7 @@ public static class IOHelper {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             return Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
         } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-            return Process.Start(new ProcessStartInfo("xdg-open") { ArgumentList = { path }});
+            return Process.Start(new ProcessStartInfo("xdg-open") { Arguments = path });
         } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
             return Process.Start("open", $"'{path}'");
         } else {
