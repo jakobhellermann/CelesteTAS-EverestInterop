@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Celeste;
 using JetBrains.Annotations;
-using Monocle;
 using System;
 using System.IO;
 using TAS.EverestInterop;
@@ -101,7 +99,7 @@ internal static class SavestateManager {
         }
 
         // Autoload state after entering the level, if the TAS was started outside the level
-        if (Engine.Scene is Level) {
+        if (GameInterop.IsInsideLevel()) {
             // Load ideal savestate to start playing from for frame step back
             if (Manager.FrameStepBackTargetFrame > 0) {
                 foreach (var state in AllSavestates.Reverse()) {
@@ -181,7 +179,7 @@ internal static class SavestateManager {
 
     [EnableRun(EnableRunPriority)]
     internal static void EnableRun() {
-        if (!SpeedrunToolInterop.Installed || Engine.Scene is not Level) {
+        if (!SpeedrunToolInterop.Installed || !GameInterop.IsInsideLevel()) {
             return;
         }
 

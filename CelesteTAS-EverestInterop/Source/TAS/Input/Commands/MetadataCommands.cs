@@ -7,6 +7,7 @@ using Monocle;
 using StudioCommunication;
 using StudioCommunication.Util;
 using TAS.Communication;
+using TAS.EverestInterop;
 using TAS.Gameplay;
 using TAS.ModInterop;
 using TAS.Module;
@@ -105,7 +106,7 @@ internal static class MetadataCommands {
             return;
         }
 
-        if (RealTimeInfo != null && !Manager.IsActuallyLoading()) {
+        if (RealTimeInfo != null && !GameInterop.IsActuallyLoading()) {
             RealTimeInfo = RealTimeInfo.Value with { FrameCount = RealTimeInfo.Value.FrameCount + 1 };
         }
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Celeste;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
@@ -7,6 +7,7 @@ using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using StudioCommunication.Util;
 using TAS.Gameplay;
+using TAS.EverestInterop;
 using TAS.Module;
 using TAS.Tools;
 using TAS.Utils;
@@ -153,7 +154,7 @@ internal static class Core {
         }
     }
 
-    private static bool IsPaused() => Manager.CurrState == Manager.State.Paused && !Manager.IsLoading();
+    private static bool IsPaused() => Manager.CurrState == Manager.State.Paused && !GameInterop.IsLoading();
 
     private static void On_MInput_Update(On.Monocle.MInput.orig_Update orig) {
         if (!TasSettings.Enabled) {
