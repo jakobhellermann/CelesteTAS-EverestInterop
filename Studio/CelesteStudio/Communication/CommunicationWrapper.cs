@@ -106,9 +106,6 @@ public static class CommunicationWrapper {
         autoCompleteEntryCachePending.Clear();
 
         commands = newCommands;
-        foreach (var command in newCommands) {
-            Console.WriteLine($"TAS command: '{command.Name}'");
-        }
         Application.Instance.AsyncInvoke(() => CommandsChanged?.Invoke(newCommands));
     }
 
