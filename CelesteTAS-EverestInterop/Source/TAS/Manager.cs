@@ -166,7 +166,7 @@ public static class Manager {
             action.Invoke();
         }
 
-        if (!Running || CurrState == State.Paused || IsLoading()) {
+        if (!Running || CurrState == State.Paused || GameInterop.IsLoading()) {
             return;
         }
 
@@ -218,7 +218,7 @@ public static class Manager {
         // Prevent executing unsafe actions unless explicitly allowed
         if (SafeCommand.DisallowUnsafeInput && Controller.CurrentFrameInTas > 1) {
             // Only allow specific scenes
-            if (Engine.Scene is not (Level or LevelLoader or LevelExit or Emulator or LevelEnter)) {
+            if (GameInterop.IsUnsafeInput()) {
                 SyncChecker.ReportUnsafeAction();
                 DisableRun();
             }
@@ -409,35 +409,6 @@ public static class Manager {
         mainThreadActions.Enqueue(action);
     }
 
-    /// TAS-execution is paused during loading screens
-    public static bool IsLoading() {
-        return Engine.Scene switch {
-            Level level => level.IsAutoSaving() && level.Session.Level == "end-cinematic",
-            SummitVignette summit => !summit.ready,
-            Overworld overworld => overworld.Current is OuiFileSelect { SlotIndex: >= 0 } slot && slot.Slots[slot.SlotIndex].StartingGame ||
-                                   overworld.Next is OuiChapterSelect && UserIO.Saving ||
-                                   overworld.Next is OuiMainMenu && (UserIO.Saving || Everest._SavingSettings),
-            Emulator emulator => emulator.game == null,
-            _ => Engine.Scene is LevelExit or LevelLoader or GameLoader || Engine.Scene.GetType().Name == "LevelExitToLobby",
-        };
-    }
-
-    /// Whether the game is currently truly loading, i.e. waiting an undefined amount of time
-    public static bool IsActuallyLoading() {
-        if (Controller.Inputs.GetValueOrDefault(Controller.CurrentFrameInTas) is { } current && current.ParentCommand is { } command && command.Is("SaveAndQuitReenter")) {
-            // SaveAndQuitReenter manually adds the optimal S&Q real-time
-            return true;
-        }
-
-        return Engine.Scene switch {
-            Level level => level.IsAutoSaving(),
-            SummitVignette summit => !summit.ready,
-            Overworld overworld => overworld.Next is OuiChapterSelect && UserIO.Saving ||
-                                   overworld.Next is OuiMainMenu && (UserIO.Saving || Everest._SavingSettings),
-            LevelExit exit => exit.mode == LevelExit.Mode.Completed && !exit.completeLoaded || UserIO.Saving,
-            _ => Engine.Scene is LevelLoader or GameLoader || Engine.Scene.GetType().Name == "LevelExitToLobby" && UserIO.Saving,
-        };
-    }
 
     /// Determine if current TAS file is a draft
     private static bool IsDraft() {
@@ -476,16 +447,7 @@ public static class Manager {
 
             ShowSubpixelIndicator = TasSettings.InfoSubpixelIndicator && Engine.Scene is Level or Emulator,
         };
-
-        if (Engine.Scene is Level level && level.GetPlayer() is { } player) {
-            state.PlayerPosition = (player.Position.X, player.Position.Y);
-            state.PlayerPositionRemainder = (player.PositionRemainder.X, player.PositionRemainder.Y);
-            state.PlayerSpeed = (player.Speed.X, player.Speed.Y);
-        } else if (Engine.Scene is Emulator emulator && emulator.game?.objects.FirstOrDefault(o => o is Classic.player) is Classic.player classicPlayer) {
-            state.PlayerPosition = (classicPlayer.x, classicPlayer.y);
-            state.PlayerPositionRemainder = (classicPlayer.rem.X, classicPlayer.rem.Y);
-            state.PlayerSpeed = (classicPlayer.spd.X, classicPlayer.spd.Y);
-        }
+        GameInterop.SetStudioState(ref state);
 
         CommunicationWrapper.SendState(state);
     }
