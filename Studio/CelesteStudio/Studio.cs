@@ -40,7 +40,7 @@ public sealed class Studio : Form {
     /// Path to the Celeste install or null if it couldn't be found
     public static string? CelesteDirectory { get; private set; }
     /// Path to the Studio install
-    public static string InstallDirectory { get; private set; }
+    public static string InstallDirectory { get; private set; } = "";
 
     /// For some **UNHOLY** reasons, not calling Content.UpdateLayout() in RecalculateLayout() places during startup causes themeing to crash.
     /// _However_, while this hack is active, you can't resize the window, so this has to be disabled again as soon as possible...
