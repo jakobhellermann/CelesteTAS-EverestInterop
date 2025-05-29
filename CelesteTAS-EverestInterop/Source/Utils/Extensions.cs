@@ -437,8 +437,12 @@ internal static class ReflectionExtensions {
         if (obj.GetType().GetFieldInfo(name, InstanceAnyVisibility) is not { } field) {
             return default;
         }
+        var value = field.GetValue(obj);
+        if (value is not T val) {
+            throw new Exception($"GetFieldValue for {name}: Expected {typeof(T)} but got {value.GetType()}");
+        }
 
-        return (T?) field.GetValue(obj);
+        return val;
     }
 
     /// Gets the value of the static field on the type
