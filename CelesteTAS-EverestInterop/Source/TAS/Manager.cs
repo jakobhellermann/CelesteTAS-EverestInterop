@@ -8,6 +8,7 @@ using Celeste.Pico8;
 using JetBrains.Annotations;
 using Monocle;
 using StudioCommunication;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using TAS.Communication;
 using TAS.EverestInterop;
