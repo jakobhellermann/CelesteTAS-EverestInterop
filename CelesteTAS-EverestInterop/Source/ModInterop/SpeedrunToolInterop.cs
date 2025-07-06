@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using TAS.Utils;
+using System.Linq;
 
 #pragma warning disable CS8321 // Local function is declared but never used
 namespace TAS.ModInterop;
@@ -22,7 +23,7 @@ internal class ClearStateAttribute(int priority = 0) : EventAttribute(priority);
 
 /// Mod-Interop with Speedrun Tool
 internal static class SpeedrunToolInterop {
-    public static bool Installed { get; private set; }
+    public static bool Installed => TasMod.Instance.DebugModPlusInterop != null;
     public static bool MultipleSaveSlotsSupported { get; private set; }
 
 #pragma warning disable CS0414 // Field is assigned but its value is never used
@@ -34,8 +35,6 @@ internal static class SpeedrunToolInterop {
         AttributeUtils.CollectOwnMethods<SaveStateAttribute>(typeof(Dictionary<string, object?>));
         AttributeUtils.CollectOwnMethods<LoadStateAttribute>(typeof(Dictionary<string, object?>));
         AttributeUtils.CollectOwnMethods<ClearStateAttribute>();
-
-        Installed = false;
     }
     
     [Unload]
@@ -48,15 +47,25 @@ internal static class SpeedrunToolInterop {
 
     public const string DefaultSlot = "CelesteTAS";
 
+    public const SavestateFilter TasSavestateFilter = SavestateFilter.Monsters | SavestateFilter.Monsters;
+
     /// Saves the current state into the specified slot. Returns whether it was successful
-    public static bool SaveState(string? slot = null) => throw new NotImplementedException();
+    public static bool SaveState(string? slot = null) {
+        TasMod.Instance.DebugModPlusInterop!.CreateSavestateDisk($"tas{slot}", "tas", TasSavestateFilter);
+        return true;
+    }
 
     /// Loads the specified slot into the current state. Returns whether it was successful
-    public static bool LoadState(string? slot = null) => throw new NotImplementedException();
+    public static bool LoadState(string? slot = null) {
+        TasMod.Instance.DebugModPlusInterop!.LoadSavestateDisk($"tas{slot}", "tas");
+        return true;
+    }
 
     /// Clears the specified save slot
-    public static void ClearState(string? slot = null) => throw new NotImplementedException();
+    public static void ClearState(string? slot = null) {}
 
     /// Checks if something is saved in the specified save slot
-    public static bool IsSaved(string? slot = null) => throw new NotImplementedException();
+    public static bool IsSaved(string? slot = null) {
+        return TasMod.Instance.DebugModPlusInterop!.ListSavestates("tas").Contains($"tas{slot}");
+    }
 }
