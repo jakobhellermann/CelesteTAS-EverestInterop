@@ -114,6 +114,7 @@ public class TasMod : BaseUnityPlugin {
 
     private void Start() {
         DebugModPlusInterop = DebugModPlusInteropGlue.Load();
+        SpeedrunToolInterop.Backend = DebugModPlusInterop is { } debugModPlus ? new DebugModPlusSavestateBackend(debugModPlus) : null;
         
         Cysharp.Threading.Tasks.PlayerLoopHelper.AddAction(PlayerLoopTiming.EarlyUpdate, new PlayerLoopItem(this, EarlyUpdate));
         Cysharp.Threading.Tasks.PlayerLoopHelper.AddAction(PlayerLoopTiming.Update, new PlayerLoopItem(this, FirstUpdate));
