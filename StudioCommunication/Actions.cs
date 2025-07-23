@@ -5,6 +5,26 @@ using System.Linq;
 
 namespace StudioCommunication;
 
+public abstract record ActionData {
+    public sealed record Regular : ActionData;
+
+    public sealed record Degree : ActionData;
+
+    public sealed record CustomKey : ActionData;
+
+    public sealed record KeyModifier(Actions AppliesTo, Actions DerivedGroup) : ActionData {
+        public int DerivedCountOf(Actions actions) {
+            int count = 0;
+            uint remaining = (uint) (actions & DerivedGroup);
+            while (remaining != 0) {
+                remaining &= remaining - 1;
+                count++;
+            }
+            return count;
+        }
+    }
+}
+
 [Flags]
 public enum Actions {
     None = 0,
@@ -39,6 +59,61 @@ public enum Actions {
 }
 
 public static class ActionsUtils {
+    private static readonly ActionData.Regular RegularData = new();
+    private static readonly ActionData.Degree DegreeData = new();
+    private static readonly ActionData.CustomKey CustomKeyData = new();
+
+    private static readonly ActionData.KeyModifier DashOnlyData = new(
+        Actions.Left | Actions.Right | Actions.Up | Actions.Down,
+        Actions.LeftDashOnly | Actions.RightDashOnly | Actions.UpDashOnly | Actions.DownDashOnly);
+    private static readonly ActionData.KeyModifier MoveOnlyData = new(
+        Actions.Left | Actions.Right | Actions.Up | Actions.Down,
+        Actions.LeftMoveOnly | Actions.RightMoveOnly | Actions.UpMoveOnly | Actions.DownMoveOnly);
+
+    public static ActionData Data(this Actions actions) => actions switch {
+        Actions.DashOnly => DashOnlyData,
+        Actions.MoveOnly => MoveOnlyData,
+        Actions.Feather => DegreeData,
+        Actions.PressedKey => CustomKeyData,
+        _ => RegularData,
+    };
+
+    public static Actions ActionModifierOf(Actions action) {
+        if (action != Actions.None && DashOnlyData.DerivedGroup.HasFlag(action))
+            return Actions.DashOnly;
+        if (action != Actions.None && MoveOnlyData.DerivedGroup.HasFlag(action))
+            return Actions.MoveOnly;
+        return Actions.None;
+    }
+
+    public static Actions ToDerived(this Actions action, ActionData.KeyModifier modifier) {
+        uint remaining = (uint) modifier.DerivedGroup;
+        while (remaining != 0) {
+            var derived = (Actions) (remaining & ~remaining + 1);
+            remaining &= remaining - 1;
+
+            if (derived.CharForAction() == action.CharForAction())
+                return derived;
+        }
+        return action;
+    }
+
+    /// Actions which are set within the given group, ordered by their bit
+    public static IEnumerable<Actions> InGroup(this Actions actions, Actions group) {
+        uint remaining = (uint) (actions & group);
+        while (remaining != 0) {
+            yield return (Actions) (remaining & ~remaining + 1);
+            remaining &= remaining - 1;
+        }
+    }
+
+    /// Pairs of actions which can be swapped in-place
+    public static readonly (Actions A, Actions B)[] SwappablePairs = [
+        (Actions.Left, Actions.Right),
+        (Actions.Jump, Actions.Jump2),
+        (Actions.Dash, Actions.Dash2),
+    ];
+
     public static readonly ReadOnlyDictionary<char, Actions> Chars = new(
         new Dictionary<char, Actions> {
             {'L', Actions.Left},
@@ -61,22 +136,6 @@ public static class ActionsUtils {
             {'M', Actions.MoveOnly},
             {'P', Actions.PressedKey},
             {'F', Actions.Feather},
-        });
-
-    public static readonly ReadOnlyDictionary<char, Actions> DashOnlyChars = new(
-        new Dictionary<char, Actions> {
-            {'L', Actions.LeftDashOnly},
-            {'R', Actions.RightDashOnly},
-            {'U', Actions.UpDashOnly},
-            {'D', Actions.DownDashOnly},
-        });
-
-    public static readonly ReadOnlyDictionary<char, Actions> MoveOnlyChars = new(
-        new Dictionary<char, Actions> {
-            {'L', Actions.LeftMoveOnly},
-            {'R', Actions.RightMoveOnly},
-            {'U', Actions.UpMoveOnly},
-            {'D', Actions.DownMoveOnly},
         });
 
     public static bool TryParse(char c, out Actions actions) {
@@ -176,41 +235,6 @@ public static class ActionsUtils {
             Actions.LeftMoveOnly or Actions.RightMoveOnly => (actions & ~(Actions.LeftMoveOnly | Actions.RightMoveOnly)) | other,
             Actions.UpMoveOnly or Actions.DownMoveOnly => (actions & ~(Actions.UpMoveOnly | Actions.DownMoveOnly)) | other,
             _ => actions | other,
-        };
-    }
-
-    public static IEnumerable<Actions> GetDashOnly(this Actions actions) => new[] {
-        Actions.LeftDashOnly,
-        Actions.RightDashOnly,
-        Actions.UpDashOnly,
-        Actions.DownDashOnly,
-    }.Where(e => actions.HasFlag(e));
-
-    public static IEnumerable<Actions> GetMoveOnly(this Actions actions) => new[] {
-        Actions.LeftMoveOnly,
-        Actions.RightMoveOnly,
-        Actions.UpMoveOnly,
-        Actions.DownMoveOnly,
-    }.Where(e => actions.HasFlag(e));
-
-
-    public static Actions ToDashOnlyActions(this Actions actions) {
-        return actions switch {
-            Actions.Left => Actions.LeftDashOnly,
-            Actions.Right => Actions.RightDashOnly,
-            Actions.Up => Actions.UpDashOnly,
-            Actions.Down => Actions.DownDashOnly,
-            _ => actions
-        };
-    }
-
-    public static Actions ToMoveOnlyActions(this Actions actions) {
-        return actions switch {
-            Actions.Left => Actions.LeftMoveOnly,
-            Actions.Right => Actions.RightMoveOnly,
-            Actions.Up => Actions.UpMoveOnly,
-            Actions.Down => Actions.DownMoveOnly,
-            _ => actions
         };
     }
 }

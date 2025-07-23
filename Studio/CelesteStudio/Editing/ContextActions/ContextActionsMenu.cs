@@ -12,9 +12,7 @@ public class ContextActionsMenu(Editor editor) : PopupMenu {
     public static readonly ContextAction[] ContextActions = [
         new CombineConsecutiveSameInputs(),
 
-        new SwapActions(Actions.Left, Actions.Right),
-        new SwapActions(Actions.Jump, Actions.Jump2),
-        new SwapActions(Actions.Dash, Actions.Dash2),
+        .. ActionsUtils.SwappablePairs.Select(pair => new SwapActions(pair.A, pair.B)),
 
         new ForceCombineInputFrames(),
         new SplitFrames(),
