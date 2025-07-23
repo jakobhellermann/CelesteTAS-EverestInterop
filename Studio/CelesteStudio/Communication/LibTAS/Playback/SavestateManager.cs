@@ -161,6 +161,7 @@ internal static class SavestateManager {
 
         savestate = new Savestate(Manager.Controller.Clone(), Manager.Controller.CalcChecksum(Manager.Controller.CurrentFrameInTas), byBreakpoint);
         if (!SpeedrunToolInterop.SaveState(savestate.Slot)) {
+            Console.WriteLine("Failed to save savestate");
             return false;
         }
 

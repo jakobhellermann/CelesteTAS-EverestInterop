@@ -134,7 +134,7 @@ public sealed class LibTasCommunication(
 
                 Manager.Update();
 
-                SendMarker($"frame: {Manager.Controller.FilePath} {Manager.Controller.CurrentFrameInTas + 1}");
+                // SendMarker($"frame: {Manager.Controller.FilePath} {Manager.Controller.CurrentFrameInTas + 1}");
 
                 if (endInnerLoop) {
                     break;
@@ -363,10 +363,11 @@ public sealed class LibTasCommunication(
 
         // TODO preview inputs
 
-        WriteMessage(MessageId.MSGN_EXPOSE);
+        SendExpose();
     }
 
     public void WriteMessage(MessageId message) {
+        Console.WriteLine($"Writing message {message}");
         writer.Write((int)message);
     }
 
@@ -397,26 +398,35 @@ public sealed class LibTasCommunication(
 
     public bool SendSavestate() {
         WriteMessage(MessageId.MSGN_SAVESTATE);
-        return ReceiveMessage() == MessageId.MSGB_SAVING_SUCCEEDED;
+        var message = ReceiveMessage();
+        Console.WriteLine($"Savestate response: {message}");
+        return message == MessageId.MSGB_SAVING_SUCCEEDED;
     }
 
     public bool SendLoadstate() {
         WriteMessage(MessageId.MSGN_LOADSTATE);
         var message = ReceiveMessage();
 
-        if (message != MessageId.MSGB_LOADING_SUCCEEDED) {
-            return false;
-        }
+        bool didLoad = message == MessageId.MSGB_LOADING_SUCCEEDED;
 
-        WriteConfig(Config);
-        message = ReceiveMessage();
+        if (didLoad) {
+            WriteConfig(Config);
+            message = ReceiveMessage();
+        }
+        
         if (message != MessageId.MSGB_FRAMECOUNT_TIME) {
             throw new Exception($"Got {message} instead of framecount after loading state");
         }
 
         ReadDataFramecountTime();
 
-        return true;
+        if (didLoad) {
+            SendOsdMessage($"Loaded savestate");
+        }
+        
+        SendExpose();
+
+        return didLoad;
     }
 
     public void SendExpose() {

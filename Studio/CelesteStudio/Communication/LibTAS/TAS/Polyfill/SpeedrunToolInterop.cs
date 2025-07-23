@@ -29,8 +29,7 @@ public static class SpeedrunToolInterop {
 
         const int idx = 0;
         comm.SendSavestateIndex(idx);
-        var ok = comm.SendLoadstate();
-        comm.SendExpose();
+        bool ok = comm.SendLoadstate();
 
         return ok;
     }
