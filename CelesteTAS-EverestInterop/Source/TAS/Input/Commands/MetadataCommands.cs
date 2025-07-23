@@ -6,6 +6,7 @@ using Celeste.Mod;
 using Monocle;
 using StudioCommunication;
 using TAS.Communication;
+using TAS.EverestInterop;
 using TAS.Module;
 using TAS.Tools;
 using TAS.Utils;
@@ -39,7 +40,7 @@ internal static class MetadataCommands {
                 }
 
                 // Advance real-time
-                if (RealTimeInfo != null && (Manager.CurrState != Manager.State.Paused || Manager.IsLoading()) && !Manager.IsActuallyLoading()) {
+                if (RealTimeInfo != null && (Manager.CurrState != Manager.State.Paused || GameInterop.IsLoading()) && !GameInterop.IsActuallyLoading()) {
                     RealTimeInfo = RealTimeInfo.Value with { FrameCount = RealTimeInfo.Value.FrameCount + 1 };
                 }
 
