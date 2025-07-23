@@ -22,7 +22,8 @@ public sealed class LibTasCommunication(
     Socket socket,
     NetworkStream stream,
     BinaryReader reader,
-    BinaryWriter writer
+    BinaryWriter writer,
+    LuaEnv lua
 ) : IDisposable {
     private const string SocketPath = "/tmp/libTAS.socket";
 
@@ -93,7 +94,14 @@ public sealed class LibTasCommunication(
         var reader = new BinaryReader(stream, Encoding.UTF8);
         var writer = new BinaryWriter(stream);
 
-        return new LibTasCommunication(s, stream, reader, writer);
+        var lua = new LuaEnv();
+        try {
+            lua.Load().Wait();
+        } catch (Exception e) {
+            Console.WriteLine($"lua error: {e}");
+        }
+
+        return new LibTasCommunication(s, stream, reader, writer, lua);
     }
 
 
@@ -329,6 +337,10 @@ public sealed class LibTasCommunication(
             }
 
             message = ReceiveMessage();
+        }
+
+        if (drawFrame && !skipDrawFrame) {
+            lua.OnPaint();
         }
 
         WriteMessage(MessageId.MSGN_START_FRAMEBOUNDARY);
