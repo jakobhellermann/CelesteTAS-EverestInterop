@@ -37,7 +37,7 @@ public sealed class Editor : SkiaDrawable {
                 document.FixupPatch -= HandleFixupPatch;
 
                 if (Settings.Instance.AutoSave) {
-                    FormatLines(Enumerable.Range(0, document.Lines.Count).ToArray());
+                    // FormatLines(Enumerable.Range(0, document.Lines.Count).ToArray());
                     FixInvalidInputs();
                     document.Save();
                 }
@@ -47,7 +47,7 @@ public sealed class Editor : SkiaDrawable {
             document = value;
 
             // Ensure everything is properly formatted
-            FormatLines(Enumerable.Range(0, document.Lines.Count).ToArray());
+            // FormatLines(Enumerable.Range(0, document.Lines.Count).ToArray());
 
             // Jump to end when file only 10 lines, else the start
             document.Caret = document.Lines.Count is > 0 and <= 10
@@ -562,7 +562,7 @@ public sealed class Editor : SkiaDrawable {
         using var __ = Document.Update();
 
         for (int row = 0; row < Document.Lines.Count; row++) {
-            FixInvalidInput(row);
+            // FixInvalidInput(row);
 
             if (Document.Caret.Row == row) {
                 Document.Caret.Col = Math.Min(Document.Caret.Col, Document.Lines[row].Length);

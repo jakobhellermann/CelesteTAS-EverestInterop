@@ -95,7 +95,7 @@ public static class Migrator {
         File.WriteAllLines(LatestVersionPath, [newStudioVersion.ToString(3), newCelesteTasVersion.ToString(3)]);
 
         // Apply settings migrations
-        if (oldStudioVersion < newStudioVersion) {
+        if (oldStudioVersion < newStudioVersion && false) {
             Console.WriteLine($"Migrating from v{oldStudioVersion.ToString(3)} to v{newStudioVersion.ToString(3)}...");
 
             foreach (var (version, preLoad, _) in migrations) {
