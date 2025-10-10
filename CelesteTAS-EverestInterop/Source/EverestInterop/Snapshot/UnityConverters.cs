@@ -2,23 +2,28 @@ using System;
 using Newtonsoft.Json;
 using TAS;
 using UnityEngine;
+#pragma warning disable CS9113 // Parameter _ is unread.
 
 namespace Snapshots;
 
-internal static class ExtraUnityConverters {
-    public static readonly JsonConverter[] UnityConverters = [
-        new TransformConverter(),
-        new Vector2Converter(),
-        new Vector3Converter(),
-        new Vector4Converter(),
-        new QuatConverter(),
-        new ColorConverter(),
-        new Color32Converter(),
-        new AnimatorConverter(),
-    ];
+public class OptInToken {
+    public static OptInToken OptIn = new OptInToken();
 }
 
-public class Vector4Converter : NullableJsonConverter<Vector4> {
+internal static class ExtraUnityConverters {
+    public static readonly JsonConverter[] UnityConverters = [
+        new TransformConverter(OptInToken.OptIn),
+        new Vector2Converter(OptInToken.OptIn),
+        new Vector3Converter(OptInToken.OptIn),
+        new Vector4Converter(OptInToken.OptIn),
+        new QuatConverter(OptInToken.OptIn),
+        new ColorConverter(OptInToken.OptIn),
+        new Color32Converter(OptInToken.OptIn),
+        new AnimatorConverter(OptInToken.OptIn),
+    ];   
+}
+
+public class Vector4Converter(OptInToken _) : NullableJsonConverter<Vector4> {
     protected override void WriteJson(JsonWriter writer, Vector4 value, JsonSerializer serializer) {
         writer.WriteStartObject();
         writer.WritePropertyName("x");
@@ -41,7 +46,7 @@ public class Vector4Converter : NullableJsonConverter<Vector4> {
     }
 }
 
-internal class Vector3Converter : NullableJsonConverter<Vector3> {
+internal class Vector3Converter(OptInToken _) : NullableJsonConverter<Vector3> {
     protected override void WriteJson(JsonWriter writer, Vector3 value, JsonSerializer serializer) {
         writer.WriteStartObject();
         writer.WritePropertyName("x");
@@ -62,7 +67,7 @@ internal class Vector3Converter : NullableJsonConverter<Vector3> {
     }
 }
 
-internal class Vector2Converter : NullableJsonConverter<Vector2> {
+internal class Vector2Converter(OptInToken _) : NullableJsonConverter<Vector2> {
     protected override void WriteJson(JsonWriter writer, Vector2 value, JsonSerializer serializer) {
         writer.WriteStartObject();
         writer.WritePropertyName("x");
@@ -81,7 +86,7 @@ internal class Vector2Converter : NullableJsonConverter<Vector2> {
     }
 }
 
-public class QuatConverter : NullableJsonConverter<Quaternion> {
+public class QuatConverter(OptInToken _) : NullableJsonConverter<Quaternion> {
     protected override void WriteJson(JsonWriter writer, Quaternion value, JsonSerializer serializer) {
         writer.WriteStartObject();
         writer.WritePropertyName("x");
@@ -104,7 +109,7 @@ public class QuatConverter : NullableJsonConverter<Quaternion> {
     }
 }
 
-internal class ColorConverter : NullableJsonConverter<Color> {
+internal class ColorConverter(OptInToken _) : NullableJsonConverter<Color> {
     protected override void WriteJson(JsonWriter writer, Color value, JsonSerializer serializer) {
         writer.WriteStartObject();
         writer.WritePropertyName("r");
@@ -126,7 +131,7 @@ internal class ColorConverter : NullableJsonConverter<Color> {
         new NotImplementedException();
 }
 
-internal class Color32Converter : NullableJsonConverter<Color32> {
+internal class Color32Converter(OptInToken _) : NullableJsonConverter<Color32> {
     protected override void WriteJson(JsonWriter writer, Color32 value, JsonSerializer serializer) {
         writer.WriteStartObject();
         writer.WritePropertyName("r");
@@ -149,7 +154,7 @@ internal class Color32Converter : NullableJsonConverter<Color32> {
         new NotImplementedException();
 }
 
-public class TransformConverter : NullableJsonConverter<Transform> {
+public class TransformConverter(OptInToken _) : NullableJsonConverter<Transform> {
     protected override void WriteJson(JsonWriter writer, Transform? value, JsonSerializer serializer) {
         if (value == null) {
             writer.WriteNull();
@@ -192,7 +197,7 @@ public class TransformConverter : NullableJsonConverter<Transform> {
     private record TransformMirror(Vector3 position, Quaternion rotation, Vector3 scale);
 }
 
-public class AnimatorConverter : NullableJsonConverter<Animator> {
+public class AnimatorConverter(OptInToken _) : NullableJsonConverter<Animator> {
     protected override void WriteJson(JsonWriter writer, Animator? value, JsonSerializer serializer) {
         if (value == null) {
             writer.WriteNull();
