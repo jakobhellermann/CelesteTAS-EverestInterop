@@ -21,12 +21,13 @@ internal static class GameInputBinding {
 
         // Legacy Input System (UnityEngine.Input.GetKey patches)
         InputHelper.OldInputSystemActionKeyMap = new Dictionary<Actions, KeyCode> {
-            { Actions.Up,    KeyCode.W },
-            { Actions.Down,  KeyCode.S },
-            { Actions.Left,  KeyCode.A },
-            { Actions.Right, KeyCode.D },
-            { Actions.Jump,  KeyCode.Space },
-            { Actions.Dash,  KeyCode.LeftShift },
+            { Actions.Up,       KeyCode.UpArrow },
+            { Actions.Down,     KeyCode.DownArrow },
+            { Actions.Left,     KeyCode.LeftArrow },
+            { Actions.Right,    KeyCode.RightArrow },
+            { Actions.Jump,     KeyCode.Z },
+            { Actions.Dash,     KeyCode.C },
+            { Actions.DashOnly, KeyCode.X },
         };
     }
 
@@ -35,12 +36,13 @@ internal static class GameInputBinding {
         var a = frame.Actions;
         var state = new KeyboardState();
 
-        if (a.HasFlag(Actions.Up))    state.Press(NisKey.W);
-        if (a.HasFlag(Actions.Down))  state.Press(NisKey.S);
-        if (a.HasFlag(Actions.Left))  state.Press(NisKey.A);
-        if (a.HasFlag(Actions.Right)) state.Press(NisKey.D);
-        if (a.HasFlag(Actions.Jump))  state.Press(NisKey.Space);
-        if (a.HasFlag(Actions.Dash))  state.Press(NisKey.LeftShift);
+        if (a.HasFlag(Actions.Up))       state.Press(NisKey.UpArrow);
+        if (a.HasFlag(Actions.Down))     state.Press(NisKey.DownArrow);
+        if (a.HasFlag(Actions.Left))     state.Press(NisKey.LeftArrow);
+        if (a.HasFlag(Actions.Right))    state.Press(NisKey.RightArrow);
+        if (a.HasFlag(Actions.Jump))     state.Press(NisKey.Z);
+        if (a.HasFlag(Actions.Dash))     state.Press(NisKey.C);
+        if (a.HasFlag(Actions.DashOnly)) state.Press(NisKey.X);
 
         return state;
     }
