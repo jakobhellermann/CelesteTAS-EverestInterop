@@ -51,5 +51,9 @@ internal static class PopupToast {
     public static void Show(Entry entry) {
         Log.Error(entry.Text);
         entries.Add(entry);
+
+        if (DevUtils.DevUtilsPlugin.Instance != null) {
+            DevUtils.Toasts.ToastManager.Toast(entry.Text);
+        }
     }
 }
