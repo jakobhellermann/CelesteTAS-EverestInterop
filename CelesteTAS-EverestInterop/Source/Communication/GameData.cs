@@ -6,7 +6,8 @@ public static class GameData {
     public static string GetConsoleCommand(bool simple) {
         var sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
 
-        var pos = new Vector2(); // TODO
+        var hero = HeroController.UnsafeInstance;
+        var pos = hero ? hero.transform.position : Vector3.zero;
         return $"load {sceneName} {pos.x:0.00} {pos.y:0.00}";
     }
 }

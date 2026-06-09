@@ -1,6 +1,7 @@
 using System;
 using BepInEx;
 using BepInEx.Configuration;
+using DevUtils.Toasts;
 using HarmonyLib;
 using JetBrains.Annotations;
 using PlayerLoopHelper;
@@ -87,6 +88,7 @@ public class TasMod : BaseUnityPlugin {
             if (TasSettings.AttemptConnectStudio) CommunicationWrapper.Start();
         } catch (Exception e) {
             Log.Error($"Failed to load TasTools: {e}");
+            ToastManager.Toast($"Failed to load TasTools: {e}");
         }
 
         // https://giannisakritidis.com/blog/Early-And-Super-Late-Update-In-Unity/
