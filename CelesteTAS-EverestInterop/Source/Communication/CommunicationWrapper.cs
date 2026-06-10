@@ -17,7 +17,7 @@ public static class CommunicationWrapper {
     public static bool Connected => comm is { Connected: true };
     private static CommunicationAdapterCeleste? comm;
 
-    [Load]
+    /*[Load]
     private static void Load() {
         Everest.Events.Celeste.OnExiting += Stop;
     }
@@ -25,7 +25,7 @@ public static class CommunicationWrapper {
     private static void Unload() {
         Everest.Events.Celeste.OnExiting -= Stop;
         Stop();
-    }
+    }*/
 
     public static void Start() {
         if (SyncChecker.Active) {

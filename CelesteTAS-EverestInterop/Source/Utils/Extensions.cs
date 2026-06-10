@@ -1066,41 +1066,9 @@ internal static class EnumerableExtension {
         public int Compare(T? x, T? y) => compare(x!, y!);
     }
 
+    /*
     /// Sorts the elements according to the comparision function
     public static IEnumerable<T> Sort<T>(this IEnumerable<T> enumerable, Func<T, T, int> compare) {
         return enumerable.Order(new DynamicComparer<T>(compare));
-    }
-}
-
-internal static class GameStateExtension {
-    public static GameState.Vec2 ToGameStateVec2(this Vector2 vec) => new(vec.X, vec.Y);
-    public static GameState.RectI ToGameStateRectI(this Rectangle rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
-    public static GameState.RectF ToGameStateRectF(this Entity entity) => new(entity.X, entity.Y, entity.Width, entity.Height);
-
-    public static GameState.Direction ToGameStateDirection(this Spikes.Directions dir) => dir switch {
-        Spikes.Directions.Up => GameState.Direction.Up,
-        Spikes.Directions.Down => GameState.Direction.Down,
-        Spikes.Directions.Left => GameState.Direction.Left,
-        Spikes.Directions.Right => GameState.Direction.Right,
-        _ => throw new UnreachableException()
-    };
-
-    public static GameState.WindPattern ToGameStatePattern(this WindController.Patterns pattern) => pattern switch {
-        WindController.Patterns.None => GameState.WindPattern.None,
-        WindController.Patterns.Left => GameState.WindPattern.Left,
-        WindController.Patterns.Right => GameState.WindPattern.Right,
-        WindController.Patterns.LeftStrong => GameState.WindPattern.LeftStrong,
-        WindController.Patterns.RightStrong => GameState.WindPattern.RightStrong,
-        WindController.Patterns.LeftOnOff => GameState.WindPattern.LeftOnOff,
-        WindController.Patterns.RightOnOff => GameState.WindPattern.RightOnOff,
-        WindController.Patterns.LeftOnOffFast => GameState.WindPattern.LeftOnOffFast,
-        WindController.Patterns.RightOnOffFast => GameState.WindPattern.RightOnOffFast,
-        WindController.Patterns.Alternating => GameState.WindPattern.Alternating,
-        WindController.Patterns.LeftGemsOnly => GameState.WindPattern.LeftGemsOnly,
-        WindController.Patterns.RightCrazy => GameState.WindPattern.RightCrazy,
-        WindController.Patterns.Down => GameState.WindPattern.Down,
-        WindController.Patterns.Up => GameState.WindPattern.Up,
-        WindController.Patterns.Space => GameState.WindPattern.Space,
-        _ => throw new UnreachableException()
-    };
+    }*/
 }
