@@ -246,3 +246,5 @@ ModelManifest.xml
 
 # JetBrains IDE settings
 .idea
+
+/GamePath.props
