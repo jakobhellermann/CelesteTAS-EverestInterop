@@ -129,37 +129,10 @@ public static class TargetQuery {
     internal static readonly Dictionary<string, (HashSet<Type> Types, string[] MemberArgs)> BaseTypeCache = new();
 
     internal static readonly Handler[] Handlers = [
-        new SettingsQueryHandler(),
-        new SaveDataQueryHandler(),
-        new AssistsQueryHandler(),
-        new ExtendedVariantsQueryHandler(),
-        new EverestModuleSettingsQueryHandler(),
-        new EverestModuleSessionQueryHandler(),
-        new EverestModuleSaveDataQueryHandler(),
-        new SceneQueryHandler(),
-        new SessionQueryHandler(),
-        new ComponentQueryHandler(), // Needs to be before EntityQueryHandler, so that it will handle 'Type:StateMachine.State' before the general handler
-        new EntityQueryHandler(),
         new CollectionQueryHandler(),
-        new SpecialValueQueryHandler(),
-        new DeterministicVariablesQueryHandler(),
-        new ModInteropQueryHandler(),
     ];
 
     [Initialize(ConsoleEnhancements.InitializePriority + 1)]
-    private static void Initialize() {
-        CollectAllTypes();
-
-        Everest.Events.Everest.OnLoadMod += OnModLoad;
-    }
-    [Unload]
-    private static void Unload() {
-        Everest.Events.Everest.OnLoadMod -= OnModLoad;
-    }
-
-    // Refresh type cache
-    private static void OnModLoad(EverestModuleMetadata _) => CollectAllTypes();
-
     private static void CollectAllTypes() {
         AllTypes.Clear();
         BaseTypeCache.Clear();
@@ -192,17 +165,13 @@ public static class TargetQuery {
         }
     }
 
-    [MonocleCommand(CommandInfo.GetCommand, "'get Type.fieldOrProperty' -> value | Example: 'get Player.Position', 'get Level.Wind' (CelesteTAS)"), UsedImplicitly]
+    /*[MonocleCommand("get", "'get Type.fieldOrProperty' -> value | Example: 'get Player.Position', 'get Level.Wind' (CelesteTAS)"), UsedImplicitly]
     private static void GetCmd() {
         if (!CommandLine.TryParse(Engine.Commands.commandHistory[0], out var commandLine)) {
             "Get Command Failed: Couldn't parse arguments of command".ConsoleLog(LogLevel.Error);
             return;
         }
 
-        Get(commandLine);
-    }
-
-    internal static void Get(CommandLine commandLine) {
         if (commandLine.Arguments.Length == 0) {
             "Get Command Failed: No target-query specified".ConsoleLog(LogLevel.Error);
             return;
@@ -229,7 +198,7 @@ public static class TargetQuery {
                 }
             }
         }
-    }
+    }*/
 
     /// Parses a target-query and returns the results for that
     internal static Result<List<(object BaseInstance, object? Value)>, QueryError> GetMemberValues(string query, bool forceAllowCodeExecution = false) {
@@ -440,22 +409,8 @@ public static class TargetQuery {
     internal static readonly string[] ignoredNamespaces = [
         // C# Standard library
         "System",
-        // Celeste libraries
-        "SimplexNoise", "FMOD",
-        // Everest libraries
-        "MonoMod",
-        // Non-gameplay-relevant utilities
-        "Celeste.Editor", "Celeste.Mod.Helpers", "Celeste.Mod.Meta", "Celeste.Mod.UI",
         // Non-gameplay-relevant mods
         "TAS", "StudioCommunication",
-        "Celeste.Mod.TASHelper",
-        "Celeste.Mod.SpeedrunTool", "Force.DeepCloner",
-        "Celeste.Mod.TASRecorder", "FFmpeg",
-        "Celeste.Mod.DebugConsole",
-        "Celeste.Mod.ImGuiHelper",
-        "Celeste.Mod.MappingUtils",
-        "Celeste.Mod.CelesteRepl",
-        "Snowberry"
     ];
 
     private const int MaxTypeViabilityRecursion = 3;
