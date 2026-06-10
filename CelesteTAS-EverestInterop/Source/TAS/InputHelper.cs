@@ -74,6 +74,9 @@ public static class InputHelper {
 
     public static void FeedInputs(InputFrame inputFrame) {
         currentFeed = inputFrame;
+#if UNITY_NEW_INPUT_SYSTEM
+        NewInputSystemInjector.FeedFrame(inputFrame);
+#endif
     }
 
     private record FramerateTimeConfig(
@@ -96,22 +99,14 @@ public static class InputHelper {
         }
     }
 
-    private static Dictionary<Actions, KeyCode> actionKeyMap = new() {
-        { Actions.Up, KeyCode.W },
-        { Actions.Down, KeyCode.S },
-        { Actions.Left, KeyCode.A },
-        { Actions.Right, KeyCode.D },
-
-        { Actions.Jump, KeyCode.Space },
-        { Actions.Dash, KeyCode.LeftShift },
-    };
+    public static Dictionary<Actions, KeyCode> OldInputSystemActionKeyMap = [];
 
     [HarmonyPatch(typeof(UnityEngine.Input), nameof(UnityEngine.Input.GetKey), [typeof(KeyCode)])]
     [HarmonyPrefix]
     public static bool GetKey(KeyCode key, ref bool __result) {
         if (!Manager.Running || currentFeed is null) return true;
 
-        foreach (var (action, actionKey) in actionKeyMap) {
+        foreach (var (action, actionKey) in OldInputSystemActionKeyMap) {
             if ((currentFeed.Actions & action) != 0 && actionKey == key) {
                 __result = true;
             }
@@ -125,7 +120,7 @@ public static class InputHelper {
     public static bool GetKeyDown(KeyCode key, ref bool __result) {
         if (!Manager.Running || currentFeed is null) return true;
 
-        foreach (var (action, actionKey) in actionKeyMap) {
+        foreach (var (action, actionKey) in OldInputSystemActionKeyMap) {
             if ((currentFeed.Actions & action) != 0 && actionKey == key) {
                 // TODO: only true for a frame
                 __result = true;

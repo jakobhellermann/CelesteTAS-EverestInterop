@@ -30,7 +30,15 @@
             <Private>false</Private>
         </Reference>
         -->
+        <Reference Include="Unity.InputSystem" Condition="Exists('$(DllPath)/Unity.InputSystem.dll')">
+            <HintPath>$(DllPath)/Unity.InputSystem.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
     </ItemGroup>
+
+    <PropertyGroup Condition="Exists('$(DllPath)/Unity.InputSystem.dll')">
+        <DefineConstants>$(DefineConstants);UNITY_NEW_INPUT_SYSTEM</DefineConstants>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="BepInEx.Analyzers" Version="1.*" />
