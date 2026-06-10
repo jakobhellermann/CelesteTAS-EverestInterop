@@ -60,6 +60,7 @@ public static class Manager {
             if (value == playbackSpeed) return;
 
             playbackSpeed = value;
+            InputHelper.WriteFramerate();
         }
     }
 
@@ -129,6 +130,8 @@ public static class Manager {
     public static void DisableRunLater() => NextState = State.Disabled;
 
     public static void EnablePause() {
+        DeterministicTimePatch.OverwriteTimeScale = 0;
+
         try {
             // TODO(unity): pause animators
         } catch (Exception e) {
@@ -144,6 +147,8 @@ public static class Manager {
             anim.enabled = true;
         }
         prePauseAnimatorStates.Clear();
+
+        DeterministicTimePatch.OverwriteTimeScale = null;
     }
 
     /// Updates the TAS itself
