@@ -1,5 +1,7 @@
 using HarmonyLib;
+using StudioCommunication;
 using System;
+using System.Collections.Generic;
 using TAS.Input;
 using UnityEngine;
 
@@ -14,6 +16,13 @@ public static class InputHelper {
         a();
         Prevent = false;
     }
+
+    /*[HarmonyPrefix]
+    public static bool DontRunWhenPaused(MethodBase __originalMethod) =>
+        Manager.CurrState != Manager.State.Paused && !Prevent;
+
+    [HarmonyPrefix]
+    public static bool DontRunInTAS(MethodBase __originalMethod) => !Manager.Running;*/
 
     private const int DefaultTasFramerate = 60;
     public static int CurrentTasFramerate = DefaultTasFramerate;
@@ -61,8 +70,10 @@ public static class InputHelper {
         Physics2D.simulationMode = SimulationMode2D.Update;
     }
 
+    private static InputFrame? currentFeed;
+
     public static void FeedInputs(InputFrame inputFrame) {
-        // TODO(input)
+        currentFeed = inputFrame;
     }
 
     private record FramerateTimeConfig(
@@ -84,5 +95,46 @@ public static class InputHelper {
             Time.captureDeltaTime = CaptureDeltaTime;
         }
     }
+
+    private static Dictionary<Actions, KeyCode> actionKeyMap = new() {
+        { Actions.Up, KeyCode.W },
+        { Actions.Down, KeyCode.S },
+        { Actions.Left, KeyCode.A },
+        { Actions.Right, KeyCode.D },
+
+        { Actions.Jump, KeyCode.Space },
+        { Actions.Dash, KeyCode.LeftShift },
+    };
+
+    [HarmonyPatch(typeof(UnityEngine.Input), nameof(UnityEngine.Input.GetKey), [typeof(KeyCode)])]
+    [HarmonyPrefix]
+    public static bool GetKey(KeyCode key, ref bool __result) {
+        if (!Manager.Running || currentFeed is null) return true;
+
+        foreach (var (action, actionKey) in actionKeyMap) {
+            if ((currentFeed.Actions & action) != 0 && actionKey == key) {
+                __result = true;
+            }
+        }
+
+        return false;
+    }
+    
+    [HarmonyPatch(typeof(UnityEngine.Input), nameof(UnityEngine.Input.GetKeyDown), [typeof(KeyCode)])]
+    [HarmonyPrefix]
+    public static bool GetKeyDown(KeyCode key, ref bool __result) {
+        if (!Manager.Running || currentFeed is null) return true;
+
+        foreach (var (action, actionKey) in actionKeyMap) {
+            if ((currentFeed.Actions & action) != 0 && actionKey == key) {
+                // TODO: only true for a frame
+                __result = true;
+            }
+        }
+
+        return false;
+    }
+    
+    // TODO: GetKeyUp
 }
 
