@@ -249,3 +249,5 @@ ModelManifest.xml
 
 # nix output
 /result
+
+/GamePath.props
