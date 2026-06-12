@@ -97,6 +97,9 @@ internal static class TasTracer {
 
     internal const bool TraceLoadingFrames = false;
 
+    // Capture the stack trace of each top level call. Expensive.
+    internal static bool CaptureCallRootStacks = false;
+
     [Initialize]
     private static void Initialize() {
         AttributeUtils.CollectAllMethods<TasTraceAddState>(typeof(TraceData));
@@ -198,26 +201,22 @@ internal static class TasTracer {
             return;
         }
 
+        var advancing = Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance;
+        if (!advancing && !frameStages.Any(s => s.HasContent)) {
+            return;
+        }
+
+        using var _ = SuppressTrace();
+
         var data = new TraceData();
-        var inputFrame = Manager.Controller.Previous;
         data.Add("Frame", Manager.Controller.CurrentFrameInTas);
+        data.Add("State", Manager.CurrState);
+        var inputFrame = Manager.Controller.Previous;
         if (inputFrame != null) data.Add("InputLine", inputFrame.ToString());
         // data.Add("Time", TimeHelper.timeInTas);
         AttributeUtils.Invoke<TasTraceAddState>([data]);
 
         trace.Trace.Add(data);
-    }
-
-    public static void TraceFramePause() {
-        if (!TraceLoadingFrames && EverestInterop.GameInterop.IsLoading()) {
-            return;
-        }
-
-        var data = new TraceData();
-        if (FrameHistoryPaused.Count > 0) {
-            data.Add("FrameHistoryPaused", new List<object?[]>(new List<object?[]>(FrameHistoryPaused)));
-            trace.Trace.Add(data);
-        }
     }
 
     #region Frame history (framework)
@@ -238,32 +237,110 @@ internal static class TasTracer {
         return true;
     }
 
-    private static readonly List<object?[]> frameHistory = [];
-    internal static readonly List<object?[]> FrameHistoryPaused = [];
-    private static readonly List<object?[]> SortedFrameHistory = [];
+    // Frame history as a tree of stages. Each player loop phase opens a stage, and events are recorded as children in a call tree.
+    private sealed class FrameStage {
+        public required string Stage;
+        public Dictionary<string, object?>? Vars;
+        public readonly List<object?> Events = [];
+
+        public bool HasContent => Events.Count > 0 || Vars is { Count: > 0 };
+
+        public Dictionary<string, object?> ToDict() {
+            var d = new Dictionary<string, object?> { ["Stage"] = Stage };
+            if (Vars is { Count: > 0 }) d["Vars"] = Vars;
+            if (Events.Count > 0) d["Events"] = Events.Select(Collapse).ToList();
+            return d;
+        }
+
+        // A call node with no children and no stack renders as just its name, keeping the common (leaf) case
+        // compact. Top-level nodes carry a "Stack" (their external caller) and are always kept as objects.
+        private static object? Collapse(object? node) {
+            if (node is Dictionary<string, object?> call && call.TryGetValue("Children", out var raw)
+                                                          && raw is List<object?> children) {
+                var hasStack = call.ContainsKey("Stack");
+                if (children.Count == 0 && !hasStack) {
+                    return call["Call"];
+                }
+
+                var d = new Dictionary<string, object?> { ["Call"] = call["Call"] };
+                if (hasStack) d["Stack"] = call["Stack"];
+                if (children.Count > 0) d["Children"] = children.Select(Collapse).ToList();
+                return d;
+            }
+
+            return node;
+        }
+    }
+
+    private static readonly List<FrameStage> frameStages = [];
+    private static FrameStage currentStage = new() { Stage = "start" };
+
+    // Live call tree: the current append target is the top of callStack (a Children list); the bottom is the
+    // current stage's Events. HeroController prefixes push, finalizers pop; a new stage resets to its root.
+    private static readonly List<List<object?>> CallStack = [];
+
+    private static void StartStage(string name) {
+        currentStage = new FrameStage { Stage = name };
+        frameStages.Add(currentStage);
+        CallStack.Clear();
+        CallStack.Add(currentStage.Events);
+    }
 
     private static readonly Dictionary<string, object?> traceVarsState = [];
 
+    // Skip trace while our instrumentation (e.g. debuginfo) reads the game state.
+    internal static bool DoSuppressTrace;
+
+    internal static TraceSuppressScope SuppressTrace() => new();
+
+    internal readonly struct TraceSuppressScope : IDisposable {
+        private readonly bool prev;
+        public TraceSuppressScope() {
+            prev = DoSuppressTrace;
+            DoSuppressTrace = true;
+        }
+        public void Dispose() => DoSuppressTrace = prev;
+    }
+
     internal static void AddFrameHistory(params object?[] args) {
-        frameHistory.Add(args);
+        if (CallStack.Count == 0) return;
+
+        if (CallStack.Count == 1 && CaptureCallRootStacks) {
+            args = [..args, new StackTrace()];
+        }
+
+        CallStack[^1].Add(args.Length == 1 ? args[0] : args);
     }
 
-    internal static void AddFrameHistoryPaused(params object?[] args) {
-        FrameHistoryPaused.Add(args);
+    internal static void PushCall(string name) {
+        if (CallStack.Count == 0) return;
+        var children = new List<object?>();
+        var node = new Dictionary<string, object?> { ["Call"] = name, ["Children"] = children };
+        if (CallStack.Count == 1 && CaptureCallRootStacks) {
+            node["Stack"] = new StackTrace();
+        }
+        CallStack[^1].Add(node);
+        CallStack.Add(children);
     }
 
-    internal static void TraceVarsThroughFrame(string phase) {
+    internal static void PopCall() {
+        if (CallStack.Count > 1) CallStack.RemoveAt(CallStack.Count - 1);
+    }
+
+    /// Opens a new stage for the given player-loop phase; subsequent recorded events become its children.
+    /// Optionally captures per-phase state vars (gated by the TraceVarsThroughFrame filter).
+    internal static void BeginStage(string phase) {
+        if (!ShouldTrace()) return;
+
+        using var _ = SuppressTrace();
+
+        StartStage(phase);
+
         if (!ShouldTrace(TasTracerFilter.TraceVarsThroughFrame)) return;
 
         try {
             if (GameTrace.TraceVarsThroughFrameVars.Length > 0) {
-                var vars = GameTrace.TraceVarsThroughFrameVars.ToDictionary(x => x.Name, x => x.Get());
-                AddFrameHistory($"ThroughFrame-{phase}", vars);
-            }
-
-            if (GameTrace.TraceVarsThroughFramePausedVars.Length > 0) {
-                var vars = GameTrace.TraceVarsThroughFramePausedVars.ToDictionary(x => x.Name, x => x.Get());
-                AddFrameHistoryPaused($"ThroughFrame-{phase}", vars);
+                currentStage.Vars = GameTrace.TraceVarsThroughFrameVars.ToDictionary(x => x.Name, x => x.Get());
             }
         } catch (Exception e) {
             Log.Error(e);
@@ -289,20 +366,8 @@ internal static class TasTracer {
             traceVarsState[name] = newVal;
         }
 
-        if (FrameHistoryEnabled && frameHistory.Count > 0)
-        {
-            var history = frameHistory.Select(x => x.Length == 1 ? x[0] : x).ToArray();
-            data.Add("FrameHistory", history);
-            if (SortedFrameHistory.Count > 0) {
-                SortedFrameHistory.Sort((a, b) => a.Zip(b,
-                        (item1, item2) => item1 is string i1 && item2 is string i2
-                            ? string.Compare(i1, i2, StringComparison.Ordinal)
-                            : 0)
-                    .Skip(1)
-                    .FirstOrDefault(cmp => cmp != 0));
-
-                data.Add("FrameHistorySorted", new List<object?[]>(SortedFrameHistory));
-            }
+        if (FrameHistoryEnabled && frameStages.Any(s => s.HasContent)) {
+            data.Add("FrameHistory", frameStages.Where(s => s.HasContent).Select(s => s.ToDict()).ToList());
         }
 
         if (changes.Count > 0) {
@@ -311,9 +376,8 @@ internal static class TasTracer {
     }
 
     private static void ClearFrameHistory() {
-        frameHistory.Clear();
-        FrameHistoryPaused.Clear();
-        SortedFrameHistory.Clear();
+        frameStages.Clear();
+        StartStage("start");
     }
 
     [BeforeTasFrame]
@@ -346,12 +410,19 @@ internal static class TasTracer {
                         for (var i = 1; i < st.FrameCount; i++) {
                             var frame = st.GetFrame(i);
                             var method = frame.GetMethod();
+                            // Drop runtime/MonoMod frames, our own instrumentation (TAS.Tracer.*), and the
+                            // Harmony DMD<…> trampoline of the patched method — so the stack starts at the
+                            // real external caller.
                             if (method.DeclaringType?.Namespace is { } ns &&
-                                (ns.StartsWith("System") || ns.StartsWith("MonoMod"))) {
+                                (ns.StartsWith("System") || ns.StartsWith("MonoMod") || ns.StartsWith("TAS.Tracer"))) {
                                 continue;
                             }
 
                             var name = method.Name;
+                            if (name.StartsWith("DMD<")) {
+                                continue;
+                            }
+
                             frames.Add($"{method.DeclaringType}.{name}");
                         }
 
