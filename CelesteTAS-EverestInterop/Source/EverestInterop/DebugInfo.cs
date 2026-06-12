@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using TAS.Tracer;
 
 namespace TAS;
 
@@ -14,6 +14,8 @@ public static class DebugInfo {
     }
 
     public static string GetInfoText(DebugFilter filter = DebugFilter.Base) {
+        using var _ = TasTracer.SuppressTrace();
+        
         var text = "";
         text += $"Pos:   {"todo"}\n";
         text += $"Vel:   {"todo"}\n";
