@@ -25,6 +25,9 @@ public class TasMod : BaseUnityPlugin {
 
     internal HitboxModule HitboxModule = null!;
 
+    // private static readonly Type? AlsoTraceAround = typeof(UnityEngine.PlayerLoop.PreUpdate.Physics2DUpdate);
+    private static readonly Type? AlsoTraceAround = null;
+
     // private ConfigEntry<bool> configOpenStudioOnLaunch = null!;
     // private ConfigEntry<KeyboardShortcut> configOpenStudioShortcut = null!;
 
@@ -99,8 +102,6 @@ public class TasMod : BaseUnityPlugin {
 
     private struct LastUpdateSystem;
 
-    private static Type? alsoTraceAround = typeof(UnityEngine.PlayerLoop.PreUpdate.Physics2DUpdate);
-
     private void Start() {
         PlayerLoopSystemHelper.Register(typeof(EarlyUpdateSystem),
             InsertPosition.FirstChildOf,
@@ -119,7 +120,7 @@ public class TasMod : BaseUnityPlugin {
             typeof(UnityEngine.PlayerLoop.PostLateUpdate),
             PostLateUpdate);
 
-        if (alsoTraceAround is { } system) {
+        if (AlsoTraceAround is { } system) {
             PlayerLoopSystemHelper.Register(typeof(TasMod),
                 InsertPosition.Before,
                 system,
@@ -136,19 +137,19 @@ public class TasMod : BaseUnityPlugin {
             AttributeUtils.Invoke<BeforeActiveTasFrame>();
         }
 
-        TasTracer.TraceVarsThroughFrame("EarlyUpdate");
+        TasTracer.BeginStage("EarlyUpdate");
     }
 
     private void FixedUpdate() {
-        TasTracer.TraceVarsThroughFrame("FixedUpdate");
+        TasTracer.BeginStage("FixedUpdate");
     }
 
-    private static void TraceBefore() => TasTracer.TraceVarsThroughFrame($"TraceBefore-{alsoTraceAround}");
-    private static void TraceAfter() => TasTracer.TraceVarsThroughFrame($"TraceAfter-{alsoTraceAround}");
+    private static void TraceBefore() => TasTracer.BeginStage($"TraceBefore-{AlsoTraceAround}");
+    private static void TraceAfter() => TasTracer.BeginStage($"TraceAfter-{AlsoTraceAround}");
 
     
     private static void FirstUpdate() {
-        TasTracer.TraceVarsThroughFrame("FirstUpdate");
+        TasTracer.BeginStage("FirstUpdate");
         
         if (Physics2D.simulationMode != SimulationMode2D.Script) return;
 
@@ -158,30 +159,22 @@ public class TasMod : BaseUnityPlugin {
         }
     }
 
-    private static void LastUpdate() => TasTracer.TraceVarsThroughFrame("LastUpdate");
+    private static void LastUpdate() => TasTracer.BeginStage("LastUpdate");
 
     private void LateUpdate() {
-        TasTracer.TraceVarsThroughFrame("LateUpdate");
+        TasTracer.BeginStage("LateUpdate");
         TasTracer.LateUpdate();
     }
 
     private void PostLateUpdate() {
-        TasTracer.TraceVarsThroughFrame("PostLateUpdate");
+        TasTracer.BeginStage("PostLateUpdate");
 
         try {
             GameInfo.Update();
 
             if (Manager.Running) {
                 try {
-                    if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
-                        TasTracer.TraceFrame();
-                    } else {
-                        if (TasTracer.TracePauseMode == TracePauseMode.Reduced) {
-                            TasTracer.TraceFramePause();
-                        } else if (TasTracer.TracePauseMode == TracePauseMode.Full) {
-                            TasTracer.TraceFrame();
-                        }
-                    }
+                    TasTracer.TraceFrame();
                 } catch (Exception e) {
                     e.LogException("Error trying to collect trace data");
                 }
