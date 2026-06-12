@@ -175,6 +175,7 @@ public class TasMod : BaseUnityPlugin {
 
     private void PostLateUpdate() {
         TasTracer.BeginStage("PostLateUpdate");
+        DebugInfo.PostLateUpdate();
 
         try {
             GameInfo.Update();
