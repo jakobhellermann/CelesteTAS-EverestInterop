@@ -44,6 +44,8 @@ internal static class CoroutineTracker {
         "ShineAnimSequence.ShineSequence",
         // Camera shake is always a visual effect, never gameplay.
         "CameraShakeOnEnable.ShakeCameraDelayed",
+        // Fades a camera shake's strength while the hero is inside a trigger (no world force, freeze or vibration).
+        "CameraShakeRegion.InsideRoutine",
         // Our own DevServer HTTP loop (DevUtils), not game code.
         "HttpServer.RunAsync",
         // Ambient decor glints/drips — cosmetic, always running.
@@ -52,6 +54,9 @@ internal static class CoroutineTracker {
         // Ambient water drip: falls, impacts the ground (OnCollisionEnter2D, no hero contact), plays audio, resets.
         // Draws RNG for its idle interval and impact sound; no gameplay/hero state.
         "WaterDrip.Drip",
+        // Background decor: shows a sprite animation at a random spot in its range, then hides it. Draws RNG for the
+        // wait, spot, flip and animation; no collider or gameplay state.
+        "SandCentipede.Anim",
         // UI-only coroutines: Unity/TMPro UI tweens (ScrollRect/Toggle color+position), layout rebuilds, scroll
         // animations, the UniverseLib debug-menu cursor unlock, and inventory-crest display transitions. No gameplay
         // state, so hide them from the display.
@@ -122,6 +127,9 @@ internal static class CoroutineTracker {
         // Decorative sprite-frame animation (floor/background decor): cycles a SpriteRenderer through its frames,
         // writing only rend.sprite. Draws RNG for its start delay/frame; no hero/gameplay state.
         "BasicSpriteAnimator.Animate",
+        // NPC talk/listen animations + talk enter/exit audio during dialogue; reads the hero's x only to pick a facing.
+        // Draws RNG for the exit delay. No hero/gameplay write.
+        "TalkAnimNPC.Animation",
         "InputField.CaretBlink",
     ];
 
@@ -445,11 +453,20 @@ internal static class CoroutineTrackerPatch {
         "Disable Sign",
         // Signpost glow text (e.g. weaver_harp_sign): a looping NestedFadeGroupCurveAnimator alpha pulse, no OnStart/OnStop listeners.
         "glow_text_sprite",
+        // Bonetown lift cogs: a generic PlayableDirectorRamp whose timeline only animates the cog sprites; its events
+        // play audio, camera shake and StartJitter on the lift's collider-less visual parts (JitterSelf draws RNG).
+        "Bone Lift Cogs",
     ];
 
     // Owner categories whose coroutines are provisionally ignored to cut display/trace noise while we focus on the
     // core owners (Hero, GameManagers, systems). TODO: each category *can* matter — revisit rather than skip forever.
     private static bool IsIgnoredOwner(MonoBehaviour mb) {
+        // Ambient NPC idle loop: alternates two tk2d clips on a random delay (draws RNG) via its own Animate and the
+        // generic Extensions.PlayAnimWait. Animation only.
+        if (mb is RandomLooptk2dAnimator) {
+            return true;
+        }
+
         // Enemies: attack windups / death timing can be gameplay-relevant; skipped for now.
         if (mb.GetComponentInParent<HealthManager>()) {
             return true;

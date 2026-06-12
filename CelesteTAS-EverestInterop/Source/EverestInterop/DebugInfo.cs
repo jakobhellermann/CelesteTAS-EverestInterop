@@ -110,6 +110,7 @@ public static class DebugInfo {
                 .Select(stateName => (player.cState.GetState(stateName), stateName)),
             (!player.acceptingInput, "!AcceptingInput"),
             (player.GetFieldValue<bool>("dashQueuing"), "DashQueueing"),
+            (player.GetFieldValue<bool>("queuedWallJumpInterrupt"), "WallJumpInterrupt"),
             (player.exitedQuake, "ExitedQuake")
         ];
 
@@ -188,6 +189,7 @@ public static class DebugInfo {
             (CanWithoutQueueingInterrupt(() => player.CanDoubleJump()), "DoubleJump"),
             (Can("CanDash"), "Dash"),
             (Can("CanWallJump", true), "WallJump"),
+            (CanQueueWallJumpInterrupt(), "WallJumpInterrupt"),
             (Can("CanHarpoonDash"), "HarpoonDash"),
             (Can("CanSuperJump"), "SuperJump"),
             (Can("CanThrowTool", false), "ThrowTool"),
@@ -262,6 +264,23 @@ public static class DebugInfo {
             } finally {
                 player.SetFieldValue("queuedWallJumpInterrupt", queued);
                 player.SetFieldValue("touchingWallObj", wallObj);
+            }
+        }
+
+        // TryQueueWallJumpInterrupt without setting the flag. move_input is frozen while !acceptingInput, so use the
+        // held direction, as RegainControl refreshes it before re-evaluating a jump.
+        bool CanQueueWallJumpInterrupt() {
+            if (!player.playerData.hasWalljump
+                || player.cState.touchingNonSlider
+                || !player.IsFacingNearWall(player.cState.facingRight, player.WALLJUMP_BROLLY_RAY_LENGTH, Color.green)) {
+                return false;
+            }
+            float moveInput = player.GetFieldValue<float>("move_input");
+            try {
+                player.SetFieldValue("move_input", player.GetFieldValue<InputHandler>("inputHandler").inputActions.MoveVector.Vector.x);
+                return Can("CanChainWallJumps");
+            } finally {
+                player.SetFieldValue("move_input", moveInput);
             }
         }
 
