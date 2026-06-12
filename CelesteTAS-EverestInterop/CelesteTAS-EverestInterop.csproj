@@ -28,17 +28,29 @@
             <HintPath>$(ManagedDir)/Assembly-CSharp.dll</HintPath>
             <Private>false</Private>
         </Reference>
+        <Reference Include="Assembly-CSharp-firstpass">
+            <HintPath>$(ManagedDir)/Assembly-CSharp-firstpass.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
         <Reference Include="PlayMaker">
             <HintPath>$(ManagedDir)/PlayMaker.dll</HintPath>
             <Private>false</Private>
         </Reference>
-        <Reference Include="Unity.InputSystem" Condition="Exists('$(DllPath)/Unity.InputSystem.dll')">
-            <HintPath>$(DllPath)/Unity.InputSystem.dll</HintPath>
+        <Reference Include="TeamCherry.TK2D">
+            <HintPath>$(ManagedDir)/TeamCherry.TK2D.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="PlayMaker">
+            <HintPath>$(ManagedDir)/PlayMaker.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Unity.InputSystem" Condition="Exists('$(ManagedDir)/Unity.InputSystem.dll')">
+            <HintPath>$(ManagedDir)/Unity.InputSystem.dll</HintPath>
             <Private>false</Private>
         </Reference>
     </ItemGroup>
 
-    <PropertyGroup Condition="Exists('$(DllPath)/Unity.InputSystem.dll')">
+    <PropertyGroup Condition="Exists('$(ManagedDir)/Unity.InputSystem.dll')">
         <DefineConstants>$(DefineConstants);UNITY_NEW_INPUT_SYSTEM</DefineConstants>
     </PropertyGroup>
 
