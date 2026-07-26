@@ -24,7 +24,10 @@ public class CelesteTasSettings {
             SyncSettings();
         };
         infoCustomTemplate = config.Bind("Info HUD", "Custom Info Template", string.Empty);
+        LaunchStudioAtBoot = config.Bind("Studio", "Launch on start", true);
     }
+
+    public readonly ConfigEntry<bool> LaunchStudioAtBoot;
 
     // Settings which are shared / controllable from Studio
     internal GameSettings _studioShared = new();
