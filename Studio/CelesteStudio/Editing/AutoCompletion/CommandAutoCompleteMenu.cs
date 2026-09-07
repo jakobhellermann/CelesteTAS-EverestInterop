@@ -184,8 +184,11 @@ public class CommandAutoCompleteMenu : AutoCompleteMenu {
 
                             var menuEntries = commandEntries.Select(entry => new Entry {
                                 SearchText = entry.Prefix + entry.Name,
-                                DisplayText = entry.Name,
-                                ExtraText = entry.Extra,
+                                // Coalesce: the game may send an auto-complete entry with a null Name/Extra, and
+                                // Entry.DisplayText/ExtraText are non-null (used unguarded when rendering) — a null
+                                // would crash the popup.
+                                DisplayText = entry.Name ?? string.Empty,
+                                ExtraText = entry.Extra ?? string.Empty,
                                 Suggestion = entry.Suggestion,
                                 StorageKey = entry.StorageKey == null ? null : $"{BaseStorageKey}{StorageKeySeparator}{entry.StorageKey}",
                                 StorageName = entry.StorageName,

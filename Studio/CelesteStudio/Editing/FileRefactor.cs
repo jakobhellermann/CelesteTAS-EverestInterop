@@ -2,6 +2,7 @@ using CelesteStudio.Communication;
 using StudioCommunication;
 using StudioCommunication.Util;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,8 +17,9 @@ public static class FileRefactor {
 
     public static readonly SemaphoreSlim RefactorSemaphore = new(1);
 
-    /// Caches the file contents in lines of external files
-    private static readonly Dictionary<string, string[]> FileCache = [];
+    /// Caches the file contents in lines of external files. Concurrent: written from the FileSystemWatcher's
+    /// OnFileChanged callback (a threadpool thread) as well as the refactor path, so a plain Dictionary corrupts.
+    private static readonly ConcurrentDictionary<string, string[]> FileCache = new();
     private static readonly HashSet<string> lockedFiles = [];
     private static readonly HashSet<string> pendingFilesystemWrite = [];
 
@@ -543,7 +545,7 @@ public static class FileRefactor {
                 Console.WriteLine($"Failed to update file cache for '{e.FullPath}'");
                 Console.WriteLine(ex);
 
-                FileCache.Remove(e.FullPath);
+                FileCache.TryRemove(e.FullPath, out _);
             }
         }
     }

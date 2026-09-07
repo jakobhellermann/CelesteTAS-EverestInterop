@@ -377,7 +377,7 @@ public class GameInfo : Scrollable {
 
                 patch.DeleteRange(0, infoText.Document.Lines.Count - 1);
                 patch.Insert(0, frameInfoBuilder.ToString());
-                patch.InsertRange(1, newState.GameInfo.SplitLines());
+                patch.InsertRange(1, (newState.GameInfo ?? string.Empty).SplitLines());
             }
 
             subpixelIndicator.Visible = CommunicationWrapper.ShowSubpixelIndicator && Settings.Instance.ShowSubpixelIndicator;

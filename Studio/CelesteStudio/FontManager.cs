@@ -78,6 +78,12 @@ public static class FontManager {
         return width;
     }
     public static float MeasureWidth(this SKFont font, string text) {
+        // Guard null/empty: a measure utility on the draw path must never NRE (an unhandled exception in
+        // Editor.Draw takes down the whole GTK app).
+        if (string.IsNullOrEmpty(text)) {
+            return 0;
+        }
+
         return font.CharWidth() * text.Length;
     }
 

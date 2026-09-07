@@ -419,7 +419,12 @@ public class TextViewer : SkiaDrawable {
         const int menuMinMaxHeight = 250;
 
         float carX = Font.CharWidth() * Document.Caret.Col;
-        float carY = Font.LineHeight() * (actualToVisualRows[Document.Caret.Row] + 1);
+        // actualToVisualRows can lag the document for a moment (e.g. right after an undo/redo, before the row recalc
+        // runs), so clamp the caret row — positioning the popup must never index out of bounds.
+        int visualCaretRow = actualToVisualRows.Length > 0
+            ? actualToVisualRows[Math.Clamp(Document.Caret.Row, 0, actualToVisualRows.Length - 1)]
+            : 0;
+        float carY = Font.LineHeight() * (visualCaretRow + 1);
 
         int menuX, menuY;
 

@@ -120,7 +120,14 @@ public abstract class PopupMenu : Scrollable {
         public int FrequentlyUsedIndex = -1;
 
         /// Unique identifier for the category of the entry
-        public string? StorageKey { get; init; }
+        public string? StorageKey {
+            get;
+            // Written verbatim as a TOML table-header key, which must survive a Tomlet round-trip. '.' would be read
+            // back as a dotted key path; '[' / ']' / '"' break the header (Tomlet mangles a quoted header containing
+            // ']', crashing Studio on load). Map them all to '#' — type-name queries like `Get, Foo`1[[Bar, ...]]`
+            // produced headers with brackets that jammed startup. Other characters are safe inside a quoted key.
+            init => field = value?.Replace('.', '#').Replace('[', '#').Replace(']', '#').Replace('"', '#');
+        }
 
         /// Unique identifier inside the current category
         [AllowNull]
@@ -643,8 +650,10 @@ public abstract class PopupMenu : Scrollable {
         contentHeight = shownEntries.Length * EntryHeight + Settings.Instance.Theme.PopupMenuBorderPadding * 2;
 
         var font = FontManager.SKPopupFont;
-        int maxDisplayLen = shownEntries.Select(entry => entry.DisplayText.Length).Aggregate(Math.Max);
-        int maxExtraLen = shownEntries.Select(entry => entry.ExtraText.Length).Aggregate(Math.Max);
+        // Guard against a malformed entry (null DisplayText/ExtraText, e.g. an auto-complete entry the game sent
+        // with a null Name) — a bad entry must not crash the editor.
+        int maxDisplayLen = shownEntries.Select(entry => entry.DisplayText?.Length ?? 0).Aggregate(Math.Max);
+        int maxExtraLen = shownEntries.Select(entry => entry.ExtraText?.Length ?? 0).Aggregate(Math.Max);
         if (maxExtraLen != 0) {
             maxDisplayLen += DisplayExtraPadding;
         }
