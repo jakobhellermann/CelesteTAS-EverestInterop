@@ -70,6 +70,9 @@ public static class Manager {
     public static State CurrState, NextState;
     public static readonly InputController Controller = new();
 
+    /// A breakpoint hit on the same frame as a load defers its pause until loading finishes — see Manager.Update.
+    private static bool pendingBreakpointPause;
+
     private static readonly ConcurrentQueue<Action> mainThreadActions = new();
 
     private static PopupToast.Entry? frameStepEofToast = null;
@@ -131,6 +134,7 @@ public static class Manager {
         }
         
         CurrState = NextState = State.Disabled;
+        pendingBreakpointPause = false;
         Controller.Stop();
     }
 
@@ -211,6 +215,15 @@ public static class Manager {
             return;
         }
 
+        // A breakpoint that coincided with a load deferred its pause (see below) so we wouldn't strand on a
+        // still-loading frame. Loading is done now — pause on this clean frame, before AdvanceFrame moves us past
+        // the breakpoint.
+        if (pendingBreakpointPause) {
+            pendingBreakpointPause = false;
+            NextState = State.Paused;
+            return;
+        }
+
         if (FrameStepBackTargetFrame > 0) {
             NextState = State.Running;
             PlaybackSpeed = FastForward.DefaultSpeed;
@@ -266,7 +279,15 @@ public static class Manager {
         // Pause the TAS if breakpoint is hit
         if (FrameStepBackTargetFrame == -1 && Controller.Break && (Controller.CanPlayback || IsDraft())) {
             Controller.NextLabelFastForward = null;
-            NextState = State.Paused;
+            // If a load was kicked off on this same frame (e.g. a `load`/savestate command sharing the breakpoint
+            // frame), don't pause yet: pausing now strands us on a still-loading frame, and the first frame-advance
+            // is wasted just clearing the load gate (IsLoading true→false) instead of advancing. Defer the pause to
+            // the first non-loading frame — we're still on the breakpoint frame (it's frozen while loading).
+            if (GameInterop.IsLoading()) {
+                pendingBreakpointPause = true;
+            } else {
+                NextState = State.Paused;
+            }
         }
 
         // Prevent executing unsafe actions unless explicitly allowed
@@ -361,7 +382,11 @@ public static class Manager {
                 break;
 
             case State.FrameAdvance:
-                NextState = State.Paused;
+                // Never strand on a loading frame: if this step kicked off a load, stay in FrameAdvance so it runs to
+                // completion, and settle to Paused only once we're back on a real, non-loading frame.
+                if (!GameInterop.IsLoading()) {
+                    NextState = State.Paused;
+                }
                 break;
 
             case State.Paused:

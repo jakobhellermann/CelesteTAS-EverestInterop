@@ -1,4 +1,5 @@
 using StudioCommunication;
+using TAS.Input.Commands;
 using UnityEngine;
 
 namespace TAS.EverestInterop;
@@ -9,7 +10,7 @@ public static class GameInterop {
     public static bool IsInsideLevel() => true;
 
     /// TAS-execution is paused during loading screens
-    public static bool IsLoading() => false;
+    public static bool IsLoading() => TasLoad.IsLoading;
 
     /// Whether the game is currently truly loading, i.e. waiting an undefined amount of time
     public static bool IsActuallyLoading() => false;
