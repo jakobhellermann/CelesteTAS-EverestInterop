@@ -9,6 +9,8 @@ public static class GlobalVariables {
     public static CelesteTasSettings TasSettings => TasMod.Instance.TasSettings;
 
     public static void AbortTas(string message, bool log = false, float duration = PopupToast.DefaultDuration) {
+        Manager.LastAbortMessage = message;
+
 #if DEBUG
         // Always log in debug builds
         log = true;
