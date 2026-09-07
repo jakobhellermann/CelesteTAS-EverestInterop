@@ -14,6 +14,8 @@ using TAS.Tools;
 using TAS.UnityInterop;
 using TAS.Utils;
 using UnityEngine;
+using UnityEngine.LowLevel;
+using PlayerLoopHelper;
 
 namespace TAS;
 
@@ -135,6 +137,8 @@ public static class Manager {
     public static void EnablePause() {
         DeterministicTimePatch.OverwriteTimeScale = 0;
 
+        FreezeScriptUpdates();
+
         try {
             // TODO(unity): pause animators
         } catch (Exception e) {
@@ -143,13 +147,32 @@ public static class Manager {
     }
 
     private static List<(Animator, AnimatorSnapshot)> prePauseAnimatorStates = [];
-    
+
+    // Pre-pause PlayerLoop snapshot
+    private static PlayerLoopSystem? loopBeforePause;
+
+    /// Stop all gameplay MonoBehaviour Update/LateUpdate while paused.
+    private static void FreezeScriptUpdates() {
+        loopBeforePause = PlayerLoop.GetCurrentPlayerLoop();
+        PlayerLoopSystemHelper.Unregister(typeof(UnityEngine.PlayerLoop.Update.ScriptRunBehaviourUpdate));
+        PlayerLoopSystemHelper.Unregister(typeof(UnityEngine.PlayerLoop.PreLateUpdate.ScriptRunBehaviourLateUpdate));
+    }
+
+    private static void UnfreezeScriptUpdates() {
+        if (loopBeforePause is { } loop) {
+            PlayerLoop.SetPlayerLoop(loop);
+            loopBeforePause = null;
+        }
+    }
+
     public static void DisablePause() {
         foreach (var (anim, _) in prePauseAnimatorStates) {
             // snapshot.Restore(anim);
             anim.enabled = true;
         }
         prePauseAnimatorStates.Clear();
+
+        UnfreezeScriptUpdates();
 
         DeterministicTimePatch.OverwriteTimeScale = null;
     }
