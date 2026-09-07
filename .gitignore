@@ -248,3 +248,5 @@ ModelManifest.xml
 .idea
 
 /GamePath.props
+
+__pycache__/
