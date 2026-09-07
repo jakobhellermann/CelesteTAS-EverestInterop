@@ -3,6 +3,7 @@ global using SavestateData = System.Collections.Generic.Dictionary<string, objec
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using TAS.Input.Commands;
 using TAS.Utils;
 
 #pragma warning disable CS8321 // Local function is declared but never used
@@ -48,8 +49,15 @@ internal static class SpeedrunToolInterop {
     /// Saves the current state into the specified slot. Returns whether it was successful
     public static bool SaveState(string? slot = null) => AssertBackend.Save(slot ?? DefaultSlot);
 
-    /// Loads the specified slot into the current state. Returns whether it was successful
-    public static bool LoadState(string? slot = null) => AssertBackend.Load(slot ?? DefaultSlot);
+    /// Starts loading the specified slot, see <see cref="SavestateLoad"/>. Returns whether the slot holds a savestate
+    public static bool LoadState(string? slot = null) {
+        if (!IsSaved(slot)) {
+            return false;
+        }
+
+        SavestateLoad.Load(slot ?? DefaultSlot, "Savestate");
+        return true;
+    }
 
     /// Clears the specified save slot
     public static void ClearState(string? slot = null) => AssertBackend.Clear(slot ?? DefaultSlot);
