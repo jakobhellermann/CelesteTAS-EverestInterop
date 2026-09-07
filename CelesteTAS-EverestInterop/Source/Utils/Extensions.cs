@@ -431,6 +431,9 @@ internal static class ReflectionExtensions {
             return default;
         }
         var value = field.GetValue(obj);
+        if (value is null) {
+            return default;
+        }
         if (value is not T val) {
             throw new Exception($"GetFieldValue for {name}: Expected {typeof(T)} but got {value.GetType()}");
         }
