@@ -8,11 +8,13 @@ namespace TAS;
 public static class DeterministicTimePatch {
     private static int? overrideFrameCount;
     private static float? timeInTas;
+    private static bool wasLoading;
 
     [EnableRun]
     private static void EnableRun() {
         overrideFrameCount = 1000;
         timeInTas = 0;
+        wasLoading = false;
     }
 
     [DisableRun]
@@ -23,7 +25,20 @@ public static class DeterministicTimePatch {
 
     [BeforeTasFrame]
     private static void Update() {
-        if (Manager.CurrState == Manager.State.Paused) return;
+        var loading = EverestInterop.GameInterop.IsLoading();
+
+        // Freeze world simulation during the load via the timeScale override; clearing it restores rcgTimeScale
+        // (the real value) rather than hardcoding 1. A resumed savestate lifts the freeze itself at its restore
+        // boundary (see SavestateLoad.ApplyPendingRestore) so the first live frame's physics isn't frozen; this
+        // edge only covers loads that finish without a deferred restore (e.g. the `load` command).
+        if (loading) {
+            OverwriteTimeScale = 0;
+        } else if (wasLoading) {
+            OverwriteTimeScale = null;
+        }
+        wasLoading = loading;
+
+        if (Manager.CurrState == Manager.State.Paused || loading) return;
 
         if (overrideFrameCount != null) {
             overrideFrameCount++;
