@@ -102,6 +102,49 @@ public static class DeterministicTimePatch {
         return false;
     }
 
+    // TODO: returns time-since-TAS-start, not truly since-level-load (no per-level reset) — fine while consumers use
+    // only deltas of it; revisit if an absolute value is needed.
+    [HarmonyPatch(typeof(Time), nameof(Time.timeSinceLevelLoad), MethodType.Getter)]
+    [HarmonyPrefix]
+    private static bool GetTimeSinceLevelLoad(ref float __result) {
+        if (timeInTas is not { } time) return true;
+
+        __result = time;
+        return false;
+    }
+
+    // unscaledTime is a separate session-cumulative clock (unaffected by timeScale), so it bypasses the `time`
+    // patch above. Pin it to the TAS clock too, else absolute-unscaled-time state baked into savestates (e.g.
+    // RandomAudioClipTable.nextPlayTime = Time.unscaledTimeAsDouble + cooldown) drifts with session age between
+    // runs and breaks byte-reproducibility. The double accessors (timeAsDouble / unscaledTimeAsDouble) likewise
+    // bypass the float getters, so patch them explicitly.
+    [HarmonyPatch(typeof(Time), nameof(Time.unscaledTime), MethodType.Getter)]
+    [HarmonyPrefix]
+    private static bool GetUnscaledTime(ref float __result) {
+        if (timeInTas is not { } time) return true;
+
+        __result = time;
+        return false;
+    }
+
+    [HarmonyPatch(typeof(Time), nameof(Time.timeAsDouble), MethodType.Getter)]
+    [HarmonyPrefix]
+    private static bool GetTimeAsDouble(ref double __result) {
+        if (timeInTas is not { } time) return true;
+
+        __result = time;
+        return false;
+    }
+
+    [HarmonyPatch(typeof(Time), nameof(Time.unscaledTimeAsDouble), MethodType.Getter)]
+    [HarmonyPrefix]
+    private static bool GetUnscaledTimeAsDouble(ref double __result) {
+        if (timeInTas is not { } time) return true;
+
+        __result = time;
+        return false;
+    }
+
     [HarmonyPatch(typeof(Time), nameof(Time.frameCount), MethodType.Getter)]
     [HarmonyPrefix]
     private static bool FrameCountGet(ref int __result) {
