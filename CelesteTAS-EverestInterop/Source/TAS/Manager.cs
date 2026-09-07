@@ -85,12 +85,16 @@ public static class Manager {
 
     public static bool DidComplete = false;
 
+    /// The reason the most recent run stopped early (set by AbortTas); null while running or after a clean finish.
+    public static string? LastAbortMessage;
+
     public static void EnableRun() {
         if (Running) {
             return;
         }
 
         DidComplete = false;
+        LastAbortMessage = null;
         CurrState = NextState = State.Running;
         PlaybackSpeed = 1.0f;
 
