@@ -1,0 +1,23 @@
+# Room-dupe regression. When a savestate carries an additive sub-scene (a boss arena), the load preloads it itself
+# and hands the Addressables handle to the scene's SceneAdditiveLoadConditional (AdditiveScenePreload) so its
+# Unload() can release it. Without that the loader ends up sceneLoaded=true with no loadOp: a later scene transition
+# removes the loader but leaves the sub-scene loaded — orphaned (the HK "room dupe", where a transition unloads one
+# of two loaded scenes but not the other, and the orphan can even become the active scene).
+#
+# Enter Cog_Dancers from Hang_07 so its Cog_Dancers_boss sub-scene loads, snapshot it (AdditiveScenes then captures
+# Cog_Dancers_boss), reload the snapshot, walk back out to Hang_07, and assert only Hang_07 stays loaded — no orphan.
+load Hang_07 144.88 6.57
+   1
+
+  30,R
+  80
+
+SaveSavestate, {scratch}.dancers.json
+LoadSavestate, {scratch}.dancers.json
+   1
+
+  32,L
+  50
+
+Assert, Equal, "1", "{SceneManager.sceneCount}"
+***

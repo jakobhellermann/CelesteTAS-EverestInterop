@@ -1,0 +1,30 @@
+# Boss-fight resume must be reproducible: engage the Cog_Dancers, snapshot mid-fight (past the boss's first roar),
+# then two independent resumes from that snapshot replaying the same inputs must produce byte-identical boss state —
+# attack alternation, boss FSMs/animators, positions, hazard-respawn, and RandomState all round-trip (the
+# Time.timeSinceLevelLoad patch fixed the attack-alternation determinism; RNG is restored by the savestate load).
+LoadSavestate, {tests}/savestates/cog_dancers_entry.json
+   1
+  70,R,X
+ 600
+SaveSavestate, {scratch}.boundary.json
+LoadSavestate, {scratch}.boundary.json
+   1
+   1,A
+  24
+   1,A
+  24
+   1,A
+  24
+SaveSavestate, {scratch}.r1.json
+LoadSavestate, {scratch}.boundary.json
+   1
+   1,A
+  24
+   1,A
+  24
+   1,A
+  24
+SaveSavestate, {scratch}.r2.json
+AssertEqualSavestates, {scratch}.r1.json, {scratch}.r2.json
+   1
+***

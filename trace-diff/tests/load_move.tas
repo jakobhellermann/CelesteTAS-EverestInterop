@@ -1,0 +1,10 @@
+#! Mode=compareTraces
+#! each prior=idle,airborne
+# `load` then move right must land the same regardless of the hero state it was loaded from (idle vs airborne).
+Read, priors/{prior}.tas
+BeginTrace, scenario
+load Tut_01 50 4.57
+   1
+   5,R
+EndTrace
+***
