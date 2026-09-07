@@ -192,6 +192,7 @@ public class TasMod : BaseUnityPlugin {
 
             Manager.UpdateMeta();
             Manager.Update();
+            Input.Commands.SavestateLoad.ApplyPendingRestore();
 
             // TODO: ensure consistent fixedupdate
         } catch (Exception e) {
