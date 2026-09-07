@@ -1,0 +1,13 @@
+# A savestate resume must be transparent: capture mid-motion, then load that savestate and replay the same inputs
+load Tut_01 47.73 4.57
+   1
+   4,J
+SaveSavestate, {scratch}.boundary.json
+  10
+SaveSavestate, {scratch}.create.json
+LoadSavestate, {scratch}.boundary.json
+  10
+SaveSavestate, {scratch}.resume.json
+AssertEqualSavestates, {scratch}.create.json, {scratch}.resume.json
+   1
+***

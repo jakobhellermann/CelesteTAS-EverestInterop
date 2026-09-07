@@ -1,0 +1,30 @@
+# Greymoor arena playback must be deterministic off a savestate. Loads the checked-in Greymoor_03 fixture, asserts the
+# hero was restored to idle (not a transient), then walks into the arena and plays the battle. The BattleScene state
+# machine is not part of the snapshot (it re-initialises from the fresh scene load), so the run also anchors the battle
+# progression: currentEnemies is 0 before the wave triggers and 2 once it has, and the final hero x-position pins the
+# whole combat trajectory. All values are reproducible within a session (fixed clock + restored RNG); a divergence here
+# is a real determinism regression.
+LoadSavestate, {tests}/savestates/greymoor_03.json
+   1
+
+Assert, Equal, idle, {HeroController.hero_state}
+   4,L,X
+  30
+  57,L,X
+Assert, Equal, 0, {BattleScene.currentEnemies}
+  19,L,X
+   1,L,X,A
+  28,L,X
+  60
+Assert, Equal, 2, {BattleScene.currentEnemies}
+  70
+  17
+   1,R,A
+  10
+   1,R,J
+  10,R,X
+   2,R,A
+  10
+Assert, Equal, 11.98864, {HeroController.transform.position.x}
+   1
+***
