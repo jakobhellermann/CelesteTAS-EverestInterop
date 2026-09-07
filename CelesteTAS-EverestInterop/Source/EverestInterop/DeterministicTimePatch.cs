@@ -23,6 +23,17 @@ public static class DeterministicTimePatch {
         timeInTas = null;
     }
 
+    // Re-base the clock onto a loaded savestate's capture time, else its absolute-time/-frame state is stale.
+    public static void RebaseClock(float time, int frameCount) {
+        if (timeInTas != null) {
+            timeInTas = time;
+        }
+
+        if (overrideFrameCount != null) {
+            overrideFrameCount = frameCount;
+        }
+    }
+
     [BeforeTasFrame]
     private static void Update() {
         var loading = EverestInterop.GameInterop.IsLoading();
