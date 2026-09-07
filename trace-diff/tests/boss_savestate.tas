@@ -1,0 +1,17 @@
+# Boss (Cog_Dancers) savestate must stay intact. Loads a checked-in fixture captured from the DebugMod "Boss -
+# Cogwork Dancers" reference with the two dancers damaged to non-default hp (150/120) via a direct hp set, so the hp
+# assert proves the value was *restored from the snapshot* (not just the prefab default, 190). Then two independent
+# loads of the same fixture, each advancing the same frames, must produce byte-identical savestates — the full boss
+# capture (HealthManagers, FSMs, tk2d animators, activeSelf toggles, RNG, hazard-respawn) restores deterministically.
+# A command round-trip in one frame can't work (LoadSavestate's async scene load doesn't complete before the next
+# command), so both saves come from a full load + equal settle; see CLAUDE.md "Savestate load".
+LoadSavestate, {tests}/savestates/cog_dancers_entry.json
+   3
+Assert, Equal, "{ 150, 120 }", "{HealthManager.hp}"
+SaveSavestate, {scratch}.a.json
+LoadSavestate, {tests}/savestates/cog_dancers_entry.json
+   3
+SaveSavestate, {scratch}.b.json
+AssertEqualSavestates, {scratch}.a.json, {scratch}.b.json
+   1
+***
