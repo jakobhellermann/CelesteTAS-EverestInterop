@@ -117,5 +117,13 @@ public static class CommunicationWrapper {
         comm.WriteThirdPartyPopup(id, title, text);
     }
 
+    public static void SendCurrentFile(string path) {
+        if (!Connected) {
+            return;
+        }
+
+        comm!.WriteCurrentFile(path);
+    }
+
     #endregion
 }

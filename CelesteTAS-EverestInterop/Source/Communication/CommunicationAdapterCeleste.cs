@@ -334,6 +334,11 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
         LogVerbose("Sent message ThirdPartyPopup");
     }
 
+    public void WriteCurrentFile(string filePath) {
+        QueueMessage(MessageID.CurrentFile, writer => writer.Write(filePath));
+        LogVerbose($"Sent message CurrentFile: '{filePath}'");
+    }
+
     private void ProcessRecordTAS(string fileName) {
         if (!TASRecorderInterop.Installed) {
             WriteRecordingFailed(RecordingFailedReason.TASRecorderNotInstalled);

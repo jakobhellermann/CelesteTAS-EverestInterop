@@ -44,6 +44,9 @@ public enum MessageID : byte {
     /// Messages from other mods to Studio
     ThirdPartyPopup = 0x17,
 
+    /// Tells Studio to open/switch to a file the game started playing on its own (e.g. via remote control)
+    CurrentFile = 0x18,
+
     #endregion
 
     #region Studio to Celeste

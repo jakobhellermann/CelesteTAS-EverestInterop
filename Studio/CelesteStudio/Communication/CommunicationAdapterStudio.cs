@@ -147,6 +147,18 @@ public sealed class CommunicationAdapterStudio(
                 Application.Instance.AsyncInvoke(() => ThirdPartyDialog.Show(id, title, text));
                 break;
 
+            case MessageID.CurrentFile:
+                string currentFile = reader.ReadString();
+                LogVerbose($"Received message CurrentFile: '{currentFile}'");
+
+                Application.Instance.AsyncInvoke(() => {
+                    // Avoid a reload loop: OpenFileInEditor echoes the path back via WritePath, so skip if unchanged.
+                    if (Studio.Instance.Editor?.Document.FilePath != currentFile) {
+                        Studio.Instance.OpenFileInEditor(currentFile);
+                    }
+                });
+                break;
+
             case MessageID.GameSettings:
                 var settings = reader.ReadObject<GameSettings>();
                 LogVerbose("Received message GameSettings");
