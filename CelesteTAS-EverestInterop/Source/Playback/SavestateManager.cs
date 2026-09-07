@@ -9,6 +9,7 @@ using TAS.Input.Commands;
 using TAS.ModInterop;
 using TAS.UnityInterop;
 using TAS.Utils;
+#pragma warning disable CS0162 // Unreachable code detected
 
 namespace TAS.Playback;
 
