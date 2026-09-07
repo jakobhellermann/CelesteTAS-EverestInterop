@@ -1,0 +1,20 @@
+# A savestate loaded mid-hazard-death must restore the clean hero, not the death's transient state. A lava death
+# disables the hero's renderer, moves it to a non-colliding layer (2) and flips the body Kinematic; the respawn
+# coroutine normally undoes that. Load the Tut_01 boundary 40 frames into the death — before the respawn, and late
+# enough that its coroutine's owner (the hazard object) is destroyed by the load's scene reload, so nothing cleans up
+# afterwards. Without the fix the transient sticks: the hero stays invisible on a non-colliding layer and falls
+# through the floor. One assert bundles the restored gameplay state (visible, on the player layer, dynamic body) so a
+# failure shows every field at once.
+load Tut_01 47.73 4.57
+   1
+SaveSavestate, {scratch}.boundary.json
+load Bone_East_08 97.29 7.06
+Set, HeroController.playerData.health, 5
+   1,L,J
+  25,L
+  40
+LoadSavestate, {scratch}.boundary.json
+   1
+   8
+Assert, Equal, "renderer=True layer=9 body=Dynamic", "renderer={HeroController.renderer.enabled} layer={HeroController.gameObject.layer} body={HeroController.rb2d.bodyType}"
+***
