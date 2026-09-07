@@ -8,6 +8,7 @@ using TAS.Communication;
 using TAS.EverestInterop;
 using TAS.Input;
 using TAS.Input.Commands;
+using TAS.Tracer;
 using TAS.ModInterop;
 using TAS.Playback;
 using TAS.Tools;
@@ -83,7 +84,7 @@ public static class Manager {
     private static PopupToast.Entry? frameStepBackToast = null;
 
     public static bool DidComplete = false;
-    
+
     public static void EnableRun() {
         if (Running) {
             return;
@@ -206,7 +207,6 @@ public static class Manager {
             return;
         }
 
-
         if (FrameStepBackTargetFrame > 0) {
             NextState = State.Running;
             PlaybackSpeed = FastForward.DefaultSpeed;
@@ -217,8 +217,39 @@ public static class Manager {
 
         Controller.AdvanceFrame(out bool couldPlayback);
 
+        // couldPlayback is false once AdvanceFrame is called at the end frame — after it has run that frame's
+        // commands (e.g. trailing asserts / FileTime). Reaching here completes the run: auto-pause a draft to keep
+        // it editable on the last frame, otherwise stop. (A run stopped early — e.g. AbortTas — never gets here, so
+        // DidComplete stays false.)
         if (!couldPlayback) {
-            DisableRun();
+            // A trailing command may have aborted the run this frame (AbortTas → NextState=Disabled). An abort is a
+            // failure, not a completion: leave it disabling and keep DidComplete false.
+            if (NextState == State.Disabled) {
+                DisableRun();
+                return;
+            }
+
+            DidComplete = true;
+            TasTracer.SaveCompletedTrace();
+
+            if (TasSettings.AutoPauseDraft && IsDraft()) {
+                NextState = State.Paused;
+
+                if (CurrState == State.Running && !FastForwarding) {
+                    float duration = seenAutoPauseToast ? 2.0f : 8.0f;
+                    if (autoPauseDraft is not { Active: true }) {
+                        autoPauseDraft = PopupToast.Show(Dialog.Clean("TAS_AutoPauseToast"), duration);
+                    } else {
+                        autoPauseDraft.Text = Dialog.Clean("TAS_AutoPauseToast");
+                        autoPauseDraft.Timeout = duration;
+                    }
+
+                    seenAutoPauseToast = true;
+                }
+            } else {
+                DisableRun();
+            }
+
             return;
         }
 
@@ -227,30 +258,9 @@ public static class Manager {
             FrameStepBackTargetFrame = -1;
             NextState = State.Paused;
         }
-        
-        if (!Controller.CanPlayback) {
-            DidComplete = true;
-        }
 
-        // Auto-pause at end of drafts
-        else if (!Controller.CanPlayback && TasSettings.AutoPauseDraft && IsDraft()) {
-            NextState = State.Paused;
-
-            if (CurrState == State.Running && !FastForwarding) {
-                float duration = seenAutoPauseToast ? 2.0f : 8.0f;
-                if (autoPauseDraft is not { Active: true }) {
-                    autoPauseDraft = PopupToast.Show(Dialog.Clean("TAS_AutoPauseToast"), duration);
-                } else {
-                    autoPauseDraft.Text = Dialog.Clean("TAS_AutoPauseToast");
-                    autoPauseDraft.Timeout = duration;
-                }
-
-                seenAutoPauseToast = true;
-            }
-        }
         // Pause the TAS if breakpoint is hit
-        // Special-case for end of regular files, to update *Time-commands
-        else if (FrameStepBackTargetFrame == -1 && Controller.Break && (Controller.CanPlayback || IsDraft())) {
+        if (FrameStepBackTargetFrame == -1 && Controller.Break && (Controller.CanPlayback || IsDraft())) {
             Controller.NextLabelFastForward = null;
             NextState = State.Paused;
         }
@@ -367,8 +377,16 @@ public static class Manager {
                     frameStepBackTimeout = FrameStepBackTime;
                     frameStepBackAmount = Core.PlaybackDeltaTime;
                 } else if (Hotkeys.PauseResume.Pressed) {
-                    NextState = State.Running;
+                    // A completed draft is paused at its final frame with nothing left to play — resuming would run
+                    // the end frame again and immediately re-pause. End the run instead.
+                    NextState = DidComplete ? State.Disabled : State.Running;
                 } else if (Hotkeys.FrameAdvance.Repeated || Hotkeys.FastForward.Check) {
+                    if (DidComplete) {
+                        // Same as resuming a completed draft: there's nothing left to advance into, so end the run.
+                        NextState = State.Disabled;
+                        break;
+                    }
+
                     // Prevent frame-advancing into the end of the TAS
                     if (!Controller.CanPlayback) {
                         Controller.RefreshInputs(); // Ensure there aren't any new inputs
