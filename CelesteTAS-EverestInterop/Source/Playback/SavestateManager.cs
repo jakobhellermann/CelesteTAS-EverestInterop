@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using TAS.EverestInterop;
 using TAS.Input;
+using TAS.Input.Commands;
 using TAS.ModInterop;
 using TAS.UnityInterop;
 using TAS.Utils;
@@ -52,6 +53,15 @@ internal static class SavestateManager {
     private static Savestate? ManualSavestate;
     private static readonly List<Savestate> BreakpointSavestates = [];
 
+    /// A resume-load that was kicked off and is waiting for the async PreciseSavestates load to finish, after
+    /// which its controller progress is restored (CopyProgressFrom) — see Load / Update.
+    private static Savestate? pendingResume;
+
+    [DisableRun]
+    private static void OnDisableRun() {
+        pendingResume = null;
+    }
+
     [UsedImplicitly] // Only included in hot-reloading support
     public static void ClearAllSavestates() {
         ManualSavestate?.Clear();
@@ -66,6 +76,30 @@ internal static class SavestateManager {
     /// Update for each TAS frame
     public static void Update() {
         var controller = Manager.Controller;
+
+        // Finish a pending async resume-load once PreciseSavestates is done (the restore lands while IsLoading is
+        // still set; CopyProgressFrom then puts the TAS controller at the saved frame, so playback resumes there).
+        if (pendingResume is { } resume) {
+            if (TasLoad.IsLoading) {
+                return; // still loading
+            }
+
+            controller.CopyProgressFrom(resume.Controller);
+            UpdateStudio();
+            // Freeze after loading a savestate: stay paused at the loaded frame until the user continues / steps.
+            // Must go through Manager.Pause() (not a direct CurrState assignment) so EnablePause/FreezeScriptUpdates
+            // actually runs — otherwise MonoBehaviour Update keeps ticking and decays the restored state.
+            Manager.Pause();
+
+            pendingResume = null;
+            return;
+        }
+
+        // Don't trigger a save/resume while a load is already in progress (e.g. the StartOnSavestate/LoadSavestate
+        // at TAS start) — otherwise the resume fires mid-load and conflicts with it.
+        if (TasLoad.IsLoading) {
+            return;
+        }
 
         if (Manager.CurrState != Manager.State.Running) {
             // Only savestate while TAS is actively running and not while paused
@@ -125,7 +159,7 @@ internal static class SavestateManager {
 
                 state.Load();
                 if (state.Frame == controller.CurrentFrameInTas) {
-                    Manager.CurrState = Manager.NextState = Manager.State.Paused;
+                    Manager.Pause();
                 }
                 return;
             }
@@ -200,7 +234,7 @@ internal static class SavestateManager {
                     continue;
                 }
                 if (state.Frame == Manager.FrameStepBackTargetFrame) {
-                    Manager.CurrState = Manager.NextState = Manager.State.Paused;
+                    Manager.Pause();
                 }
                 goto CleanupStates;
             }
@@ -223,7 +257,7 @@ internal static class SavestateManager {
 
             // Pause TAS if latest breakpoint
             if (Manager.Controller.FastForwards.LastOrDefault().Value?.Frame <= state.Frame) {
-                Manager.CurrState = Manager.NextState = Manager.State.Paused;
+                Manager.Pause();
             } else {
                 Manager.CurrState = Manager.NextState = Manager.State.Running;
             }
@@ -276,13 +310,14 @@ internal static class SavestateManager {
             return true;
         }
 
+        // PreciseSavestates loads asynchronously (scene transition). LoadState only kicks it off (and sets
+        // IsLoading so playback pauses); the resume is finished in Update once the load completes — we can't
+        // CopyProgressFrom here because the restored game state isn't in place yet.
         if (!SpeedrunToolInterop.LoadState(savestate.Slot)) {
             return false;
         }
 
-        Manager.Controller.CopyProgressFrom(savestate.Controller);
-
-        UpdateStudio();
+        pendingResume = savestate;
         return true;
     }
     private static void Clear(Savestate savestate) {
