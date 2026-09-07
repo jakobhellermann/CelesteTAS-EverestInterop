@@ -1,0 +1,3351 @@
+{
+  "ComponentSnapshots": [
+    {
+      "Path": "Hero_Hornet(Clone)@Transform",
+      "Data": {
+        "localRotation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        },
+        "localScale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      }
+    },
+    {
+      "Path": "Hero_Hornet(Clone)@Rigidbody2D",
+      "Data": {
+        "linearVelocity": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "gravityScale": 1.0,
+        "bodyType": "Dynamic"
+      }
+    },
+    {
+      "Path": "Hero_Hornet(Clone)@MeshRenderer",
+      "Data": {
+        "enabled": true
+      }
+    },
+    {
+      "Path": "Hero_Hornet(Clone)@HeroController",
+      "Data": {
+        "verboseMode": false,
+        "RUN_SPEED": 8.25,
+        "WALK_SPEED": 5.0,
+        "JUMP_SPEED": 18.6,
+        "MIN_JUMP_SPEED": 3.0,
+        "JUMP_STEPS": 8,
+        "JUMP_STEPS_MIN": 2,
+        "AIR_HANG_GRAVITY": 0.1,
+        "AIR_HANG_ACCEL": 5.0,
+        "SHUTTLECOCK_SPEED": 18.0,
+        "FLOAT_SPEED": -3.0,
+        "DOUBLE_JUMP_RISE_STEPS": 4,
+        "DOUBLE_JUMP_FALL_STEPS": 4,
+        "JUMP_ABILITY_GROUND_RAY_LENGTH": 1.0,
+        "WALLJUMP_RAY_LENGTH": 0.6,
+        "WALLJUMP_BROLLY_RAY_LENGTH": 1.0,
+        "WJLOCK_STEPS_SHORT": 5,
+        "WJLOCK_STEPS_LONG": 15,
+        "WJLOCK_CHAIN_STEPS": 10,
+        "WJ_KICKOFF_SPEED": 25.0,
+        "WALL_STICKY_STEPS": 3,
+        "DASH_SPEED": 28.0,
+        "DASH_TIME": 0.1,
+        "AIR_DASH_TIME": 0.02,
+        "DOWN_DASH_TIME": 0.25,
+        "DASH_QUEUE_STEPS": 10,
+        "DASH_COOLDOWN": 0.425,
+        "WALLSLIDE_STICK_TIME": 0.15,
+        "WALLSLIDE_ACCEL": -24.0,
+        "WALLSLIDE_SHUTTLECOCK_VEL": 12.0,
+        "WALLCLING_DECEL": 80.0,
+        "WALLCLING_COOLDOWN": 0.3,
+        "NAIL_CHARGE_TIME": 1.35,
+        "NAIL_CHARGE_TIME_QUICK": 0.8,
+        "NAIL_CHARGE_BEGIN_TIME": 0.3,
+        "NAIL_CHARGE_BEGIN_TIME_QUICK": 0.225,
+        "TIME_TO_ENTER_SCENE_BOT": 0.1,
+        "SPEED_TO_ENTER_SCENE_HOR": 8.0,
+        "SPEED_TO_ENTER_SCENE_UP": 9.4,
+        "SPEED_TO_ENTER_SCENE_DOWN": -12.0,
+        "DEFAULT_GRAVITY": 1.0,
+        "UNDERWATER_GRAVITY": 0.225,
+        "ALT_ATTACK_RESET": 0.5,
+        "DOWNSPIKE_REBOUND_STEPS": 6,
+        "DOWNSPIKE_REBOUND_SPEED": 20.0,
+        "DOWNSPIKE_LAND_RECOVERY_TIME": 0.166666672,
+        "DOWNSPIKE_ANTIC_DECELERATION": 0.8,
+        "DOWNSPIKE_ANTIC_CLAMP_VEL_Y": {
+          "Start": -12.0,
+          "End": 12.0
+        },
+        "JUMP_SPEED_UPDRAFT_EXIT": 20.0,
+        "DOWNSPIKE_INVULNERABILITY_STEPS": 8,
+        "DOWNSPIKE_INVULNERABILITY_STEPS_LONG": 16,
+        "BOUNCE_TIME": 0.25,
+        "BOUNCE_VELOCITY": 12.0,
+        "SHROOM_BOUNCE_VELOCITY": 25.0,
+        "RECOIL_HOR_VELOCITY": 3.75,
+        "RECOIL_HOR_VELOCITY_LONG": 16.0,
+        "RECOIL_HOR_VELOCITY_DRILLDASH": 10.0,
+        "RECOIL_HOR_STEPS": 8,
+        "RECOIL_DOWN_VELOCITY": 0.0,
+        "BIG_FALL_TIME": 0.5,
+        "HARD_LANDING_TIME": 0.67,
+        "DOWN_DASH_RECOVER_TIME": 0.115,
+        "MAX_FALL_VELOCITY": 30.0,
+        "MAX_FALL_VELOCITY_WEIGHTED": 38.0,
+        "MAX_FALL_VELOCITY_DJUMP": 10.0,
+        "RECOIL_DURATION": 0.2,
+        "RECOIL_VELOCITY": 15.0,
+        "DAMAGE_FREEZE_DOWN": 0.0,
+        "DAMAGE_FREEZE_WAIT": 0.1,
+        "DAMAGE_FREEZE_UP": 0.1,
+        "DAMAGE_FREEZE_SPEED": 0.0,
+        "INVUL_TIME": 1.0,
+        "INVUL_TIME_PARRY": 0.15,
+        "INVUL_TIME_QUAKE": 0.4,
+        "INVUL_TIME_CROSS_STITCH": 0.35,
+        "INVUL_TIME_SILKDASH": 0.5,
+        "REVENGE_WINDOW_TIME": 0.15,
+        "DASHCOMBO_WINDOW_TIME": 0.15,
+        "CAST_RECOIL_VELOCITY": 10.0,
+        "WALLSLIDE_CLIP_DELAY": 0.1,
+        "QUICKENING_DURATION": 10.0,
+        "QUICKENING_RUN_SPEED": 11.5,
+        "QUICKENING_WALK_SPEED": 7.0,
+        "FIRST_SILK_REGEN_DELAY": 0.65,
+        "FIRST_SILK_REGEN_DURATION": 0.8,
+        "SILK_REGEN_DELAY": 2.0,
+        "SILK_REGEN_DURATION": 1.9,
+        "CURSED_SILK_EAT_DELAY_FIRST": 2.0,
+        "CURSED_SILK_EAT_DELAY": 0.4,
+        "CURSED_SILK_EAT_DURATION": 1.083333,
+        "MAGGOTED_SILK_EAT_DELAY_FIRST": 0.0,
+        "MAGGOTED_SILK_EAT_DELAY": 0.0,
+        "MAGGOTED_SILK_EAT_DURATION": 7.0,
+        "JUMP_QUEUE_STEPS": 2,
+        "JUMP_RELEASE_QUEUE_STEPS": 2,
+        "DOUBLE_JUMP_QUEUE_STEPS": 10,
+        "ATTACK_QUEUE_STEPS": 8,
+        "TOOLTHROW_QUEUE_STEPS": 5,
+        "HARPOON_QUEUE_STEPS": 8,
+        "LOOK_DELAY": 0.85,
+        "LOOK_ANIM_DELAY": 0.25,
+        "DEATH_WAIT": 4.0,
+        "HAZARD_DEATH_CHECK_TIME": 3.0,
+        "FLOATING_CHECK_TIME": 0.18,
+        "LANDING_BUFFER_STEPS": 5,
+        "LEDGE_BUFFER_STEPS": 4,
+        "HEAD_BUMP_STEPS": 3,
+        "FIND_GROUND_POINT_DISTANCE": 10.0,
+        "FIND_GROUND_POINT_DISTANCE_EXT": 1000.0,
+        "HARPOON_DASH_TIME": 0.0,
+        "hero_state": "idle",
+        "prev_hero_state": "airborne",
+        "transitionState": "WAITING_TO_TRANSITION",
+        "damageMode": "FULL_DAMAGE",
+        "unlockRequests": "None",
+        "move_input": 0.0,
+        "vertical_input": 0.0,
+        "controller_deadzone": 0.2,
+        "current_velocity": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "isGameplayScene": true,
+        "isEnteringFirstLevel": false,
+        "isDashStabBouncing": false,
+        "canSoftLand": true,
+        "softLandTime": 16813,
+        "blockSteepSlopes": false,
+        "queuedLifeBloodState": false,
+        "slashOffset": {
+          "x": -0.4,
+          "y": -0.25
+        },
+        "upSlashOffset": {
+          "x": -0.1,
+          "y": 0.3
+        },
+        "downwardSlashOffset": {
+          "x": 0.3,
+          "y": -1.75
+        },
+        "spell1Offset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "jump_steps": 0,
+        "jumped_steps": 0,
+        "doubleJump_steps": 0,
+        "dash_timer": 0.0,
+        "dash_time": 0.0,
+        "attack_time": 0.0,
+        "attack_cooldown": 0.0,
+        "throwToolCooldown": 0.0,
+        "downspike_rebound_steps": 0,
+        "transition_vel": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "altAttackTime": 0.0,
+        "lookDelayTimer": 0.0,
+        "bounceTimer": 0.0,
+        "hardLandingTimer": 0.0,
+        "dashLandingTimer": 0.0,
+        "recoilTimer": 0.0,
+        "recoilStepsLeft": 0,
+        "landingBufferSteps": 0,
+        "dashQueueSteps": 0,
+        "dashQueuing": false,
+        "shadowDashTimer": 0.0,
+        "dashCooldownTimer": 0.0,
+        "nailChargeTimer": 0.0,
+        "wallLockSteps": 0,
+        "wallJumpChainStepsLeft": 0,
+        "wallslideClipTimer": 0.0,
+        "hardLandFailSafeTimer": 0.0,
+        "hazardDeathTimer": 0.0,
+        "floatingBufferTimer": 0.0,
+        "attackDuration": 0.0,
+        "prevAttackDir": -1,
+        "parryInvulnTimer": 0.0,
+        "revengeWindowTimer": -0.0156666953,
+        "wandererDashComboWindowTimer": 0.0,
+        "downSpikeTimer": 0.0,
+        "downSpikeRecoveryTimer": 0.0,
+        "toolThrowTime": 0.0,
+        "toolThrowDuration": 0.0,
+        "wallStickTimer": 0.0,
+        "wallStickStartVelocity": 0.0,
+        "lavaBellCooldownTimeLeft": 0.0,
+        "shuttlecockTime": 0.0,
+        "shuttlecockTimeResetTimer": 0.0,
+        "wallClingCooldownTimer": 0.0,
+        "evadingDidClash": false,
+        "doMaxSilkRegen": false,
+        "maxSilkRegenTimer": 0.0,
+        "shuttleCockJumpSteps": 0,
+        "artChargedEffectAnim": {
+          "$ref": "Hero_Hornet(Clone)/Effects/NA Charged@tk2dSpriteAnimator"
+        },
+        "frostedEffect": {
+          "$ref": "Hero_Hornet(Clone)/Effects/Frost Antic Pt@PlayParticleEffects"
+        },
+        "SlashNoiseMakerFront": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Slash Noise Maker Front@NoiseMaker"
+        },
+        "SlashNoiseMakerAbove": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Slash Noise Maker Above@NoiseMaker"
+        },
+        "SlashNoiseMakerBelow": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Slash Noise Maker Below@NoiseMaker"
+        },
+        "gm": {
+          "$ref": "_GameManager@GameManager"
+        },
+        "rb2d": {
+          "$ref": "Hero_Hornet(Clone)@Rigidbody2D"
+        },
+        "renderer": {
+          "$ref": "Hero_Hornet(Clone)@MeshRenderer"
+        },
+        "animCtrl": {
+          "$ref": "Hero_Hornet(Clone)@HeroAnimationController"
+        },
+        "heroBox": {
+          "$ref": "Hero_Hornet(Clone)/HeroBox@HeroBox"
+        },
+        "cState": {
+          "facingRight": false,
+          "onGround": true,
+          "jumping": false,
+          "shuttleCock": false,
+          "floating": false,
+          "wallJumping": false,
+          "doubleJumping": false,
+          "nailCharging": false,
+          "shadowDashing": false,
+          "swimming": false,
+          "falling": false,
+          "dashing": false,
+          "isSprinting": false,
+          "isBackSprinting": false,
+          "isBackScuttling": false,
+          "airDashing": false,
+          "superDashing": false,
+          "superDashOnWall": false,
+          "backDashing": false,
+          "touchingWall": false,
+          "wallSliding": false,
+          "wallClinging": false,
+          "wallScrambling": false,
+          "transitioning": false,
+          "attacking": false,
+          "attackCount": 14,
+          "lookingUp": false,
+          "lookingDown": false,
+          "lookingUpRing": false,
+          "lookingDownRing": false,
+          "lookingUpAnim": false,
+          "lookingDownAnim": false,
+          "altAttack": false,
+          "upAttacking": false,
+          "downAttacking": false,
+          "downTravelling": false,
+          "downSpikeAntic": false,
+          "downSpiking": false,
+          "downSpikeBouncing": false,
+          "downSpikeBouncingShort": false,
+          "downSpikeRecovery": false,
+          "bouncing": false,
+          "shroomBouncing": false,
+          "recoilingRight": false,
+          "recoilingLeft": false,
+          "recoilingDrill": false,
+          "dead": false,
+          "isFrostDeath": false,
+          "hazardDeath": false,
+          "hazardRespawning": false,
+          "willHardLand": false,
+          "recoilFrozen": false,
+          "recoiling": false,
+          "invulnerable": false,
+          "invulnerableCount": 0,
+          "casting": false,
+          "castRecoiling": false,
+          "preventDash": false,
+          "preventBackDash": false,
+          "dashCooldown": false,
+          "backDashCooldown": false,
+          "nearBench": false,
+          "inWalkZone": false,
+          "isPaused": true,
+          "onConveyor": false,
+          "onConveyorV": false,
+          "inConveyorZone": false,
+          "spellQuake": false,
+          "freezeCharge": false,
+          "focusing": false,
+          "inAcid": false,
+          "touchingNonSlider": false,
+          "wasOnGround": true,
+          "parrying": false,
+          "parryAttack": false,
+          "mantling": false,
+          "mantleRecovery": false,
+          "inUpdraft": false,
+          "downspikeInvulnerabilitySteps": 0,
+          "isToolThrowing": false,
+          "toolThrowCount": 0,
+          "throwingToolVertical": 0,
+          "isInCancelableFSMMove": false,
+          "inWindRegion": false,
+          "isMaggoted": false,
+          "inFrostRegion": false,
+          "isFrosted": false,
+          "isTouchingSlopeLeft": false,
+          "isTouchingSlopeRight": false,
+          "isBinding": false,
+          "needolinPlayingMemory": false,
+          "isScrewDownAttacking": false,
+          "evading": false,
+          "whipLashing": false,
+          "fakeHurt": false,
+          "isInCutsceneMovement": false,
+          "isTriggerEventsPaused": false,
+          "invulnerabilitySources": []
+        },
+        "audioCtrl": {
+          "$ref": "Hero_Hornet(Clone)@HeroAudioController"
+        },
+        "audioSource": {
+          "$ref": "Hero_Hornet(Clone)@AudioSource"
+        },
+        "ui": {
+          "$ref": "_UIManager@UIManager"
+        },
+        "inputHandler": {
+          "$ref": "_GameManager@InputHandler"
+        },
+        "damageEffectFSM": {
+          "$ref": "Hero_Hornet(Clone)/Effects/Damage Effect@PlayMakerFSM"
+        },
+        "vibrationCtrl": {
+          "$ref": "Hero_Hornet(Clone)@HeroVibrationController"
+        },
+        "sprintFSM": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:5"
+        },
+        "toolsFSM": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:9"
+        },
+        "mantleFSM": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:6"
+        },
+        "umbrellaFSM": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:8"
+        },
+        "silkSpecialFSM": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:10"
+        },
+        "crestAttacksFSM": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:14"
+        },
+        "harpoonDashFSM": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:7"
+        },
+        "superJumpFSM": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:12"
+        },
+        "bellBindFSM": {
+          "$ref": "Hero_Hornet(Clone)/Tool Effects/Bell Bind@PlayMakerFSM"
+        },
+        "wallScrambleFSM": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:15"
+        },
+        "invPulse": {
+          "$ref": "Hero_Hornet(Clone)@InvulnerablePulse"
+        },
+        "spriteFlash": {
+          "$ref": "Hero_Hornet(Clone)@SpriteFlash"
+        },
+        "prevGravityScale": 0.0,
+        "recoilVector": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "lastInputState": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "velocity_crt": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "velocity_prev": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "gatePosition": "top",
+        "hardLanded": false,
+        "fallRumble": false,
+        "acceptingInput": true,
+        "fallTrailGenerated": false,
+        "dashBumpCorrection": 0.0,
+        "controlReqlinquished": false,
+        "enterWithoutInput": false,
+        "skipNormalEntry": false,
+        "downspike_rebound_xspeed": 0.0,
+        "downSpikeHorizontalSpeed": 0.0,
+        "shuttlecockSpeed": 0.0,
+        "currentGravity": 0.0,
+        "didAirHang": false,
+        "updraftsEntered": 0,
+        "harpoonDashCooldown": 0.0,
+        "endBeta": null,
+        "lastLookDirection": 0,
+        "controlRelinquishedFrame": 0,
+        "jumpQueueSteps": 0,
+        "jumpQueuing": false,
+        "doubleJumpQueueSteps": 0,
+        "doubleJumpQueuing": false,
+        "jumpReleaseQueueSteps": 0,
+        "jumpReleaseQueuing": false,
+        "attackQueueSteps": 0,
+        "attackQueuing": false,
+        "harpoonQueueSteps": 0,
+        "harpoonQueuing": false,
+        "toolThrowQueueSteps": 0,
+        "toolThrowQueueing": false,
+        "touchingWallL": false,
+        "touchingWallR": false,
+        "wallSlidingL": false,
+        "wallSlidingR": false,
+        "airDashed": false,
+        "dashingDown": false,
+        "startWithWallslide": false,
+        "startWithJump": false,
+        "startWithAnyJump": false,
+        "startWithTinyJump": false,
+        "startWithShuttlecock": false,
+        "startWithFullJump": false,
+        "startWithFlipJump": false,
+        "startWithBackflipJump": false,
+        "startWithBrolly": false,
+        "startWithDoubleJump": false,
+        "startWithWallsprintLaunch": false,
+        "startWithDash": false,
+        "dashCurrentFacing": false,
+        "startWithDownSpikeBounce": false,
+        "startWithDownSpikeBounceSlightlyShort": false,
+        "startWithDownSpikeBounceShort": false,
+        "startWithDownSpikeEnd": false,
+        "startWithHarpoonBounce": false,
+        "startWithWitchSprintBounce": false,
+        "startWithBalloonBounce": false,
+        "startWithUpdraftExit": false,
+        "useUpdraftExitJumpSpeed": false,
+        "startWithScrambleLeap": false,
+        "startWithRecoilBack": false,
+        "startWithRecoilBackLong": false,
+        "startWithWhipPullRecoil": false,
+        "startWithAttack": false,
+        "startWithToolThrow": false,
+        "wallSlashing": false,
+        "doubleJumped": false,
+        "wallJumpedR": false,
+        "wallJumpedL": false,
+        "wallLocked": false,
+        "currentWalljumpSpeed": 0.0,
+        "walljumpSpeedDecel": 0.0,
+        "wallUnstickSteps": 0,
+        "recoilVelocity": 0.0,
+        "conveyorSpeed": 0.0,
+        "enteringVertically": false,
+        "playingWallslideClip": false,
+        "playedMantisClawClip": false,
+        "exitedSuperDashing": false,
+        "exitedQuake": false,
+        "exitedSprinting": false,
+        "fallCheckFlagged": false,
+        "ledgeBufferSteps": 0,
+        "sprintBufferSteps": 0,
+        "syncBufferSteps": false,
+        "noShuttlecockTime": 0.0,
+        "headBumpSteps": 0,
+        "takeNoDamage": false,
+        "joniBeam": false,
+        "fadedSceneIn": false,
+        "stopWalkingOut": false,
+        "boundsChecking": false,
+        "blockerFix": false,
+        "doFullJump": false,
+        "startFromMantle": false,
+        "allowMantle": false,
+        "allowAttackCancellingDownspikeRecovery": false,
+        "queuedWallJumpInterrupt": false,
+        "startWithWallJump": false,
+        "jumpPressedWhileRelinquished": false,
+        "regainControlJumpQueued": false,
+        "positionHistory": [
+          {
+            "x": 47.9445419,
+            "y": 4.567685
+          },
+          {
+            "x": 47.9445419,
+            "y": 4.567685
+          }
+        ],
+        "tilemapTestActive": true,
+        "allowNailChargingWhileRelinquished": false,
+        "allowRecoilWhileRelinquished": false,
+        "recoilZeroVelocity": false,
+        "silkRegenDelayLeft": 0.08305857,
+        "silkRegenDurationLeft": 0.0,
+        "isSilkRegenBlocked": false,
+        "hasSilkSpoolAppeared": true,
+        "isNextSilkRegenUpgraded": false,
+        "blockFsmMove": false,
+        "maggotedSilkTracker": {
+          "EatDelayLeft": 0.0,
+          "EatDurationLeft": 0.0,
+          "EatSilkCount": 0
+        },
+        "maggotCharmTimer": 0.0,
+        "mossCreep1Hits": 0,
+        "mossCreep2Hits": 0,
+        "frostAmount": 0.0,
+        "frostDamageTimer": 0.0,
+        "isInFrostRegion": false,
+        "frostRegionFlash": {
+          "id": 0,
+          "owner": null
+        },
+        "frostAnticFlash": {
+          "id": 0,
+          "owner": null
+        },
+        "doingHazardRespawn": false,
+        "lastHazardRespawnTime": 0.0,
+        "luckyDiceShieldedHits": 0,
+        "forceWalkingSound": false,
+        "silkTauntEffectTimeLeft": 0.0,
+        "ringTauntEffectTimeLeft": 0.0,
+        "refillSoundSuppressFramesLeft": 0,
+        "groundRayOriginC": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "groundRayOriginL": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "groundRayOriginR": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "nailArtChargeComplete": {},
+        "doubleJumpClip": {},
+        "mantisClawClip": {},
+        "downDashCancelClip": {},
+        "deathImpactClip": {},
+        "shuttleCockJumpAudio": {
+          "$ref": "Hero_Hornet(Clone)/Sounds/Shuttlecock Jump@AudioSource"
+        },
+        "frostedEnterAudio": {
+          "Clip": {},
+          "PitchMin": 0.95,
+          "PitchMax": 1.05,
+          "Volume": 1.0
+        },
+        "frostedAudioLoop": {
+          "$ref": "Hero_Hornet(Clone)/Sounds/Frosted Loop@AudioSource"
+        },
+        "frostedAudioLoopFadeOut": 0.0,
+        "_slashComponent": null,
+        "slashFsm": null,
+        "currentSlashDamager": null,
+        "currentDownspike": null,
+        "runEffect": null,
+        "dashEffect": null,
+        "enviroRegionListener": {
+          "$ref": "Hero_Hornet(Clone)@EnviroRegionListener"
+        },
+        "tagDamageTaker": {
+          "$ref": "Hero_Hornet(Clone)@TagDamageTaker"
+        },
+        "bumpChecker": {
+          "$ref": "Hero_Hornet(Clone)@CharacterBumpCheck"
+        },
+        "spawnedQuickeningEffect": null,
+        "quickeningFlash": {
+          "id": 0,
+          "owner": null
+        },
+        "spawnedMaggotEffect": null,
+        "maggotedFlash": {
+          "id": 0,
+          "owner": null
+        },
+        "matchScale": null,
+        "poisonHealthFlash": {
+          "id": 0,
+          "owner": null
+        },
+        "vignetteFSM": {
+          "$ref": "Hero_Hornet(Clone)/Vignette@PlayMakerFSM"
+        },
+        "heroLight": {
+          "$ref": "Hero_Hornet(Clone)@HeroLight"
+        },
+        "dashBurst": null,
+        "fsm_thornCounter": null,
+        "spellControl": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:1"
+        },
+        "fsm_fallTrail": {
+          "$ref": "Hero_Hornet(Clone)/Effects/Fall Trail@PlayMakerFSM"
+        },
+        "fsm_orbitShield": null,
+        "fsm_brollyControl": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:8"
+        },
+        "toolEventTarget": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:9"
+        },
+        "skillEventTarget": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:10"
+        },
+        "rageModeEffect": {
+          "$ref": "Hero_Hornet(Clone)/crest_warrior_effects(Clone)@NestedFadeGroupTimedFader"
+        },
+        "reaperModeEffect": {
+          "$ref": "Hero_Hornet(Clone)/crest_reaper_effects(Clone)@NestedFadeGroupTimedFader"
+        },
+        "isHeroInPosition": true,
+        "isHeroInPrePosition": true,
+        "jumpReleaseQueueingEnabled": false,
+        "queuedAutoThrowTool": false,
+        "lookDownBlocked": false,
+        "warriorState": {
+          "IsInRageMode": false,
+          "RageEffectTimeLeft": 0.0,
+          "RageHealTimeLeft": 0.0,
+          "RageModeHealCount": 0,
+          "LastHealAttack": 0
+        },
+        "reaperBundleDrops": [
+          {
+            "Value": 1,
+            "Probability": 0.35
+          },
+          {
+            "Value": 2,
+            "Probability": 0.5
+          },
+          {
+            "Value": 3,
+            "Probability": 0.15
+          }
+        ],
+        "silkPartsTimeLeft": 0.0,
+        "reaperState": {
+          "ReaperModeDurationLeft": 0.0,
+          "IsInReaperMode": false
+        },
+        "hunterUpgState": {
+          "CurrentMeterHits": 0
+        },
+        "quickeningTimeLeft": 0.0,
+        "didCheckEdgeAdjust": true,
+        "normalSlash": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Default/Slash@NailSlash"
+        },
+        "normalSlashDamager": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Default/Slash@DamageEnemies"
+        },
+        "alternateSlash": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Default/AltSlash@NailSlash"
+        },
+        "alternateSlashDamager": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Default/AltSlash@DamageEnemies"
+        },
+        "upSlash": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Default/UpSlash@NailSlash"
+        },
+        "upSlashDamager": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Default/UpSlash@DamageEnemies"
+        },
+        "altUpSlash": null,
+        "altUpSlashDamager": null,
+        "downSlash": null,
+        "downSpike": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Default/DownSlash@Downspike"
+        },
+        "downSlashDamager": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Default/DownSlash@DamageEnemies"
+        },
+        "altDownSlash": null,
+        "altDownSpike": null,
+        "altDownSlashDamager": null,
+        "wallSlash": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Default/WallSlash@NailSlash"
+        },
+        "wallSlashDamager": {
+          "$ref": "Hero_Hornet(Clone)/Attacks/Default/WallSlash@DamageEnemies"
+        },
+        "areaEffectTint": {
+          "$ref": "Hero_Hornet(Clone)/Effects/Pt RunningWater@AreaEffectTint"
+        },
+        "inputBlockers": [],
+        "extraAirMoveVelocities": [],
+        "tryShove": false,
+        "onFlatGround": false,
+        "damageEnemiesList": [
+          {
+            "$ref": "Hero_Hornet(Clone)/Taunt Slash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/Slash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/AltSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/DownSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/UpSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/WallSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/Dash Stab@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Cloakless/Kick@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Cloakless/AltKick@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Cloakless/DownKick@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Cloakless/UpKick@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Cloakless/WallKick@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Cloakless/Dash Kick@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Scythe/Slash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Scythe/AltSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Scythe/DownSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Scythe/UpSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Scythe/WallSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Scythe/Dash Stab@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Scythe/DashUpper Slash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Scythe/DashUpper Slash/Extra Damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Scythe/DownSlash New@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/Slash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/AltSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/DownSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/UpSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/WallSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/SpinSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/SpinSlash/Extra Damager - Disabled for now@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/SpinSlashRage@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/SpinSlashRage/Extra Damager - Disabled for now@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/Slash Rage@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/AltSlash Rage@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/UpSlash Rage@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/WallSlash Rage@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/DashSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/DashSlash Rage@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Warrior/Taunt Slash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Wanderer/Slash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Wanderer/AltSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Wanderer/DownSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Wanderer/DownSlashAlt@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Wanderer/UpSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Wanderer/WallSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Wanderer/DashStab@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Wanderer/DashStabAlt@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Wanderer/RecoilStab@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Toolmaster/Slash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Toolmaster/AltSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Toolmaster/DownSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Toolmaster/UpSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Toolmaster/WallSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Toolmaster/Dash Stab@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Toolmaster/DownSlash New@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Toolmaster/DownSlash New Charged@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Toolmaster/Dash Stab Charged@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/Slash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/AltSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/DownSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/UpSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/WallSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/Dash Stab Parent/Dash Stab 1@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/Dash Stab Parent/Dash Stab 2@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/DownSlash New@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/DownSlash New/Extra Damager - deprecated@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/RevengeSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/Lash Damager Old@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/Slash Prev@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Witch/Slash Prev/Extra Damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Shaman/Slash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Shaman/AltSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Shaman/DownSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Shaman/UpSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Shaman/WallSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Shaman/DashSlash@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Downspike Knockback Top@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Downspike Knockback Bottom@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Harpoon Dash Damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Harpoon Damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Basic/slash 01@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Basic/slash 02@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Scythe/slash 01@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Scythe/slash 02@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Scythe/slash behind@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Upgraded/slash 01@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Upgraded/slash 02@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Upgraded/slash 03@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Warrior Old@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Screw Attack Damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Wanderer@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Toolmaster/damager/damager front@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Witch/damager 01@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Witch/damager 02@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Harpoon Breaker@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Shaman/damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Test/Reaper@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Test/Witch@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Test/Witch/Extra Damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Test/Beast@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Test/Hunter@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Test/Wanderer@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Test/Toolmaster@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Warrior/Charge Slash Warrior Right/enemy damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Warrior/Charge Slash Warrior Left/enemy damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Warrior Rage/Charge Slash Warrior Right/enemy damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Charge Slash Warrior Rage/Charge Slash Warrior Left/enemy damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Bind Effects/Witch Bind/Damager (1)@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Bind Effects/Witch Bind/Damager (2)@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Bind Effects/Witch Bind/Damager (3)@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Bind Effects/Witch Bind/Damager (4)@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Harpoon Needle/Harpoon Tinker@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Special Attacks/Sphere Ball/Ball@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Special Attacks/Needle Throw/needle_throw_simple/needle/Needle Damage@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Special Attacks/ParryDash Dmg@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Special Attacks/Super Jump Needle Throw/Damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Special Attacks/Super Jump Damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Special Attacks/Silk Charge Damager@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/SnipeShot Impact/SnipeShot Trail@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Tool Effects/Extractor Hit@DamageEnemies"
+          },
+          {
+            "$ref": "Hero_Hornet(Clone)/Tool Effects/Snare Loop Damager@DamageEnemies"
+          }
+        ],
+        "canThrowTime": 273.8371383376579,
+        "tryCancelDownSlash": false,
+        "parriedAttack": 0,
+        "announceNextFixedUpdate": false,
+        "recoilAllowTime": 0.0,
+        "preventCastByDialogueEndTimer": 0.0,
+        "preventSoftLandTimer": 0.0,
+        "invulnerableFreezeDuration": 0.0,
+        "invulnerableDuration": 0.0,
+        "leftCache": {
+          "top": {
+            "hit": {
+              "m_Centroid": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Point": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Normal": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Distance": 0.0,
+              "m_Fraction": 0.0,
+              "m_Collider": 0
+            },
+            "hasCollider2D": false,
+            "cachedCollider2D": false,
+            "cachedSlope": false,
+            "cachedSlider": false,
+            "isSteepSlope": false,
+            "isNonSlider": false
+          },
+          "mid": {
+            "hit": {
+              "m_Centroid": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Point": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Normal": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Distance": 0.0,
+              "m_Fraction": 0.0,
+              "m_Collider": 0
+            },
+            "hasCollider2D": false,
+            "cachedCollider2D": true,
+            "cachedSlope": false,
+            "cachedSlider": false,
+            "isSteepSlope": false,
+            "isNonSlider": false
+          },
+          "bottom": {
+            "hit": {
+              "m_Centroid": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Point": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Normal": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Distance": 0.0,
+              "m_Fraction": 0.0,
+              "m_Collider": 0
+            },
+            "hasCollider2D": false,
+            "cachedCollider2D": true,
+            "cachedSlope": false,
+            "cachedSlider": false,
+            "isSteepSlope": false,
+            "isNonSlider": false
+          },
+          "lastPosition": {
+            "x": 47.9445419,
+            "y": 4.567685,
+            "z": 0.004
+          },
+          "lastUpdate": 14412
+        },
+        "rightCache": {
+          "top": {
+            "hit": {
+              "m_Centroid": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Point": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Normal": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Distance": 0.0,
+              "m_Fraction": 0.0,
+              "m_Collider": 0
+            },
+            "hasCollider2D": false,
+            "cachedCollider2D": false,
+            "cachedSlope": false,
+            "cachedSlider": false,
+            "isSteepSlope": false,
+            "isNonSlider": false
+          },
+          "mid": {
+            "hit": {
+              "m_Centroid": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Point": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Normal": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Distance": 0.0,
+              "m_Fraction": 0.0,
+              "m_Collider": 0
+            },
+            "hasCollider2D": false,
+            "cachedCollider2D": true,
+            "cachedSlope": false,
+            "cachedSlider": false,
+            "isSteepSlope": false,
+            "isNonSlider": false
+          },
+          "bottom": {
+            "hit": {
+              "m_Centroid": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Point": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Normal": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "m_Distance": 0.0,
+              "m_Fraction": 0.0,
+              "m_Collider": 0
+            },
+            "hasCollider2D": false,
+            "cachedCollider2D": true,
+            "cachedSlope": false,
+            "cachedSlider": false,
+            "isSteepSlope": false,
+            "isNonSlider": false
+          },
+          "lastPosition": {
+            "x": 47.9445419,
+            "y": 4.567685,
+            "z": 0.004
+          },
+          "lastUpdate": 14412
+        },
+        "checkTouchGround": {
+          "lastPosition": {
+            "x": 47.9445419,
+            "y": 4.567685,
+            "z": 0.004
+          },
+          "IsTouchingGround": true,
+          "lastUpdate": 14413
+        },
+        "HeroLockState": "None",
+        "fallTimer": 0.0,
+        "proxyFSM": {
+          "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:0"
+        },
+        "NailImbuement": {
+          "$ref": "Hero_Hornet(Clone)@HeroNailImbuement"
+        },
+        "IsGravityApplied": true,
+        "sceneEntryGate": null,
+        "ForceRunningSound": false,
+        "IsStunned": false,
+        "WandererState": {
+          "QueuedNextHitCritical": false,
+          "CriticalHitsLocked": false
+        },
+        "IsInLifebloodState": false,
+        "PoisonHealthCount": 0,
+        "CurrentConfigGroup": {
+          "NormalSlash": {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/Slash@NailSlash"
+          },
+          "NormalSlashDamager": {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/Slash@DamageEnemies"
+          },
+          "AlternateSlash": {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/AltSlash@NailSlash"
+          },
+          "AlternateSlashDamager": {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/AltSlash@DamageEnemies"
+          },
+          "UpSlash": {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/UpSlash@NailSlash"
+          },
+          "UpSlashDamager": {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/UpSlash@DamageEnemies"
+          },
+          "AltUpSlash": null,
+          "AltUpSlashDamager": null,
+          "DownSlash": null,
+          "Downspike": {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/DownSlash@Downspike"
+          },
+          "DownSlashDamager": {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/DownSlash@DamageEnemies"
+          },
+          "AltDownSlash": null,
+          "AltDownspike": null,
+          "AltDownSlashDamager": null,
+          "WallSlash": {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/WallSlash@NailSlash"
+          },
+          "WallSlashDamager": {
+            "$ref": "Hero_Hornet(Clone)/Attacks/Default/WallSlash@DamageEnemies"
+          }
+        },
+        "ForceClampTerminalVelocity": false,
+        "AnimationControlVersion": 1,
+        "enabled": true
+      }
+    },
+    {
+      "Path": "Hero_Hornet(Clone)@HeroAnimationController",
+      "Data": {
+        "animator": {
+          "$ref": "Hero_Hornet(Clone)@tk2dSpriteAnimator"
+        },
+        "meshRenderer": {
+          "$ref": "Hero_Hornet(Clone)@MeshRenderer"
+        },
+        "heroCtrl": {
+          "$ref": "Hero_Hornet(Clone)@HeroController"
+        },
+        "audioCtrl": {
+          "$ref": "Hero_Hornet(Clone)@HeroAudioController"
+        },
+        "playLanding": false,
+        "_playRunToIdle": false,
+        "playRunToIdle": false,
+        "playDashToIdle": false,
+        "playBackDashToIdleEnd": false,
+        "playedDownSpikeBounce": false,
+        "justWallJumped": false,
+        "wallJumpedFromScramble": false,
+        "isPlayingSlashLand": false,
+        "playSlashLand": false,
+        "playSlashEnd": false,
+        "previousAttackCount": 14,
+        "canceledSlash": true,
+        "playSilkChargeEnd": false,
+        "skipIdleToRun": false,
+        "idleToRunShort": false,
+        "startWithFallAnim": false,
+        "backflipSpawnedAudio": null,
+        "playSprintToRun": false,
+        "didSkid": false,
+        "wasFacingRight": false,
+        "setEntryAnim": false,
+        "previousToolThrowCount": 0,
+        "animEventsTriggered": 2,
+        "attackComplete": false,
+        "downspikeAnims": [
+          {
+            "item": "DownSpikeBounce 1",
+            "Probability": 1.0
+          },
+          {
+            "item": "DownSpikeBounce 2",
+            "Probability": 1.0
+          },
+          {
+            "item": "Recoil Twirl",
+            "Probability": 1.0
+          }
+        ],
+        "downspikeAnimProbabilities": null,
+        "wasPlayingAirRecovery": false,
+        "wasJumping": false,
+        "wantsToJump": false,
+        "wasWallSliding": false,
+        "wasWallClinging": false,
+        "wasInWalkZone": false,
+        "didJustLand": false,
+        "playingDoubleJump": false,
+        "canForceDoubleJump": false,
+        "playingDownDashEnd": false,
+        "wasFacingRightWhenStopped": false,
+        "selectedMantleCancelJumpAnim": null,
+        "playMantleCancel": false,
+        "checkMantleCancel": false,
+        "playBackflip": false,
+        "playSuperJumpFall": false,
+        "playDashUpperRecovery": false,
+        "nextIdleLookTime": 0.5314057,
+        "playingIdleRest": false,
+        "isCursed": false,
+        "waitingToEnter": false,
+        "actorState": "idle",
+        "prevActorState": "airborne",
+        "stateBeforeControl": "idle",
+        "controlEnabled": true,
+        "IsPlayingUpdraftAnim": false,
+        "IsPlayingWindyAnim": false,
+        "IsPlayingHurtAnim": false,
+        "enabled": true
+      }
+    },
+    {
+      "Path": "Hero_Hornet(Clone)@tk2dSpriteAnimator",
+      "Data": {
+        "clip": "Idle",
+        "clipTime": 135.800217,
+        "fps": 12.0,
+        "playing": true,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    }
+  ],
+  "FsmSnapshots": [
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "ProxyFSM",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Faced Radiance": false,
+        "Item Name": ""
+      },
+      "Actions": [],
+      "GameObjectVariables": {
+        "Msg": null,
+        "Msg Item": null,
+        "Msg Text": null,
+        "Self": null,
+        "White_Flower_Break": null
+      },
+      "ObjectVariables": {}
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Bind",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Bind Time": 1.2,
+        "Bind Time Limit": 0.0,
+        "Burst Time": 0.0,
+        "Deceleration": 0.0,
+        "Rise Speed": 0.0,
+        "Silk Scale": 1.36123109,
+        "Can Bind Time": 0.0,
+        "Burst Rise Velocity": 0.0,
+        "Start Rise Velocity": 0.0,
+        "Start Pos Y": 0.0,
+        "Current Pos Y": 0.0,
+        "Velocity Y": 0.0,
+        "Shuttlecock Time": 0.0,
+        "Quick Bind Effect Delay": 0.0,
+        "Max Fall Velocity": 0.0,
+        "Current Silk Cost": 0,
+        "Heal Amount": 0,
+        "Silk Cost": 9,
+        "Silk Cost Witch": 9,
+        "Bind Amount": 0,
+        "Current Silk Amount": 0,
+        "Bind Locked": false,
+        "Bind Unbound": false,
+        "Can Bind Break": false,
+        "Chooser": false,
+        "Chooser2": false,
+        "Dash Queued": false,
+        "Did Replenish": false,
+        "Do Bind": false,
+        "High Shuttlecock": false,
+        "Is Binding": false,
+        "Is Dazzle Equipped": false,
+        "Is Shaman Equipped": false,
+        "Is Shuttlecock": false,
+        "Is Sprinting": false,
+        "Is Warrior Equipped": false,
+        "Is Witch Equipped": false,
+        "Not Enough Silk": false,
+        "On Ground": false,
+        "Quick Binding": false,
+        "Return Bool": false,
+        "Skip Heal": false,
+        "Started Curse": false,
+        "Used Reserve Bind": false,
+        "Was Up Pressed": false,
+        "Witch Binding": false,
+        "Test": false,
+        "Can Dash": false,
+        "Is Pressed": false,
+        "Was On Ground": false,
+        "Is Multibind Equipped": false,
+        "Is Quickbind Equipped": false,
+        "Timer Ended": false,
+        "Is First Loop": false,
+        "Do Burst Rise": false,
+        "Is Dazzle Upgraded": false,
+        "Has Regen": false,
+        "Air Dashed": false,
+        "Bind Anim": "",
+        "BindBurst Anim": "",
+        "BindCancel Anim": "",
+        "Air BindCharge Anim": "",
+        "Ground BindCharge Anim": "",
+        "Play Anim": "",
+        "Bind Silk Anim": "",
+        "BindBurst Anim Warrior": "",
+        "Ground BindCharge Anim Next": ""
+      },
+      "Actions": [
+        {
+          "StateIndex": 0,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 1,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 2,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 3,
+          "Data": {
+            "gameObject": {
+              "ownerOption": "SpecifyGameObject"
+            },
+            "resetOnExit": false,
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 4,
+          "Data": {
+            "eventTarget": {
+              "target": "Self",
+              "gameObject": {
+                "ownerOption": "UseOwner"
+              },
+              "fsmComponent": null
+            },
+            "stateEntryOnly": false,
+            "gm": {
+              "$ref": "_GameManager@GameManager"
+            },
+            "inputHandler": {
+              "$ref": "_GameManager@InputHandler"
+            },
+            "active": true,
+            "finished": false,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 5,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Audio Player": null,
+        "Bind Bell": "Hero_Hornet(Clone)/Tool Effects/Bell Bind",
+        "Bind Effects": "Hero_Hornet(Clone)/Bind Effects",
+        "Bind Silk": "Hero_Hornet(Clone)/Bind Effects/Bind Silk",
+        "Bind Voice Player": null,
+        "Cursed Bind": "Hero_Hornet(Clone)/Effects/Cursed Bind Hornet",
+        "Focus Burst Anim": "Hero_Hornet(Clone)/Bind Effects/Heal Anim",
+        "Pt Charge": "Hero_Hornet(Clone)/Bind Effects/Pt Charge",
+        "Pt Heal": "Hero_Hornet(Clone)/Bind Effects/Pt Heal",
+        "Pt Heal Crt": null,
+        "Pt Heal Small": "Hero_Hornet(Clone)/Bind Effects/Pt Heal Small",
+        "Self": "Hero_Hornet(Clone)",
+        "Witch Bind": "Hero_Hornet(Clone)/Bind Effects/Witch Bind",
+        "Dazzle Flash": null,
+        "Sphere Flash": "Hero_Hornet(Clone)/Special Attacks/Sphere Flash",
+        "Pt Craft": "Hero_Hornet(Clone)/Tool Effects/Pt QuickCraft",
+        "QuickCraft Silk": "Hero_Hornet(Clone)/Tool Effects/QuickCraft Silk",
+        "Spawned": null,
+        "Rage Burst Effect": "Hero_Hornet(Clone)/Bind Effects/crest rage_burst_effect(Clone)",
+        "Loop Audio Spawned": null,
+        "shaman_focus_halo": "Hero_Hornet(Clone)/Bind Effects/shaman_focus_halo",
+        "Bind Audio Loop": "Hero_Hornet(Clone)/Sounds/Bind Loop",
+        "hornet_quick_bind_effect": "Hero_Hornet(Clone)/Bind Effects/hornet_quick_bind_effect",
+        "Hard Land Audio": "Hero_Hornet(Clone)/Sounds/HardLanding",
+        "Shaman_Bind_antic_silk": "Hero_Hornet(Clone)/Bind Effects/Shaman_Bind_antic_silk",
+        "Shaman Bind Fall Audio": "Hero_Hornet(Clone)/Sounds/Shaman Bind Fall",
+        "Warrior_Bind_antic_silk": "Hero_Hornet(Clone)/Bind Effects/Warrior_Bind_antic_silk",
+        "Whip_Bind_silk_antic": "Hero_Hornet(Clone)/Bind Effects/Whip_Bind_silk_antic",
+        "Witch Bind Maggot Cleanse": "Hero_Hornet(Clone)/Bind Effects/Witch Bind Maggot Cleanse",
+        "Dazzle Flash Upgraded": null
+      },
+      "ObjectVariables": {
+        "Bind Voice Clip": null
+      }
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Map Control",
+      "ActiveState": "Inactive",
+      "Variables": {
+        "Button Down Time": 0.1,
+        "Open Time": 0.0,
+        "Walk Speed": 4.0,
+        "Walk Speed Neg": -4.0,
+        "Velocity X": 0.0,
+        "Quick Map Open": false,
+        "Return Bool": false,
+        "Photo Mode": false,
+        "Queued Quick Map": false,
+        "Can Close Quick Map": false,
+        "Can Do Shortcut": false,
+        "Walking": false,
+        "Quick Cancel": false,
+        "Can Open Inventory": false
+      },
+      "Actions": [
+        {
+          "StateIndex": 0,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 1,
+          "Data": {
+            "eventTarget": {
+              "target": "Self",
+              "gameObject": {
+                "ownerOption": "UseOwner"
+              },
+              "fsmComponent": null
+            },
+            "gm": {
+              "$ref": "_GameManager@GameManager"
+            },
+            "inputHandler": {
+              "$ref": "_GameManager@InputHandler"
+            },
+            "active": true,
+            "finished": false,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Inventory": null,
+        "Self": "Hero_Hornet(Clone)",
+        "Spawned Audio Player": null
+      },
+      "ObjectVariables": {}
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Roar and Wound States",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Push Strength": 1.0,
+        "Push Strength Air": 0.0,
+        "Push Strength Ground": 0.0,
+        "X Scale": 0.0,
+        "X Speed": 0.0,
+        "Y Speed": 0.0,
+        "Double Strike Pause": 0.2,
+        "Void Effect Amount": 0,
+        "Burst": false,
+        "Can Take Damage": false,
+        "Damaged By Void Multihitter": false,
+        "Facing L": false,
+        "Facing Right": false,
+        "Force Roar Lock": false,
+        "Freeze Velocity During Multihit": true,
+        "Grounded L": false,
+        "Grounded R": false,
+        "Invalid Recoil L": false,
+        "Invalid Recoil R": false,
+        "Is Binding": false,
+        "Is Grabbed": false,
+        "Is Swimming": false,
+        "Is Weighted": false,
+        "No Roar Shove": false,
+        "On Ground": false,
+        "Roar is Left": false,
+        "Roar is Right": false,
+        "Stop Recoil": false,
+        "Wall Behind": false
+      },
+      "Actions": [
+        {
+          "StateIndex": 0,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 1,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 2,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 3,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 4,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Centre": "Hero_Hornet(Clone)/Centre",
+        "HeroBox": "Hero_Hornet(Clone)/HeroBox",
+        "Multi Wounder": null,
+        "Self": "Hero_Hornet(Clone)",
+        "Spawned": null,
+        "Wound Sender": null,
+        "Wound Sender Override": null
+      },
+      "ObjectVariables": {}
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Globalise",
+      "ActiveState": "Init",
+      "Variables": {},
+      "Actions": [
+        {
+          "StateIndex": 0,
+          "ActionIndex": 0,
+          "Data": {
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 1,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Self": "Hero_Hornet(Clone)"
+      },
+      "ObjectVariables": {}
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Sprint",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Air Sprint Speed": -12.0,
+        "Attack Direction": 0.0,
+        "Attack Speed": -50.0,
+        "Attack Speed Crt": 0.0,
+        "Attack Time": 0.12,
+        "Attack Time End": 0.0,
+        "Bump Force Grounded Delay": 0.5,
+        "Bump Force Grounded Timer": 0.0,
+        "Dash Speed": -28.0,
+        "Facing Direction": 0.0,
+        "Fast Skid Timer": 0.0,
+        "Force Grounded Timer": 0.0,
+        "Grounded Distance": 1.2,
+        "Set Gravity Timer": 0.0,
+        "Short Grounded Distance": 0.2,
+        "Skid Deceleration": 0.0,
+        "Sprint Air Volume": 0.0,
+        "Sprint Deceleration": 0.0,
+        "Sprint Deceleration Fast": 0.85,
+        "Sprint Deceleration Slow": 0.95,
+        "Sprint Grace": 0.3,
+        "Sprint Speed": 0.0,
+        "Sprint Speed Crt": 0.0,
+        "Sprint Speed Quick": -23.5,
+        "Sprint Speed Regular": -17.5,
+        "Sprint Start Speed": 0.0,
+        "Sprint Stop Wait": 0.0,
+        "Sprint Timer": 0.0,
+        "Wallrun Speed": 13.5,
+        "X Scale": 0.0,
+        "Jump Queue Timer": 0.0,
+        "Sprint Speed Quicker": -27.5,
+        "Speed Y": 0.0,
+        "Alt Timer": 0.0,
+        "Skid Speed": 0.0,
+        "Sprint Stop Timer": 0.0,
+        "Attack Cooldown": 0.0,
+        "Speed X": 0.0,
+        "Can Attack Bonk": -14.5151052,
+        "Wait Time": 0.0,
+        "X Speed": 0.0,
+        "Fall Clamp": 0.0,
+        "Add Speed": 0.0,
+        "Attack Steps": 1,
+        "Attack Step": 0,
+        "Attack Queued": false,
+        "Attack Ready": false,
+        "Can Any Jump": false,
+        "Can Dash": false,
+        "Can Jump cancel": false,
+        "Charged": false,
+        "Chooser": false,
+        "Did First Slash": false,
+        "Did Skid": false,
+        "Entered Sprinting": false,
+        "Facing Left": false,
+        "Facing Right": false,
+        "Falling Short": false,
+        "Fast Skid Timer Ended": false,
+        "Grounded": false,
+        "Has Brolly": false,
+        "High Wall": false,
+        "Hit Bump": false,
+        "Hit Bump Left": false,
+        "Hit Bump Right": false,
+        "Hit Enemy": false,
+        "Hit Ground": false,
+        "Hit High Wall": false,
+        "Hit Wall": false,
+        "Hit Wall Left": false,
+        "Hit Wall Right": false,
+        "In Attack": false,
+        "In Jump Antic": false,
+        "Is Clamber Blocked": false,
+        "Is Cloakless": false,
+        "Is Facing Left": false,
+        "Is Quickening Active": false,
+        "Is Sprinting": false,
+        "Is Stabbing Right": false,
+        "Jump Grace": false,
+        "Jump Queued": false,
+        "Left Is Pressed": false,
+        "Not Bump Forcing Grounded": false,
+        "Not Forcing Grounded": false,
+        "On Conveyor": false,
+        "On Ground": false,
+        "Rage Mode": false,
+        "Ray Hit": false,
+        "Reset Sprint Anim": false,
+        "Right Is Pressed": false,
+        "Short Grounded": false,
+        "Should Hard Land": false,
+        "Sprint Stop Timer Ended": false,
+        "Sprintmaster Active": false,
+        "Was Short Grounded": false,
+        "Will Move": false,
+        "Will Move Left": false,
+        "Will Move Right": false,
+        "Can Drift": false,
+        "Turn Blocked": false,
+        "Disabled Renderer": false,
+        "Can Throw Tool": false,
+        "Allowed Nail Charge": false,
+        "Play Audio": false,
+        "Ground Below": false,
+        "Warrior Slash To Fall": false,
+        "Can Do Land": false,
+        "Sprint Anim": "",
+        "Attack Antic Anim": "",
+        "Attack Anim": "",
+        "Attack Child Name": "",
+        "Sprint Air Anim": "",
+        "High Wall Raycast Dir": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Raycast Dir": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Extra Velocity": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Actions": [
+        {
+          "StateIndex": 1,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 1,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 2,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 3,
+          "Data": {
+            "everyFrame": true,
+            "perSecond": true,
+            "active": true,
+            "finished": false,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 4,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Camera Target": "_GameCameras/Camera Target",
+        "Centre": "Hero_Hornet(Clone)/Centre",
+        "Dash Burst": "Hero_Hornet(Clone)/Effects/Dash Burst",
+        "Dash Stab": "Hero_Hornet(Clone)/Attacks/Default/Dash Stab",
+        "Effects": "Hero_Hornet(Clone)/Effects",
+        "Sounds": "Hero_Hornet(Clone)/Sounds",
+        "Spawned Run Effects": null,
+        "Sprint Air Sound": "Hero_Hornet(Clone)/Sounds/Sprint Air Flip",
+        "Wall Bump": "Hero_Hornet(Clone)/Effects/Wall Bump",
+        "Dash Stab Crt": null,
+        "HeroBox": null,
+        "Bonking Wall": null,
+        "Reaper Slash": "Hero_Hornet(Clone)/Attacks/Scythe/DashUpper Slash",
+        "Dash Stab Alt": null,
+        "Wanderer RecoilStab": "Hero_Hornet(Clone)/Attacks/Wanderer/RecoilStab",
+        "SpinSlash": null,
+        "Warrior Dash Slash": "Hero_Hornet(Clone)/Attacks/Warrior/DashSlash",
+        "Self": "Hero_Hornet(Clone)",
+        "Warrior Dash Slash R": "Hero_Hornet(Clone)/Attacks/Warrior/DashSlash Rage",
+        "Current Attack": null,
+        "Landed On Obj": null,
+        "Shaman Dash Slash": "Hero_Hornet(Clone)/Attacks/Shaman/DashSlash",
+        "Hunter SprintAttackBurst": "Hero_Hornet(Clone)/Effects/Hunter SprintAttackBurst",
+        "Drill Stab Crt": null,
+        "Toolmaster Drill Stab": "Hero_Hornet(Clone)/Attacks/Toolmaster/Dash Stab",
+        "Toolmaster Drill Stab Charged": "Hero_Hornet(Clone)/Attacks/Toolmaster/Dash Stab Charged",
+        "Wanderer DashCombo Burst": "Hero_Hornet(Clone)/Effects/Wanderer DashCombo Burst",
+        "Witch Lash Damager": "Hero_Hornet(Clone)/Attacks/Witch/Sprint Lash Damager",
+        "Spawned Sound": null,
+        "Followup Slash": "Hero_Hornet(Clone)/Attacks/Witch/Followup Slash",
+        "Lash Checker": "Hero_Hornet(Clone)/Attacks/Witch/Lash Checker Sprint",
+        "Witch DashSlashFinal": "Hero_Hornet(Clone)/Attacks/Witch/Dash Stab Parent/Dash Stab 2",
+        "Clash Tink": null
+      },
+      "ObjectVariables": {
+        "Clip": null
+      }
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Mantle",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Land Duration": 0.0,
+        "Speed": 0.0,
+        "Y1": 0.0,
+        "Y2": 0.0,
+        "In Mantle": false,
+        "Jump Queue": false,
+        "Queued Sprint": false,
+        "R1": false,
+        "R2": false,
+        "R3": false,
+        "R4": false,
+        "Can Dash": false,
+        "Pressed R": false,
+        "Can Drop": false,
+        "Pressed L": false,
+        "Harpoon Dashing": false,
+        "Attack Queued": false,
+        "Send Event": "",
+        "Point 1": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Point 2": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "R2 Pos": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "R3 Pos": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Ray1 Direction": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Actions": [
+        {
+          "StateIndex": 1,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 1,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 2,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 3,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 4,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 5,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Effects": "Hero_Hornet(Clone)/Effects",
+        "Self": "Hero_Hornet(Clone)",
+        "clamber_impact_effects": "Hero_Hornet(Clone)/Effects/clamber_impact_effects",
+        "CamTarget": "_GameCameras/Camera Target",
+        "Clambered Collider": null
+      },
+      "ObjectVariables": {}
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Harpoon Dash",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Breaker Angle": 0.0,
+        "Breaker Distance": 0.0,
+        "Cooldown Timer": 0.0,
+        "Dash Speed": 70.0,
+        "Distance": 0.0,
+        "Look Down Timer": 0.0,
+        "Look Time": 0.25,
+        "Look Up Timer": 0.0,
+        "Needle Distance": 0.0,
+        "Needle X": 0.0,
+        "Needle Y": 0.0,
+        "Ring Travel Angle": 0.0,
+        "Scale X": 0.0,
+        "Travel Angle": 0.0,
+        "Return Idle Wait": 0.0,
+        "Fall Clamp": 0.0,
+        "Current Silk": 0,
+        "Enemy HP": 0,
+        "Object Layer": 0,
+        "Tink Layer": 0,
+        "At Needle": false,
+        "Hit Enemy": false,
+        "Hit Something": false,
+        "Hit Wall": false,
+        "Queued Move": false,
+        "Wallsliding": false,
+        "Hit 1": false,
+        "Hit 2": false,
+        "Hit 3": false,
+        "Drop Queued": false,
+        "Jump Queued": false,
+        "Attack Queued": false,
+        "Is Rail Slider": false,
+        "Facing L": false,
+        "Facing R": false,
+        "On Ground": false,
+        "Harpoon Dashing": false,
+        "Fixed Direction": false,
+        "Down Is Pressed": false,
+        "Up Is Pressed": false,
+        "Up Is Not Pressed": false,
+        "Down Is Not Pressed": false,
+        "Can End": false,
+        "Rs Up Is Pressed": false,
+        "Any Up Is Pressed": false,
+        "Rs Down Is Pressed": false,
+        "Is Not Rail Slider": false,
+        "Right Is Pressed": false,
+        "Left Is Pressed": false,
+        "Increment Up Timer": false,
+        "Increment Down Timer": false,
+        "Will Restore Anim": false,
+        "Allowed Nail Charge": false,
+        "Can Do Move": false,
+        "Locked Gravity": false,
+        "Object Tag": "",
+        "Collision Point": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Ray Origin 1": {
+          "x": 0.0,
+          "y": 0.85
+        },
+        "Ray Origin 2": {
+          "x": 0.0,
+          "y": -0.85
+        },
+        "Ray Origin 3": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Enemy Pos": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Actions": [
+        {
+          "StateIndex": 3,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 3,
+          "ActionIndex": 1,
+          "Data": {
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 3,
+          "ActionIndex": 2,
+          "Data": {
+            "gameObject": {
+              "ownerOption": "SpecifyGameObject"
+            },
+            "delivery": "SendMessage",
+            "options": "DontRequireReceiver",
+            "functionCall": {
+              "FunctionName": "HookCancel",
+              "parameterType": "None"
+            },
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 3,
+          "ActionIndex": 3,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 3,
+          "ActionIndex": 4,
+          "Data": {
+            "gameObject": {
+              "ownerOption": "SpecifyGameObject"
+            },
+            "delivery": "SendMessage",
+            "options": "DontRequireReceiver",
+            "functionCall": {
+              "FunctionName": "HookCancel",
+              "parameterType": "None"
+            },
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 3,
+          "ActionIndex": 5,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 3,
+          "ActionIndex": 6,
+          "Data": {
+            "everyFrame": true,
+            "perSecond": true,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": false
+          }
+        },
+        {
+          "StateIndex": 3,
+          "ActionIndex": 7,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Dash Damager": "Hero_Hornet(Clone)/Attacks/Harpoon Dash Damager",
+        "Dash Effect": "Hero_Hornet(Clone)/Effects/Hornet_harpoon_dash",
+        "Effects Folder": "Hero_Hornet(Clone)/Effects",
+        "Enemy": null,
+        "Grab Effect": "Hero_Hornet(Clone)/Effects/Hornet_harpoon_grab_effect",
+        "Harpoon Damager": "Hero_Hornet(Clone)/Attacks/Harpoon Damager",
+        "Needle": "Hero_Hornet(Clone)/Harpoon Needle",
+        "Self": "Hero_Hornet(Clone)",
+        "Thread": "Hero_Hornet(Clone)/Harpoon Needle/Thread",
+        "Throw Effect": "Hero_Hornet(Clone)/Effects/Hornet_harpoon_throw_effect",
+        "Centre": "Hero_Hornet(Clone)/Centre",
+        "Harpoon Breaker": "Hero_Hornet(Clone)/Attacks/Harpoon Breaker",
+        "Harpoon Breaker Extend": "Hero_Hornet(Clone)/Attacks/Harpoon Breaker Extend",
+        "Casted Object": null,
+        "Ring": null,
+        "Ring Parent": null,
+        "Hornet Grab Point": null,
+        "Harpoon Thread Ring": null,
+        "Tink Candidate": null,
+        "Harpoon Tinker": "Hero_Hornet(Clone)/Harpoon Needle/Harpoon Tinker",
+        "Enemy Parent": null,
+        "CamTarget": "_GameCameras/Camera Target"
+      },
+      "ObjectVariables": {}
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Umbrella Float",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Float Speed": -6.0,
+        "Float Speed Crt": -6.0,
+        "Wall Bump Distance": 0.7,
+        "Y Velocity": 0.0,
+        "Target Updraft Speed": 0.0,
+        "Bumping L": false,
+        "Bumping R": false,
+        "Can Dash": false,
+        "Can Harpoon Dash": false,
+        "Condition": false,
+        "Has Control": false,
+        "Has Dash": false,
+        "Has Harpoon Dash": false,
+        "In Updraft": false,
+        "Is Active": false,
+        "Was Active": false,
+        "Umbrella Wind": {
+          "x": -5.0,
+          "y": 0.0
+        }
+      },
+      "Actions": [
+        {
+          "StateIndex": 1,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Camera Target": "_GameCameras/Camera Target",
+        "Effects Folder": "Hero_Hornet(Clone)/Effects",
+        "Float Loop Source": "Hero_Hornet(Clone)/Sounds/Umbrella Float",
+        "Inflate Effect": "Hero_Hornet(Clone)/Effects/umbrella_inflate_effect",
+        "Self": "Hero_Hornet(Clone)",
+        "Sounds Folder": "Hero_Hornet(Clone)/Sounds",
+        "Spawned Brolly Spike": null,
+        "UpdraftJump Effect": "Hero_Hornet(Clone)/Effects/umbrella_updraftJump_fx",
+        "Fly Loop Source": "Hero_Hornet(Clone)/Sounds/Updraft Fly Loop"
+      },
+      "ObjectVariables": {}
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Tool Attacks",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Angle": 0.0,
+        "Angle Change": 0.0,
+        "Angle Max": 0.0,
+        "Angle Max End": 0.0,
+        "Angle Max Start": 0.0,
+        "Angle Min": 0.0,
+        "Angle Min End": 0.0,
+        "Angle Min Start": 0.0,
+        "Casing Angle": 0.0,
+        "Direction": 0.0,
+        "Facing Direction": 0.0,
+        "Fisherpin Timer": 0.0,
+        "High Wall X": 0.0,
+        "Hit Distance": 0.0,
+        "Low Wall X": 0.0,
+        "Recoil Speed": 0.0,
+        "Rise Speed": 0.0,
+        "Speed Crt": 0.0,
+        "Speed Pin": 60.0,
+        "Target Speed": 0.0,
+        "Timer": 0.0,
+        "X Direction": 0.0,
+        "X Scale": 0.0,
+        "X Speed": 0.0,
+        "Y Speed": 0.0,
+        "Straight Wall Tolerance": 0.02,
+        "Audio Delay": 0.0,
+        "X Deceleration Time": 0.0,
+        "Distance": 0.0,
+        "PosX": 0.0,
+        "Bounces Left": 0,
+        "Recoil Skips Left": 0,
+        "Silk": 0,
+        "Shots": 0,
+        "Throws": 0,
+        "Facing Left": false,
+        "Has Taken Control": false,
+        "On Ground": false,
+        "Was On Ground": false,
+        "Extracting": false,
+        "High Wall": false,
+        "Hit Bump": false,
+        "Hit Wall": false,
+        "Facing L": false,
+        "Holding L": false,
+        "Holding R": false,
+        "On Wall": false,
+        "Wall Ahead": false,
+        "Chooser": false,
+        "Is In Lifeblood State": false,
+        "Was In Lifeblood State": false,
+        "Throttle Speed": false,
+        "Dash Is Pressed": false,
+        "Scuttle Jumped": false,
+        "Jump Is Pressed": false,
+        "Do Fast Fall": false,
+        "Low Wall": false,
+        "Straight Wall": false,
+        "Is Quickening Active": false,
+        "Can Turn": false,
+        "Facing Right": false,
+        "Left Is Pressed": false,
+        "Right Is Pressed": false,
+        "Sprintmaster Active": false,
+        "Test": false,
+        "Turn Blocked": false,
+        "Is Sprinting": false,
+        "Is Poison": false,
+        "Can End": false,
+        "Quick Sling Equipped": false,
+        "Entering Lifeblood State": false,
+        "Shoot Anim": "",
+        "Event": "",
+        "Anim": "",
+        "Hit Point": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Hit Point Offset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Ray Dir": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Throw Point Pos": {
+          "x": -1.1,
+          "y": -0.35
+        },
+        "Wall Raycast Dir": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Hit Point Low": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Hit Point High": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Offset": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "Effect Pos": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "Flint Element": "None"
+      },
+      "Actions": [
+        {
+          "StateIndex": 1,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 1,
+          "Data": {
+            "everyFrame": true,
+            "perSecond": true,
+            "active": true,
+            "finished": false,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 1,
+          "ActionIndex": 2,
+          "Data": {
+            "everyFrame": true,
+            "active": true,
+            "finished": false,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Flint Effects Object": null,
+        "HeroBox": "Hero_Hornet(Clone)/HeroBox",
+        "Projectile": null,
+        "Screw Activation Flash": "Hero_Hornet(Clone)/Tool Effects/Screw Activation Flash",
+        "Screw Attack Effect Point": "Hero_Hornet(Clone)/Tool Effects/Screw Attack Effect Point",
+        "Screw Burst": "Hero_Hornet(Clone)/Tool Effects/Screw Attack Burst",
+        "Screw Damager": "Hero_Hornet(Clone)/Attacks/Screw Attack Damager",
+        "Screw Impact": "Hero_Hornet(Clone)/Tool Effects/Screw Attack Impact",
+        "Screw Start Burst": "Hero_Hornet(Clone)/Tool Effects/Screw Burst",
+        "Scuttle Burst": "Hero_Hornet(Clone)/Tool Effects/Scuttle Burst",
+        "Self": "Hero_Hornet(Clone)",
+        "Syringe Flash": "Hero_Hornet(Clone)/Tool Effects/Syringe Flash",
+        "Syringe Glow": "Hero_Hornet(Clone)/Tool Effects/Syringe Glow",
+        "Syringe Spatter": "Hero_Hornet(Clone)/Tool Effects/Syringe Spatter",
+        "Throw Point": "Hero_Hornet(Clone)/Throw Point",
+        "Throw Point C": "Hero_Hornet(Clone)/Throw Point C",
+        "Tool Hornet": "Hero_Hornet(Clone)/Tool Effects/Tool Hornet",
+        "Rosary Cannon Point": "Hero_Hornet(Clone)/Tool Effects/Rosary Cannon Point",
+        "Rosary Cannon Shoot Effect": "Hero_Hornet(Clone)/Tool Effects/Rosary Cannon Point/Shoot Effect",
+        "WebShot Bullet Point": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Bullet Point",
+        "WebShot Flash S": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Flash S",
+        "WebShot Smoke S": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Smoke S",
+        "WebShot Spit Effect S": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Spit Effect S",
+        "WebShot Smoke Fail": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Smoke Fail",
+        "WebShot Flash Dmg": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Flash Dmg",
+        "SnipeShot Impact": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/SnipeShot Impact",
+        "SnipeShot Trail": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/SnipeShot Impact/SnipeShot Trail",
+        "WebShot Spit Effect W": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Spit Effect W",
+        "WebShot Smoke W": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Smoke W",
+        "Pt SnipeStrands": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Pt SnipeStrands",
+        "Extractor Hit": "Hero_Hornet(Clone)/Tool Effects/Extractor Hit",
+        "Pt Extract M": "Hero_Hornet(Clone)/Tool Effects/Pt Extract M",
+        "Extractor ChargedEffect": "Hero_Hornet(Clone)/Tool Effects/Extractor ChargedEffect",
+        "Spawned Run Effects": null,
+        "Gun Sprite": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Gun Sprite",
+        "Play Particle": null,
+        "Pt Extract B": "Hero_Hornet(Clone)/Tool Effects/Pt Extract B",
+        "Spawned": null,
+        "Loop Effect": null,
+        "Snare Loop Damager": "Hero_Hornet(Clone)/Tool Effects/Snare Loop Damager",
+        "Pt Extract Swamp": null,
+        "Audio Loop Extract": "Hero_Hornet(Clone)/Tool Effects/Audio Loop Extract",
+        "Bullet Point Wall": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Bullet Point Wall",
+        "Bullet Point Crt": null,
+        "Audio Loop Extract Charge": "Hero_Hornet(Clone)/Tool Effects/Audio Loop Extract Charge",
+        "Current Audio": null,
+        "Audio Loop Rosary Cannon": "Hero_Hornet(Clone)/Tool Effects/Audio Loop Rosary Cannon",
+        "Pt SnipeStrands PoisonTrail": "Hero_Hornet(Clone)/Tool Effects/WebShot Effects/Pt SnipeStrands/Pt Poison Trail",
+        "Tool Hornet Poison Screw Attack": "Hero_Hornet(Clone)/Tool Effects/Tool Hornet Poison Screw Attack",
+        "Pt ScrewAttack Poison Trail": "Hero_Hornet(Clone)/Tool Effects/Pt ScrewAttack Poison Trail",
+        "Pt ScrewAttack Poison Impact": "Hero_Hornet(Clone)/Tool Effects/Pt ScrewAttack Poison Impact",
+        "CamTarget": null,
+        "RosaryCannon TurnShootEffect": "Hero_Hornet(Clone)/Tool Effects/RosaryCannon TurnShootEffect",
+        "Effect Prefab": null,
+        "Snare Dive Effect": null,
+        "Loop Effect Child": null,
+        "WebShot_antic_effect": "Hero_Hornet(Clone)/Tool Effects/WebShot_antic_effect",
+        "High Wall Obj": null,
+        "Audio Loop Drill": "Hero_Hornet(Clone)/Tool Effects/Audio Loop Drill",
+        "Audio Loop Drill Floor": "Hero_Hornet(Clone)/Tool Effects/Audio Loop Drill Floor",
+        "Audio Loop Scuttle": "Hero_Hornet(Clone)/Tool Effects/Audio Loop Scuttle",
+        "Audio Loop Scuttle Air": "Hero_Hornet(Clone)/Tool Effects/Audio Loop Scuttle Air",
+        "Syringe Glow poison": "Hero_Hornet(Clone)/Tool Effects/Syringe Glow poison",
+        "Syringe Flash poison": "Hero_Hornet(Clone)/Tool Effects/Syringe Flash poison",
+        "Syringe Spatter poison": "Hero_Hornet(Clone)/Tool Effects/Syringe Spatter poison",
+        "Syringe Glow Crt": null,
+        "Syringe Flash Crt": null,
+        "Syringe Spatter Crt": null,
+        "Overblue Burst": null
+      },
+      "ObjectVariables": {
+        "Get Item": null
+      }
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Silk Specials",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Damager Direction": 0.0,
+        "Press Timer": 0.0,
+        "Self X Scale": 0.0,
+        "Sphere Timer": 0.0,
+        "Timer": 0.0,
+        "Velocity X": 0.0,
+        "Needle Throw Cooldown": 0.0,
+        "Target Y Pos": 0.0,
+        "Current Y Pos": 0.0,
+        "Velocity Y": 0.0,
+        "Deceleration": 0.0,
+        "Min Spawn Radius": 0.0,
+        "Max Spawn Radius": 0.0,
+        "Silk Bomb Cooldown": 0.0,
+        "Speed X": 0.0,
+        "Air Sphere Cooldown": 0.0,
+        "Silk Charge Cooldown": 0.0,
+        "Roof Height": 0.0,
+        "Boss Needle Cooldown": 0.0,
+        "Hit Distance": 0.0,
+        "Initial Y Pos": 0.0,
+        "Taunt Cost": 1,
+        "Skill Cost": 0,
+        "Hero Silk": 0,
+        "Casts Left": 0,
+        "Random Blasts": 0,
+        "Array Length": 0,
+        "Rings Remaining": 0,
+        "Can Do": false,
+        "Facing Left": false,
+        "On Ground": false,
+        "Queued Needle Throw": false,
+        "Queued Thread Sphere": false,
+        "Tried Special": false,
+        "In Challenge Region": false,
+        "Is Pressed": false,
+        "Was Pressed": false,
+        "Can Extend": false,
+        "Canceling Into Wallslide": false,
+        "Silk Dashing": false,
+        "Queued Boss Needle": false,
+        "Wallsliding": false,
+        "Queued Attack": false,
+        "Zap Imbuement": false,
+        "Init": true,
+        "Is In Fast Travel": false,
+        "At Bench": false,
+        "Can Cancel Needolin": false,
+        "Can Fast Travel": false,
+        "Is Cross Slashing": false,
+        "Is Sphere Active": false,
+        "Clear Left": false,
+        "Clear Right": false,
+        "Disabled Gravity": false,
+        "Hard Landing": false,
+        "Rings Equipped": false,
+        "Has Two Rings": false,
+        "Can Input": true,
+        "Anim Clip": "",
+        "Method Name": "",
+        "Target Scene": "",
+        "Velocity": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Pos": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Shift Pos": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "Fast Travel Location": "None"
+      },
+      "Actions": [
+        {
+          "StateIndex": 0,
+          "ActionIndex": 0,
+          "Data": {
+            "EveryFrame": true,
+            "active": true,
+            "finished": false,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 1,
+          "Data": {
+            "everyFrame": true,
+            "active": true,
+            "finished": false,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 2,
+          "Data": {
+            "eventTarget": {
+              "target": "Self",
+              "gameObject": {
+                "ownerOption": "UseOwner"
+              },
+              "fsmComponent": null
+            },
+            "gm": {
+              "$ref": "_GameManager@GameManager"
+            },
+            "inputHandler": {
+              "$ref": "_GameManager@InputHandler"
+            },
+            "active": true,
+            "finished": false,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 3,
+          "Data": {
+            "Target": {
+              "ownerOption": "UseOwner"
+            },
+            "gm": {
+              "$ref": "_GameManager@GameManager"
+            },
+            "inputHandler": {
+              "$ref": "_GameManager@InputHandler"
+            },
+            "timer": 0.0,
+            "active": true,
+            "finished": false,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 4,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 5,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Current Audio": null,
+        "Fast Travel Children": null,
+        "HeroBox": "Hero_Hornet(Clone)/HeroBox",
+        "Hornet_finger_blade_cast_silk": "Hero_Hornet(Clone)/Effects/Hornet_finger_blade_cast_silk",
+        "Needle Damage": "Hero_Hornet(Clone)/Special Attacks/Needle Throw/needle_throw_simple/needle/Needle Damage",
+        "Needle Throw Child": "Hero_Hornet(Clone)/Special Attacks/Needle Throw/needle_throw_simple",
+        "Needle Throw Parent": "Hero_Hornet(Clone)/Special Attacks/Needle Throw",
+        "Needle Thunk": "Hero_Hornet(Clone)/Special Attacks/Needle Throw/Needle Thunk",
+        "Next Enemy": null,
+        "Parry Clash Effect": "Hero_Hornet(Clone)/Special Attacks/Parry Clash Effect",
+        "Parry Cross Slash Animator": "Hero_Hornet(Clone)/Special Attacks/Hornet_parry_stab_cross_slash_style Offset Parent/Hornet_parry_stab_cross_slash_style(Clone)",
+        "Parry Cross Slash Zap Animator": "Hero_Hornet(Clone)/Special Attacks/Hornet_parry_stab_cross_slash_zap_style Offset Parent/Hornet_parry_stab_cross_slash_zap_style(Clone)",
+        "Parry DashBurst": "Hero_Hornet(Clone)/Special Attacks/Parry DashBurst",
+        "Parry Stance Flash": "Hero_Hornet(Clone)/Special Attacks/Parry Stance Flash",
+        "Parry Thread": "Hero_Hornet(Clone)/Special Attacks/Parry Thread",
+        "Parry Thread Zap": "Hero_Hornet(Clone)/Special Attacks/Parry Thread Zap",
+        "ParryDash Dmg": "Hero_Hornet(Clone)/Special Attacks/ParryDash Dmg",
+        "Projectile A": null,
+        "Projectile B": null,
+        "Projectile C": null,
+        "Pt ZapBall": null,
+        "Self": "Hero_Hornet(Clone)",
+        "Silk Charge AnticBreaker": "Hero_Hornet(Clone)/Special Attacks/Silk Charge AnticBreaker",
+        "Silk Charge Damager": "Hero_Hornet(Clone)/Special Attacks/Silk Charge Damager",
+        "Silk Charge DashBurst": "Hero_Hornet(Clone)/Special Attacks/Silk Charge DashBurst",
+        "Silk Charge Particles": "Hero_Hornet(Clone)/Effects/Silk Charge Particles",
+        "Silk Charge Particles Zap": "Hero_Hornet(Clone)/Effects/Silk Charge Particles Zap",
+        "Silk Charge WallBonk": "Hero_Hornet(Clone)/Special Attacks/Silk Charge WallBonk",
+        "Sonar Enemy Tracker": "Hero_Hornet(Clone)/Special Attacks/Sonar Enemy Tracker",
+        "Special Attacks": "Hero_Hornet(Clone)/Special Attacks",
+        "Sphere Ball": "Hero_Hornet(Clone)/Special Attacks/Sphere Ball",
+        "Sphere Ball Ball": "Hero_Hornet(Clone)/Special Attacks/Sphere Ball/Ball",
+        "Sphere Flash": "Hero_Hornet(Clone)/Special Attacks/Sphere Flash",
+        "Taunt Slash": null,
+        "Taunt Thread": "Hero_Hornet(Clone)/Effects/Taunt Thread",
+        "Temp": null,
+        "Thread Anim": null,
+        "attack_bomb_cast_antic_thread": "Hero_Hornet(Clone)/Special Attacks/attack_bomb_cast_antic_thread",
+        "Taunt Rings Flash": "Hero_Hornet(Clone)/Effects/Taunt Rings Flash",
+        "Jump Sound": "Hero_Hornet(Clone)/Sounds/Jump",
+        "Hero": "Hero_Hornet(Clone)",
+        "Obj": null,
+        "HeroLight": "Hero_Hornet(Clone)/HeroLight"
+      },
+      "ObjectVariables": {
+        "Voice": null
+      }
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Nail Arts",
+      "ActiveState": "Inactive",
+      "Variables": {
+        "Lunge Speed": 0.0,
+        "Lunge Deceleration": 0.0,
+        "Deceleration": 0.92,
+        "Cyclone Accel": 1.0,
+        "Cyclone Decel": 0.0,
+        "Cyclone Speed Max": 8.0,
+        "Velocity Y": 0.0,
+        "Chain": 0,
+        "Dashing": false,
+        "Queued Attack": false,
+        "Return Bool": false,
+        "Wall Sliding": false,
+        "Is Anim Finished": false,
+        "In Rage Mode": false,
+        "Is Grounded": false,
+        "Can Drift": false,
+        "Recoil Method": "",
+        "Velocity Before Cancel": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Actions": [
+        {
+          "StateIndex": 0,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 0,
+          "ActionIndex": 1,
+          "Data": {
+            "eventTarget": {
+              "target": "Self",
+              "gameObject": {
+                "ownerOption": "UseOwner"
+              },
+              "fsmComponent": null
+            },
+            "gm": {
+              "$ref": "_GameManager@GameManager"
+            },
+            "inputHandler": {
+              "$ref": "_GameManager@InputHandler"
+            },
+            "timer": 0.0,
+            "active": true,
+            "finished": false,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Audio Player": null,
+        "Charge Slash Basic": null,
+        "Charge Slash Upgraded": null,
+        "Current Charge Slash": null,
+        "Special Attack Folder": "Hero_Hornet(Clone)/Special Attacks",
+        "Sphere Flash": "Hero_Hornet(Clone)/Special Attacks/Sphere Flash",
+        "Dash Burst": "Hero_Hornet(Clone)/Effects/Dash Burst",
+        "Charge Slash Warrior": "Hero_Hornet(Clone)/Attacks/Charge Slash Warrior",
+        "Charge Slash Warrior R": "Hero_Hornet(Clone)/Attacks/Charge Slash Warrior Rage",
+        "Dash Stopper": "Hero_Hornet(Clone)/Attacks/Charge Slash Toolmaster/damager/dash stopper",
+        "Wanderer Lunge Stopper": "Hero_Hornet(Clone)/Attacks/Charge Slash Wanderer/Lunge Stopper",
+        "Beast Lunge Stopper": null,
+        "Rage Lunge Stopper": null,
+        "Current Lunge Stopper": null,
+        "damager 01": null,
+        "damager 02": null
+      },
+      "ObjectVariables": {}
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Superjump",
+      "ActiveState": "Inactive",
+      "Variables": {
+        "Cancelable Time": 0.2,
+        "Charge Time": 0.8,
+        "Check Y": 0.0,
+        "Current Throw Needle Y": 0.0,
+        "Initial Throw Needle Y": 5.37,
+        "Jump Speed": 33.0,
+        "Main Cam Pos Y": 0.0,
+        "Speed": 0.0,
+        "Stick Needle Offset X": 0.0,
+        "Stick Needle X": 0.0,
+        "Stick Needle Y": 0.0,
+        "Throw Needle Distance": 0.0,
+        "Throw Needle Pos Y": 0.0,
+        "Throw Needle Target Y": 0.0,
+        "Throw Needle X": 0.0,
+        "Throw Wait Time": 0.0,
+        "Y Speed": 0.0,
+        "Throw Needle Pos Y Start": 0.0,
+        "Current Silk": 0,
+        "Silk Cost": 1,
+        "Sprite Flash ID": 0,
+        "Did Find Roof": false,
+        "Is Distant": false,
+        "Needle Visible": false,
+        "On Ground": false,
+        "Played Throw Wait": false,
+        "Show Thread": false,
+        "Terrain Above": false,
+        "Did Add Using Silk": false,
+        "Test": false,
+        "Did Start Flash": false,
+        "Started Rumbling Focus": false,
+        "Started Rumbling Focus 2": false,
+        "Is Transition Gate": false,
+        "Queued Cancel": false,
+        "Did Hit Spikes": false,
+        "Ray Hit Point": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "Throw Needle Move By": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      "Actions": [],
+      "GameObjectVariables": {
+        "Antic Effect L": "Hero_Hornet(Clone)/Effects/Super Jump Antic Effect L",
+        "Antic Effect R": "Hero_Hornet(Clone)/Effects/Super Jump Antic Effect R",
+        "Attacks Folder": "Hero_Hornet(Clone)/Special Attacks",
+        "Camera Target": "_GameCameras/Camera Target",
+        "Charged Effect": "Hero_Hornet(Clone)/Effects/Super Jump Charged",
+        "Charging Fader": "Hero_Hornet(Clone)/Effects/Super Jump Charging Fader",
+        "Damager": "Hero_Hornet(Clone)/Special Attacks/Super Jump Damager",
+        "Effects Folder": "Hero_Hornet(Clone)/Effects",
+        "Grab Effect": "Hero_Hornet(Clone)/Effects/Super Jump Catch Effect",
+        "Self": "Hero_Hornet(Clone)",
+        "Stick Needle": "Hero_Hornet(Clone)/Special Attacks/Super Jump Needle Stick",
+        "Stick Needle Parent": null,
+        "Throw Needle": "Hero_Hornet(Clone)/Special Attacks/Super Jump Needle Throw",
+        "Throw Needle Fall": "Hero_Hornet(Clone)/Special Attacks/Super Jump Needle Throw Fall",
+        "Throw Needle Fall Target": "Hero_Hornet(Clone)/Special Attacks/Super Jump Needle Throw Fall/Move To",
+        "Throw Needle Target": "Hero_Hornet(Clone)/Special Attacks/Super Jump Needle Throw/Move To",
+        "Superjump Audio Loop": "Hero_Hornet(Clone)/Sounds/Superjump Loop",
+        "Roof": null,
+        "Charge Audio": null,
+        "Thread": "Hero_Hornet(Clone)/Effects/Super Jump Thread",
+        "Spawned Audio Player": null,
+        "Extra Throw Effect": "Hero_Hornet(Clone)/Effects/Super Jump Extra Throw Effect",
+        "Extra Ground Effect": "Hero_Hornet(Clone)/Effects/Super Jump Extra Ground Effect",
+        "Nail Art Ready": "Hero_Hornet(Clone)/Sounds/Nail Art Ready",
+        "Throw Needle Damager": "Hero_Hornet(Clone)/Special Attacks/Super Jump Needle Throw/Damager",
+        "Thread Loop": "Hero_Hornet(Clone)/Effects/Super Jump Thread Loop"
+      },
+      "ObjectVariables": {
+        "Clip": null
+      }
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Sprint Silk Usage",
+      "ActiveState": "Unequipped",
+      "Variables": {
+        "Use Silk Timer": 0.0,
+        "Timer Add": 0.0,
+        "Current Silk": 0,
+        "Added Using Silk": false
+      },
+      "Actions": [
+        {
+          "StateIndex": 9,
+          "ActionIndex": 0,
+          "Data": {
+            "gameObject": {
+              "ownerOption": "UseOwner"
+            },
+            "everyFrame": false,
+            "fsmNameLastFrame": "Sprint",
+            "fsm": {
+              "$ref": "Hero_Hornet(Clone)@PlayMakerFSM:5"
+            },
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {},
+      "ObjectVariables": {}
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Crest Attacks",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Attack Angle": 0.0,
+        "Attack Target Y": 0.0,
+        "Move Angle": 0.0,
+        "Rotation Offset": 0.0,
+        "Velocity Add": 0.0,
+        "Velocity X": 0.0,
+        "Velocity Y": 0.0,
+        "Wait Time": 0.0,
+        "Attack Start Y": 0.0,
+        "Y Pos": 0.0,
+        "Can Drift": false,
+        "Charged": false,
+        "In Rage Mode": false,
+        "Overlapping Enemy": false,
+        "SpinBall Bouncing Up": false,
+        "HIdden Renderer": false,
+        "Disabled Animation": false,
+        "In Crest Attack": false,
+        "SpinBall Anim": "",
+        "SpinBall Grind Anim": "",
+        "SpinBall Rebound Anim": "",
+        "Facing Msg": "",
+        "SpinSlash Scale": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      "Actions": [
+        {
+          "StateIndex": 1,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "Attack Target": null,
+        "Current DrillSlash": null,
+        "Current SpinSlash": null,
+        "Downspike Burst": "Hero_Hornet(Clone)/Effects/Downspike Burst",
+        "Event Sender": null,
+        "Followup Slash": "Hero_Hornet(Clone)/Attacks/Witch/Followup Slash",
+        "HeroBox": "Hero_Hornet(Clone)/HeroBox",
+        "Lash Damager": "Hero_Hornet(Clone)/Attacks/Witch/Lash Damager",
+        "RevengeSlash": null,
+        "Rpr DownSlash": "Hero_Hornet(Clone)/Attacks/Scythe/DownSlash New",
+        "Shaman Downslash": "Hero_Hornet(Clone)/Attacks/Shaman/DownSlash",
+        "Spawned Sound": null,
+        "SpinSlash": "Hero_Hornet(Clone)/Attacks/Warrior/SpinSlash",
+        "SpinSlashRage": "Hero_Hornet(Clone)/Attacks/Warrior/SpinSlashRage",
+        "Toolmaster Downslash": "Hero_Hornet(Clone)/Attacks/Toolmaster/DownSlash New",
+        "Toolmaster Downslash Charged": "Hero_Hornet(Clone)/Attacks/Toolmaster/DownSlash New Charged",
+        "Witch Downslash": "Hero_Hornet(Clone)/Attacks/Witch/DownSlash New",
+        "Lash Aimer": null,
+        "Lash Point": null,
+        "Lash Checker": "Hero_Hornet(Clone)/Attacks/Witch/Lash Checker",
+        "Drill Checker": "Hero_Hornet(Clone)/Attacks/Toolmaster/Drill Checker",
+        "DownSlash BouncePodDummy": "Hero_Hornet(Clone)/Attacks/Toolmaster/DownSlash BouncePodDummy",
+        "Tink Checker": "Hero_Hornet(Clone)/Attacks/Witch/Tink Checker",
+        "SpinSlash Grind Dummy": "Hero_Hornet(Clone)/Attacks/Warrior/SpinSlash Grind Dummy"
+      },
+      "ObjectVariables": {}
+    },
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "FsmName": "Wall Scramble",
+      "ActiveState": "Idle",
+      "Variables": {
+        "Y Speed": 0.0,
+        "Down Force": 0.0,
+        "X Scale": 0.0,
+        "Translate": 0.0,
+        "Scramble Speed": 0.0,
+        "Facing Left": false,
+        "Hugging Wall L": false,
+        "Is Dash Pressed": false,
+        "Is Left Pressed": false,
+        "Is Right Pressed": false,
+        "Queue Scramble": false,
+        "Still Touching Wall": false,
+        "Hugging Wall R": false,
+        "Is Hugging Wall": false,
+        "Is Quickened": false,
+        "Test": false,
+        "Dash Was Released": false,
+        "Can Repeat Dash": false,
+        "Has Harpoon Dash": false,
+        "Can Dash Off": false,
+        "Scramble Clip": "",
+        "Translate Pos": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Actions": [
+        {
+          "StateIndex": 2,
+          "ActionIndex": 0,
+          "Data": {
+            "everyFrame": false,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 2,
+          "ActionIndex": 1,
+          "Data": {
+            "enterFrameCount": 16811,
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        },
+        {
+          "StateIndex": 2,
+          "ActionIndex": 2,
+          "Data": {
+            "active": false,
+            "finished": true,
+            "DisplayName": null,
+            "Entered": true
+          }
+        }
+      ],
+      "GameObjectVariables": {
+        "CamTarget": null,
+        "Effects": "Hero_Hornet(Clone)/Effects",
+        "Hornet_Wall_Scramble_Burst_Effect": "Hero_Hornet(Clone)/Effects/Hornet_Wall_Scramble_Burst_Effect",
+        "Launch Effect": "Hero_Hornet(Clone)/Effects/wall_launch_puff",
+        "Scramble Audio Player": null,
+        "Self": "Hero_Hornet(Clone)",
+        "WallScramble Dust": "Hero_Hornet(Clone)/Effects/WallScramble Dust",
+        "Walldash Kickoff": "Hero_Hornet(Clone)/Effects/Walldash Kickoff",
+        "Centre": "Hero_Hornet(Clone)/Centre"
+      },
+      "ObjectVariables": {}
+    }
+  ],
+  "AudioTableSnapshots": [
+    {
+      "Name": "Attack Normal Hornet Voice",
+      "NextPlayTime": 0.0
+    },
+    {
+      "Name": "warrior_rage_attack",
+      "NextPlayTime": 0.0
+    },
+    {
+      "Name": "hornet_projectile_twang Quick Sling",
+      "NextPlayTime": 0.0
+    },
+    {
+      "Name": "Wound Hornet Voice",
+      "NextPlayTime": 0.0
+    },
+    {
+      "Name": "hornet_wound_heavy",
+      "NextPlayTime": 0.0
+    },
+    {
+      "Name": "Frost Damage Hornet Voice",
+      "NextPlayTime": 0.0
+    },
+    {
+      "Name": "Hazard Damage Hornet Voice",
+      "NextPlayTime": 0.0
+    },
+    {
+      "Name": "Pit Fall",
+      "NextPlayTime": 0.0
+    },
+    {
+      "Name": "Death Hornet Voice",
+      "NextPlayTime": 0.0
+    },
+    {
+      "Name": "Grunt Hornet Voice",
+      "NextPlayTime": 0.0
+    }
+  ],
+  "RandomState": {
+    "s0": -2108967583,
+    "s1": -308744413,
+    "s2": -1055903498,
+    "s3": 1726834892
+  },
+  "GameTime": 288.2467,
+  "GameFrameCount": 17781,
+  "PlayerData": {
+    "FisherWalkerTimer": 10.816537857055664,
+    "FisherWalkerIdleTimeLeft": -0.0096694175153970718,
+    "FisherWalkerDirection": false
+  },
+  "FixedUpdateCycle": 0
+}
