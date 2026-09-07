@@ -1,8 +1,13 @@
+using System;
 using GlobalEnums;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using StudioCommunication;
 using System.Diagnostics.CodeAnalysis;
+using Newtonsoft.Json.Linq;
+using TAS.ModInterop;
 using TAS.Tracer;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -93,16 +98,20 @@ public static class LoadCommand {
 
         var hero = HeroController.instance;
 
-        // Place the hero at the target before normalizing: the scene's dreamGate entry can spawn the hero inside a
-        // water region (the entry point, not the target); moving to the target leaves it, which would fire a
-        // splash-out recoil on the next physics step — with the body already moved + SyncTransforms, the normalize
-        // below overwrites velocity/cState instead. SyncTransforms so physics sees the body at the target.
+        // Place the hero at the target *before* normalizing, so the fixture apply runs at the final position. The
+        // scene's dreamGate entry can spawn the hero inside a water region (the entry point, not the target); moving
+        // to the target leaves it, which fires SurfaceWaterRegion.OnTriggerExit2D → a splash-out RecoilRightLong on
+        // the next physics step. The scene-less fixture apply does position-first → Physics2D.Simulate(0) → full
+        // restore, so with the hero already at the target that exit fires inside the (untraced) settle and its recoil
+        // velocity/cState is then overwritten by the fixture's Rigidbody2D/HeroController restore. Symmetric to the
+        // savestate restore's contact settle — no manual recoil cancel needed. SyncTransforms so the body is at the
+        // target for that Simulate (the position-less fixture no longer carries a body position).
         hero.transform.position = new Vector3(pos.x, pos.y, hero.transform.position.z);
         Physics2D.SyncTransforms();
 
         GameManager.instance.cameraCtrl.PositionToHeroInstant(true);
 
-        Normalize();
+        NormalizeToIdle();
         SetSafeHazardRespawn(hero);
 
         TasLoad.End();
@@ -136,5 +145,41 @@ public static class LoadCommand {
 
     private static void Normalize() {
         Random.InitState(0);
+    }
+
+    // Normalize the hero's transient state (velocity/anim/cState/FSMs) to a known idle via a scene-less fixture,
+    // applied in-place (no reload; a manual reset is unreliable because refs are cached). Also pins the free-running
+    // state the fixture carries to its canonical values, so a load is prior-independent (otherwise scene-load RNG
+    // churn / elapsed-time timers leak the prior in). The scene-less apply restores RandomState itself; the
+    // deterministic clock and the PlayerData world-timer subset are not on that path, so apply them here. Only the
+    // FisherWalker* timers are overwritten — abilities/progress are preserved.
+    private static void NormalizeToIdle() {
+        if (PreciseSavestatesInterop.Instance is not { } interop) {
+            return;
+        }
+
+        var fixturePath = IdleFixturePath();
+        _ = interop.LoadSavestateFromFile(fixturePath);
+
+        DeterministicTimePatch.RebaseClock(interop.LastLoadedGameTime ?? 0f, interop.LastLoadedFrameCount ?? 0);
+        if (JObject.Parse(File.ReadAllText(fixturePath))["PlayerData"] is { } fixturePlayerData) {
+            JsonUtility.FromJsonOverwrite(fixturePlayerData.ToString(), PlayerData.instance);
+        }
+    }
+
+    private static string? idleFixturePath;
+
+    /// Extracts the embedded idle savestate to a temp file (cached) so it can be loaded via the file-path API.
+    private static string IdleFixturePath() {
+        if (idleFixturePath is { } cached) {
+            return cached;
+        }
+
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("idle-normalization.json")
+                           ?? throw new InvalidOperationException("embedded resource idle-normalization.json not found");
+        using var reader = new StreamReader(stream);
+        var path = Path.Combine(Path.GetTempPath(), "celestetas-idle-normalization.json");
+        File.WriteAllText(path, reader.ReadToEnd());
+        return idleFixturePath = path;
     }
 }
