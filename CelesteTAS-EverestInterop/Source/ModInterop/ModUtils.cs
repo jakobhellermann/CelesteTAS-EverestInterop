@@ -8,6 +8,8 @@ using Random = UnityEngine.Random;
 namespace TAS.ModInterop;
 
 internal static class ModUtils {
+    public const string PreciseSavestatesId = "io.github.jakobhellermann.precisesavestates";
+
     private static readonly Assembly VanillaAssembly = typeof(HeroController).Assembly;
 
     public static Type[] GetTypes() {
