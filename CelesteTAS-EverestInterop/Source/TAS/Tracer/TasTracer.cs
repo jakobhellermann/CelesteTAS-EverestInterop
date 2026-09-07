@@ -123,10 +123,83 @@ internal static class TasTracer {
     public static string? LastSavedTracePath;
 
 
+    // Named trace segment: BeginSegment records the current position in the trace, EndSegment writes everything
+    // since to TAS-Traces/<name>/ (reusing SaveTrace) so the differ can compare two segments frame-by-frame.
+    private static int segmentStart = -1;
+    private static string? segmentName;
+
+    internal static void BeginSegment(string name) {
+        segmentName = name;
+        segmentStart = trace.Trace.Count;
+    }
+
+    internal static void EndSegment() {
+        if (segmentStart < 0 || segmentName is not { } name) {
+            Log.Warn("EndTrace without a matching BeginTrace");
+            return;
+        }
+
+        var slice = trace.Trace.GetRange(segmentStart, trace.Trace.Count - segmentStart);
+        SaveTrace(trace with { Trace = [..slice], FilePath = name });
+        Log.Info($"Saved trace segment '{name}' ({slice.Count} frames)");
+        segmentStart = -1;
+        segmentName = null;
+    }
+
+    #region Dynamic trace probes (TraceVar command)
+
+    // Reusable per-frame reflection probes registered live from a TAS via `TraceVar, <path>` — no rebuild needed to
+    // add a trace variable. The path's first segment is a named root (game code registers these in TraceRoots, e.g.
+    // "HeroController" -> its singleton), the rest are navigated as instance fields/properties by reflection.
+    internal static readonly Dictionary<string, Func<object?>> TraceRoots = new();
+    private static readonly List<(string Label, Func<object?> Get)> dynamicProbes = [];
+
+    internal static void AddTraceVar(string path) {
+        var tokens = path.Split('.');
+        dynamicProbes.Add((path, () => {
+            try {
+                if (!TraceRoots.TryGetValue(tokens[0], out var root)) {
+                    return $"<no root '{tokens[0]}'>";
+                }
+
+                object? current = root();
+                for (var i = 1; i < tokens.Length && current != null; i++) {
+                    current = GetMember(current, tokens[i]);
+                }
+
+                return current is null or bool or int or long or float or double or string or Enum ? current : current.ToString();
+            } catch (Exception e) {
+                return $"<{e.GetType().Name}>";
+            }
+        }));
+        Log.Info($"TraceVar: probing '{path}'");
+    }
+
+    private static object? GetMember(object obj, string name) {
+        const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        var type = obj.GetType();
+        if (type.GetField(name, flags) is { } field) {
+            return field.GetValue(obj);
+        }
+
+        return type.GetProperty(name, flags) is { } prop ? prop.GetValue(obj) : $"<no member '{name}'>";
+    }
+
+    [TasTraceAddState]
+    private static void AddDynamicProbes(TraceData data) {
+        foreach (var (label, get) in dynamicProbes) {
+            data.Add(label, get());
+        }
+    }
+
+    #endregion
+
     [EnableRun]
     private static void BeginTrace() {
         LastSavedTracePath = null;
         traceSaved = false;
+        segmentStart = -1;
+        dynamicProbes.Clear();
         trace.Trace.Clear();
         trace.Checksum = Manager.Controller.Checksum;
         trace.FilePath = Manager.Controller.FilePath.Replace(@"\", "/");
