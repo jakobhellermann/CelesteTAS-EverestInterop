@@ -143,6 +143,21 @@ public static class Manager {
     /// Will stop the TAS on the next update cycle
     public static void DisableRunLater() => NextState = State.Disabled;
 
+    /// TODO: slop
+    /// Force the TAS into the paused state from *outside* the normal `NextState`→`Paused` transition (e.g. a
+    /// savestate resume completing inside `SavestateManager.Update`, which runs after `Update`'s transition check
+    /// and before `CurrState = NextState`). Assigning `CurrState = NextState = Paused` directly there would leave
+    /// `CurrState` already Paused next frame, so the transition check never fires `EnablePause()` — MonoBehaviour
+    /// updates and `timeScale` stay live through the "paused" frames and decay restored state (the savestate-resume
+    /// freeze-leak). Calling this runs `EnablePause()` exactly once (guarded against the double-freeze that would
+    /// corrupt the `loopBeforePause` snapshot) and then pins the state.
+    public static void Pause() {
+        if (CurrState != State.Paused) {
+            EnablePause();
+        }
+        CurrState = NextState = State.Paused;
+    }
+
     public static void EnablePause() {
         DeterministicTimePatch.OverwriteTimeScale = 0;
 
