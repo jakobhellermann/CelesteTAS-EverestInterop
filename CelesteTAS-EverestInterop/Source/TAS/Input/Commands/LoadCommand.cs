@@ -116,6 +116,8 @@ public static class LoadCommand {
             return;
         }
 
+        Normalize();
+
         // Go through the game's own scene transition (not raw SceneManager.LoadScene) so the level loads properly —
         // GameManager state, hero, camera. Same async path PreciseSavestates uses for savestate loads; the shared
         // TasLoad gate pauses playback until the scene has finished entering, and we drop the hero at (x, y) then.
@@ -203,6 +205,26 @@ public static class LoadCommand {
         TasLoad.End();
     }
 
+    // Normalize the hero's transient state (velocity/anim/cState/FSMs) to a known idle via a scene-less fixture,
+    // applied in-place (no reload; a manual reset is unreliable because refs are cached). Also pins the free-running
+    // state the fixture carries to its canonical values, so a load is prior-independent (otherwise scene-load RNG
+    // churn / elapsed-time timers leak the prior in). The scene-less apply restores RandomState itself; the
+    // deterministic clock and the PlayerData world-timer subset are not on that path, so apply them here. Only the
+    // FisherWalker* timers are overwritten — abilities/progress are preserved.
+    private static void NormalizeToIdle() {
+        if (PreciseSavestatesInterop.Instance is not { } interop) {
+            return;
+        }
+
+        var fixturePath = IdleFixturePath();
+        _ = interop.LoadSavestateFromFile(fixturePath);
+
+        DeterministicTimePatch.RebaseClock(interop.LastLoadedGameTime ?? 0f, interop.LastLoadedFrameCount ?? 0);
+        if (JObject.Parse(File.ReadAllText(fixturePath))["PlayerData"] is { } fixturePlayerData) {
+            JsonUtility.FromJsonOverwrite(fixturePlayerData.ToString(), PlayerData.instance);
+        }
+    }
+
     // Deterministic hazard-respawn failsafe for `load`. hazardRespawnLocation is [NonSerialized] (never persisted;
     // the game re-derives it on scene entry from the entry gate). Our dreamGate load has no resolvable entry gate,
     // so FinishedEnteringScene anchors it to the hero's landing position — which, if the load target is inside a
@@ -231,26 +253,6 @@ public static class LoadCommand {
 
     private static void Normalize() {
         Random.InitState(0);
-    }
-
-    // Normalize the hero's transient state (velocity/anim/cState/FSMs) to a known idle via a scene-less fixture,
-    // applied in-place (no reload; a manual reset is unreliable because refs are cached). Also pins the free-running
-    // state the fixture carries to its canonical values, so a load is prior-independent (otherwise scene-load RNG
-    // churn / elapsed-time timers leak the prior in). The scene-less apply restores RandomState itself; the
-    // deterministic clock and the PlayerData world-timer subset are not on that path, so apply them here. Only the
-    // FisherWalker* timers are overwritten — abilities/progress are preserved.
-    private static void NormalizeToIdle() {
-        if (PreciseSavestatesInterop.Instance is not { } interop) {
-            return;
-        }
-
-        var fixturePath = IdleFixturePath();
-        _ = interop.LoadSavestateFromFile(fixturePath);
-
-        DeterministicTimePatch.RebaseClock(interop.LastLoadedGameTime ?? 0f, interop.LastLoadedFrameCount ?? 0);
-        if (JObject.Parse(File.ReadAllText(fixturePath))["PlayerData"] is { } fixturePlayerData) {
-            JsonUtility.FromJsonOverwrite(fixturePlayerData.ToString(), PlayerData.instance);
-        }
     }
 
     private static string? idleFixturePath;
