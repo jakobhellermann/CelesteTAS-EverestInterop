@@ -55,6 +55,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="Assets/idle-normalization.json">
+            <LogicalName>idle-normalization.json</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="BepInEx.Analyzers" Version="1.*" />
         <PackageReference Include="BepInEx.Core" Version="5.*" IncludeAssets="compile" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
