@@ -25,14 +25,61 @@ public static class LoadCommand {
 
         public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath,
             int fileLine) {
-            if (!InGame()) yield break;
-
             if (args.Length == 1) {
-                for (var i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++) {
-                    var scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
-                    yield return new CommandAutoCompleteEntry { Name = scene.name, IsDone = true };
-                }
+                return SceneEntries(hasNext: true).GetEnumerator();
             }
+
+            return EmptyEntries();
+        }
+    }
+
+    private class LoadTransitionMeta : ITasCommandMeta {
+        public string Insert =>
+            $"LoadTransition{CommandInfo.Separator}[0;Scene]{CommandInfo.Separator}[1;Gate]";
+
+        public bool HasArguments => true;
+
+        public IEnumerator<CommandAutoCompleteEntry> GetAutoCompleteEntries(string[] args, string filePath,
+            int fileLine) {
+            if (args.Length == 1) {
+                return SceneEntries(hasNext: true).GetEnumerator();
+            }
+
+            if (args.Length == 2) {
+                return GateEntries(args[0]).GetEnumerator();
+            }
+
+            return EmptyEntries();
+        }
+    }
+
+    private static IEnumerator<CommandAutoCompleteEntry> EmptyEntries() {
+        yield break;
+    }
+
+    /// Scene-name candidates: currently-loaded scenes first (ranked as suggestions), then the full offline
+    /// catalog so any loadable scene can be completed, not just the active ones.
+    private static IEnumerable<CommandAutoCompleteEntry> SceneEntries(bool hasNext) {
+        var seen = new HashSet<string>();
+
+        for (var i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++) {
+            var name = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i).name;
+            if (seen.Add(name)) {
+                yield return new CommandAutoCompleteEntry { Name = name, Extra = "loaded", Suggestion = true, IsDone = true, HasNext = hasNext };
+            }
+        }
+
+        foreach (var name in SceneCatalog.Scenes) {
+            if (seen.Add(name)) {
+                yield return new CommandAutoCompleteEntry { Name = name, IsDone = true, HasNext = hasNext };
+            }
+        }
+    }
+
+    /// Entry-gate candidates for the chosen target scene (from the offline catalog).
+    private static IEnumerable<CommandAutoCompleteEntry> GateEntries(string scene) {
+        foreach (var gate in SceneCatalog.GatesFor(scene)) {
+            yield return new CommandAutoCompleteEntry { Name = gate, Extra = "gate", IsDone = true, HasNext = false };
         }
     }
 
@@ -78,6 +125,45 @@ public static class LoadCommand {
             SceneName = scene,
             HeroLeaveDirection = GatePosition.unknown,
             EntryGateName = "dreamGate",
+            EntryDelay = 0f,
+            PreventCameraFadeOut = true,
+            WaitForSceneTransitionCameraFade = false,
+            Visualization = GameManager.SceneLoadVisualizations.Default,
+        });
+    }
+
+    [TasCommand("LoadTransition", MetaDataProvider = typeof(LoadTransitionMeta))]
+    private static void LoadTransition(CommandLine commandLine, int studioLine, string filePath, int fileLine) {
+        TasTracer.AddFrameHistory("Executing LoadTransition command");
+
+        if (commandLine.Arguments.Length != 2) {
+            AbortTas($"Invalid number of arguments in LoadTransition command: '{commandLine.OriginalText}'.");
+            return;
+        }
+
+        var scene = commandLine.Arguments[0];
+        var gate = commandLine.Arguments[1];
+
+        if (!InGame()) {
+            AbortTas("Attempted to start TAS outside of a level");
+            return;
+        }
+
+        Normalize();
+
+        // Unlike `load` (dreamGate + guessed x/y), enter at a named TransitionPoint gate so the game's entry flow
+        // positions the hero. That flow (EnterHero → PositionHeroAtSceneEntrance → walk-in animation + entryDelay)
+        // needs *frames* to run, so we must NOT hold the TasLoad gate: TasLoad freezes the clock (timeScale = 0) and
+        // stops input-frame advancement, which would stall the entry sequence forever → FinishedEnteringScene never
+        // fires → deadlock. Instead we let the transition play out as an *organic* transition: normalize the hero to a
+        // clean idle up front (prior-independent RNG/clock/timers + idle pose), then kick off the transition and let it
+        // advance over visible TAS frames. SceneTransitionGate already hides only the variable async fetch, so the
+        // fade + gate entry stay deterministic-and-visible and playback continues normally once the hero has entered.
+        NormalizeToIdle();
+        GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo {
+            SceneName = scene,
+            HeroLeaveDirection = GatePosition.unknown,
+            EntryGateName = gate,
             EntryDelay = 0f,
             PreventCameraFadeOut = true,
             WaitForSceneTransitionCameraFade = false,
