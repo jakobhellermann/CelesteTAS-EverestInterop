@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using HarmonyLib;
 using JetBrains.Annotations;
@@ -117,9 +118,15 @@ internal static class TasTracer {
 
     private static Dictionary<int, List<TasTrace>> traceCache = new();
 
+    /// Absolute path of the most recently saved trace JSON. Set in SaveTrace, cleared when a run starts, so callers
+    /// can pick up exactly this run's trace once it completes (null while a run is in progress or if none was saved).
+    public static string? LastSavedTracePath;
+
 
     [EnableRun]
     private static void BeginTrace() {
+        LastSavedTracePath = null;
+        traceSaved = false;
         trace.Trace.Clear();
         trace.Checksum = Manager.Controller.Checksum;
         trace.FilePath = Manager.Controller.FilePath.Replace(@"\", "/");
@@ -136,17 +143,44 @@ internal static class TasTracer {
         traceCache.Clear();
     }
 
+    private static bool traceSaved;
+
     [DisableRun]
     private static void EndTrace() {
         TraceEvent("DisableRun");
 
+        // A run that ended without completing — an aborted assert, a wedge, or a manual stop. If it traced any frames,
+        // still save the partial trace (up to the aborting frame) so the failure is immediately debuggable: trace-diff
+        // it against a good run instead of re-running to try to catch an intermittent failure again. Nothing traced
+        // (e.g. a stop before the first frame) → clear it.
         if (!Manager.DidComplete) {
-            Log.Warn("TAS Trace not saved");
-            trace.Trace.Clear();
-            trace.Checksum = 0;
-            trace.FilePath = null;
+            if (!traceSaved) {
+                if (trace.Trace.Count > 0) {
+                    SaveTrace(trace);
+                    traceSaved = true;
+                } else {
+                    Log.Warn("TAS Trace not saved");
+                    trace.Trace.Clear();
+                    trace.Checksum = 0;
+                    trace.FilePath = null;
+                }
+            }
+
             return;
         }
+
+        SaveCompletedTrace();
+    }
+
+    /// Saves the finished run's trace exactly once, at the moment it completes — whether it ends by disabling or by
+    /// auto-pausing a draft on the last frame. Keying only off [DisableRun] misses the draft-pause case (a completed
+    /// draft never disables), which is why it is also called from the completion point in Manager.Update.
+    internal static void SaveCompletedTrace() {
+        if (traceSaved || !Manager.DidComplete) {
+            return;
+        }
+
+        traceSaved = true;
 
         if (!traceCache.ContainsKey(trace.Checksum)) traceCache[trace.Checksum] = [];
         var checksumTraces = traceCache[trace.Checksum];
@@ -202,8 +236,13 @@ internal static class TasTracer {
         }
 
         var advancing = Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance;
-        if (!advancing && !frameStages.Any(s => s.HasContent)) {
-            return;
+        if (!advancing) {
+            // Skip the terminal hold: a draft auto-pauses on its last frame (see Manager.Update), producing a run
+            // of held frames with no new input whose count varies run-to-run — pure trace clutter. Mid-TAS
+            // breakpoint pauses still have CanPlayback and are kept (they carry the freeze-leak signal).
+            if (!Manager.Controller.CanPlayback || !frameStages.Any(s => s.HasContent)) {
+                return;
+            }
         }
 
         using var _ = SuppressTrace();
@@ -449,6 +488,8 @@ internal static class TasTracer {
         var datetime = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         var tracePath = Path.Combine(traceDir, $"{datetime}.json");
         File.WriteAllText(tracePath, json);
+        LastSavedTracePath = tracePath;
+        Log.Info($"Saved TAS trace to {tracePath}");
 
 
         var latest = Path.Combine(traceDir, "latest");
