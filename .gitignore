@@ -251,3 +251,5 @@ ModelManifest.xml
 /result
 
 /GamePath.props
+
+__pycache__/
