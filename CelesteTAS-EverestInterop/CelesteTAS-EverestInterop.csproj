@@ -58,6 +58,9 @@
         <EmbeddedResource Include="Assets/idle-normalization.json">
             <LogicalName>idle-normalization.json</LogicalName>
         </EmbeddedResource>
+        <EmbeddedResource Include="Assets/scene-catalog.json">
+            <LogicalName>scene-catalog.json</LogicalName>
+        </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
