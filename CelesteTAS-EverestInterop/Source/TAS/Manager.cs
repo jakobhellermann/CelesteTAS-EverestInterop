@@ -205,6 +205,11 @@ public static class Manager {
     public static void Update() {
         if (CurrState != State.Paused && NextState == State.Paused) {
             EnablePause();
+
+            // An end-of-file breakpoint completes the run at its pause (DidComplete set in the breakpoint check
+            // below). TraceFrame for the final frame runs earlier in this same PostLateUpdate, so the trace is
+            // complete exactly now — save it as the pause engages. Mid-run pauses have DidComplete=false → no-op.
+            TasTracer.SaveCompletedTrace();
         }
         if (CurrState == State.Paused && NextState != State.Paused) {
             DisablePause();
@@ -235,6 +240,7 @@ public static class Manager {
         // the breakpoint.
         if (pendingBreakpointPause) {
             pendingBreakpointPause = false;
+            CompleteAtEndOfFile();
             NextState = State.Paused;
             return;
         }
@@ -301,6 +307,7 @@ public static class Manager {
             if (GameInterop.IsLoading()) {
                 pendingBreakpointPause = true;
             } else {
+                CompleteAtEndOfFile();
                 NextState = State.Paused;
             }
         }
@@ -313,6 +320,16 @@ public static class Manager {
                 DisableRun();
             }
         }
+    }
+
+    /// A pause landing on end-of-file (e.g. a trailing *** breakpoint) has consumed all its inputs — the run is
+    /// over, so complete it AT the pause instead of a frame after the resume: a plain mid-run pause would write no
+    /// trace (the completion path never fired), and resuming it runs one extra no-input game frame before the
+    /// completion branch re-pauses. The trace itself is saved by the pause transition (see Update).
+    private static void CompleteAtEndOfFile() {
+        // Keep an abort honest: AbortTas on the breakpoint frame set NextState=Disabled — that run did not complete.
+        if (Controller.CanPlayback || NextState == State.Disabled) return;
+        DidComplete = true;
     }
 
     /// Updates everything around the TAS itself, like hotkeys, studio-communication, etc.
