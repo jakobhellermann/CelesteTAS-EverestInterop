@@ -82,9 +82,11 @@ public enum TasTracerFilter {
     Miscellaneous = 1 << 1,
     Random = 1 << 2,
     Enemies = 1 << 3,
-    Movement = 1 << 4,
+    Positions = 1 << 4,
     TraceVarsThroughFrame = 1 << 6,
     Collision = 1 << 7,
+    Animation = 1 << 8,
+    CallTree = 1 << 9,
 }
 
 internal static class TasTracer {
@@ -404,6 +406,11 @@ internal static class TasTracer {
     internal static bool DoSuppressTrace;
 
     internal static TraceSuppressScope SuppressTrace() => new();
+    
+    // Nesting depth of an active RNG isolation (RandomIsolationPatch save/restore window).
+    // When >0, random patches skip recording.
+    internal static int RandomIsolationDepth;
+
 
     internal readonly struct TraceSuppressScope : IDisposable {
         private readonly bool prev;
