@@ -69,8 +69,16 @@
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="UnityEngine.Modules" Version="6000.0.50" IncludeAssets="compile" />
 
+        <!-- Plain reference (not ProjectReference!) against the *installed* DevUtils.dll: building this project
+             must NOT rebuild DevUtils — its own local-install target would re-copy DevUtils.dll into the profile,
+             Hamunii-AutoReload would reload it, and a DevUtils reload replaces the static DevServer route table,
+             orphaning every route registered before the wipe (see mods/AGENTS.md). -->
+        <Reference Include="DevUtils">
+            <HintPath>$(ProfileDir)/BepInEx/plugins/jakobhellermann-DevUtils/DevUtils.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+
         <ProjectReference Include="../StudioCommunication/StudioCommunication.csproj" />
-        <ProjectReference Include="../../DevUtils/DevUtils.csproj" Private="false" />
     </ItemGroup>
 
     <Target Name="CheckReferences" BeforeTargets="BeforeBuild">
