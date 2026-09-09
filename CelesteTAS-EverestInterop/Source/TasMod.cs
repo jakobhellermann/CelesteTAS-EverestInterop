@@ -23,6 +23,7 @@ public class TasMod : BaseUnityPlugin {
 
     internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
     internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
+    internal ConfigEntry<bool> ConfigTasTraceStackTraces = null!;
 
     internal HitboxModule HitboxModule = null!;
 
@@ -54,9 +55,13 @@ public class TasMod : BaseUnityPlugin {
 
         try {
             ConfigTasTraceFrameHistory = Config.Bind("Tracer", "Frame History", false);
+            // Capture a stacktrace on each frame-history entry (bigger, slower traces) so a traced call's origin is
+            // readable straight from the trace. Expensive — capturing a StackTrace per Random draw shifts frame
+            // timing enough to desync a full run; use only for short/offline analysis, not a timing-sensitive TAS.
+            ConfigTasTraceStackTraces = Config.Bind("Tracer", "Stack Traces", false);
             ConfigTasTraceFilter = Config.Bind("Tracer",
                 "Frame History Filter",
-                TasTracerFilter.Random | TasTracerFilter.Movement
+                TasTracerFilter.Random | TasTracerFilter.Positions
             );
 
             /*
@@ -200,6 +205,7 @@ public class TasMod : BaseUnityPlugin {
         PlayerLoopSystemHelper.Unregister(typeof(FirstUpdateSystem));
         PlayerLoopSystemHelper.Unregister(typeof(LastUpdateSystem));
         PlayerLoopSystemHelper.Unregister(typeof(PostLateUpdateSystem));
+        PlayerLoopSystemHelper.Unregister(typeof(TasMod));
 
         AttributeUtils.Invoke<UnloadAttribute>();
         if (Manager.Running) Manager.DisableRun();
