@@ -246,3 +246,6 @@ ModelManifest.xml
 
 # JetBrains IDE settings
 .idea
+
+# nix output
+/result
