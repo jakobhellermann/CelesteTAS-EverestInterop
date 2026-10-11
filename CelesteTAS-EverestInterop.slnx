@@ -1,6 +1,8 @@
 <Solution>
     <Folder Name="/CelesteTAS/">
-        <Project Path="CelesteTAS-EverestInterop/CelesteTAS-EverestInterop.csproj" />
+        <Project Path="CelesteTAS-EverestInterop/CelesteTAS-EverestInterop.csproj">
+            <Build Solution="Debug|*" Project="false" />
+        </Project>
         <Project Path="SyncChecker/SyncChecker.csproj" />
     </Folder>
     <Folder Name="/CelesteStudio/">
