@@ -1005,7 +1005,8 @@ public sealed class Editor : TextEditor {
                 leadingSpaces = line.Length - line.TrimStart().Length;
 
                 // Handle custom bindings
-                int customBindStart = GetColumnOfAction(actionLine, Actions.PressedKey);
+                var customKeyAction = actionLine.Actions.Sorted().FirstOrDefault(a => a.Data() is ActionData.CustomKey);
+                int customBindStart = customKeyAction != Actions.None ? GetColumnOfAction(actionLine, customKeyAction) : -1;
                 int customBindEnd = customBindStart + actionLine.CustomBindings.Count;
                 if (customBindStart != -1 && Document.Caret.Col >= customBindStart && Document.Caret.Col <= customBindEnd && typedCharacter is >= 'A' and <= 'Z') {
                     bool alreadyExists = !actionLine.CustomBindings.Add(typedCharacter);
@@ -1024,7 +1025,8 @@ public sealed class Editor : TextEditor {
                 var typedAction = typedCharacter.ActionForChar();
 
                 // Handle feather inputs
-                int featherStart = GetColumnOfAction(actionLine, Actions.Feather);
+                var degreeAction = actionLine.Actions.Sorted().FirstOrDefault(a => a.Data() is ActionData.Degree);
+                int featherStart = degreeAction != Actions.None ? GetColumnOfAction(actionLine, degreeAction) : -1;
                 if (featherStart != -1 && Document.Caret.Col > featherStart && (typedCharacter is '.' or ',' or (>= '0' and <= '9'))) {
                     int newCol;
                     if (typedCharacter == '.' && Document.Caret.Col > 0 && line[Document.Caret.Col - 1] == ActionLine.Delimiter) {
@@ -1042,7 +1044,7 @@ public sealed class Editor : TextEditor {
                     }
                 }
                 // Handle dash-only/move-only/custom bindings
-                else if (typedAction is Actions.DashOnly or Actions.MoveOnly or Actions.PressedKey) {
+                else if (typedAction.Data() is ActionData.KeyModifier or ActionData.CustomKey) {
                     actionLine.Actions = actionLine.Actions.ToggleAction(typedAction, Settings.Instance.AutoRemoveMutuallyExclusiveActions);
 
                     if (actionLine.Actions.HasFlag(typedAction)) {
@@ -1053,30 +1055,30 @@ public sealed class Editor : TextEditor {
                 }
                 // Handle regular inputs
                 else if (typedAction != Actions.None) {
-                    int dashOnlyStart = GetColumnOfAction(actionLine, Actions.DashOnly);
-                    int dashOnlyEnd = dashOnlyStart + actionLine.Actions.GetDashOnly().Count();
-                    if (dashOnlyStart != -1 && Document.Caret.Col >= dashOnlyStart && Document.Caret.Col <= dashOnlyEnd)
-                        typedAction = typedAction.ToDashOnlyActions();
+                    foreach (var lineAction in actionLine.Actions.Sorted()) {
+                        if (lineAction.Data() is not ActionData.KeyModifier modifier)
+                            continue;
 
-                    int moveOnlyStart = GetColumnOfAction(actionLine, Actions.MoveOnly);
-                    int moveOnlyEnd = moveOnlyStart + actionLine.Actions.GetMoveOnly().Count();
-                    if (moveOnlyStart != -1 && Document.Caret.Col >= moveOnlyStart && Document.Caret.Col <= moveOnlyEnd)
-                        typedAction = typedAction.ToMoveOnlyActions();
+                        int modifierStart = GetColumnOfAction(actionLine, lineAction);
+                        int modifierEnd = modifierStart + actionLine.Actions.CountIn(modifier.DerivedGroup);
+                        if (modifierStart != -1 && Document.Caret.Col >= modifierStart && Document.Caret.Col <= modifierEnd)
+                            typedAction = typedAction.ToDerived(modifier);
+                    }
 
                     // Toggle it
                     actionLine.Actions = actionLine.Actions.ToggleAction(typedAction, Settings.Instance.AutoRemoveMutuallyExclusiveActions);
 
                     // Warp the cursor after the number
-                    if (typedAction == Actions.Feather && actionLine.Actions.HasFlag(Actions.Feather)) {
-                        Document.Caret.Col = GetColumnOfAction(actionLine, Actions.Feather) + 1;
-                    } else if (typedAction == Actions.Feather && !actionLine.Actions.HasFlag(Actions.Feather)) {
-                        actionLine.FeatherAngle = null;
-                        actionLine.FeatherMagnitude = null;
-                        Document.Caret.Col = ActionLine.MaxFramesDigits;
-                    } else if (typedAction is Actions.LeftDashOnly or Actions.RightDashOnly or Actions.UpDashOnly or Actions.DownDashOnly) {
-                        Document.Caret.Col = GetColumnOfAction(actionLine, Actions.DashOnly) + actionLine.Actions.GetDashOnly().Count();
-                    } else if (typedAction is Actions.LeftMoveOnly or Actions.RightMoveOnly or Actions.UpMoveOnly or Actions.DownMoveOnly) {
-                        Document.Caret.Col = GetColumnOfAction(actionLine, Actions.MoveOnly) + actionLine.Actions.GetMoveOnly().Count();
+                    if (typedAction.Data() is ActionData.Degree) {
+                        if (actionLine.Actions.HasFlag(typedAction)) {
+                            Document.Caret.Col = GetColumnOfAction(actionLine, typedAction) + 1;
+                        } else {
+                            actionLine.FeatherAngle = null;
+                            actionLine.FeatherMagnitude = null;
+                            Document.Caret.Col = ActionLine.MaxFramesDigits;
+                        }
+                    } else if (typedAction.ModifierOf() is not Actions.None and var modifier && modifier.Data() is ActionData.KeyModifier modifierData) {
+                        Document.Caret.Col = GetColumnOfAction(actionLine, modifier) + actionLine.Actions.CountIn(modifierData.DerivedGroup);
                     } else {
                         Document.Caret.Col = ActionLine.MaxFramesDigits;
                     }
@@ -1244,7 +1246,8 @@ public sealed class Editor : TextEditor {
             }
 
             // Handle feather angle/magnitude
-            int featherColumn = GetColumnOfAction(actionLine, Actions.Feather);
+            var degreeAction = actionLine.Actions.Sorted().FirstOrDefault(a => a.Data() is ActionData.Degree);
+            int featherColumn = degreeAction != Actions.None ? GetColumnOfAction(actionLine, degreeAction) : -1;
             if (featherColumn != -1 && caret.Col >= featherColumn) {
                 int angleMagnitudeCommaColumn = line.IndexOf(ActionLine.Delimiter, featherColumn + 1) + 1;
 
@@ -2149,17 +2152,17 @@ public sealed class Editor : TextEditor {
             int column = GetColumnOfAction(actionLine, action);
             softSnapColumns.Add(column);
 
-            if (action == Actions.DashOnly)
-                softSnapColumns.AddRange(Enumerable.Range(column + 1, actionLine.Actions.GetDashOnly().Count()));
-            if (action == Actions.MoveOnly)
-                softSnapColumns.AddRange(Enumerable.Range(column + 1, actionLine.Actions.GetMoveOnly().Count()));
-            if (action == Actions.PressedKey)
-                softSnapColumns.AddRange(Enumerable.Range(column + 1, actionLine.CustomBindings.Count));
-        }
-        // Feather angle/magnitude
-        if (actionLine.Actions.HasFlag(Actions.Feather)) {
-            int featherColumn = GetColumnOfAction(actionLine, Actions.Feather);
-            softSnapColumns.AddRange(Enumerable.Range(featherColumn, actionLine.ToString().Length + 1 - featherColumn));
+            switch (action.Data()) {
+                case ActionData.KeyModifier modifier:
+                    softSnapColumns.AddRange(Enumerable.Range(column + 1, actionLine.Actions.CountIn(modifier.DerivedGroup)));
+                    break;
+                case ActionData.CustomKey:
+                    softSnapColumns.AddRange(Enumerable.Range(column + 1, actionLine.CustomBindings.Count));
+                    break;
+                case ActionData.Degree:
+                    softSnapColumns.AddRange(Enumerable.Range(column, actionLine.ToString().Length + 1 - column));
+                    break;
+            }
         }
 
         return softSnapColumns.AsReadOnly();
@@ -2180,8 +2183,8 @@ public sealed class Editor : TextEditor {
             hardSnapColumns.Add(GetColumnOfAction(actionLine, actionLine.Actions.Sorted().Last()) + actionLine.CustomBindings.Count);
 
         // Feather angle/magnitude
-        if (actionLine.Actions.HasFlag(Actions.Feather)) {
-            int featherColumn = GetColumnOfAction(actionLine, Actions.Feather);
+        if (actionLine.Actions.Sorted().FirstOrDefault(a => a.Data() is ActionData.Degree) is not Actions.None and var degreeAction) {
+            int featherColumn = GetColumnOfAction(actionLine, degreeAction);
             string line = actionLine.ToString();
 
             int decimalColumn = featherColumn + 1;
@@ -2214,21 +2217,21 @@ public sealed class Editor : TextEditor {
     }
 
     private static int GetColumnOfAction(ActionLine actionLine, Actions action) {
-        int index = actionLine.Actions.Sorted().IndexOf(action);
+        var sorted = actionLine.Actions.Sorted().ToArray();
+        int index = Array.IndexOf(sorted, action);
         if (index < 0) return -1;
 
-        int dashOnlyIndex = actionLine.Actions.Sorted().IndexOf(Actions.DashOnly);
-        int moveOnlyIndex = actionLine.Actions.Sorted().IndexOf(Actions.MoveOnly);
-        int customBindingIndex = actionLine.Actions.Sorted().IndexOf(Actions.PressedKey);
-
         int additionalOffset = 0;
-
-        if (dashOnlyIndex != -1 && index > dashOnlyIndex)
-            additionalOffset += actionLine.Actions.GetDashOnly().Count();
-        if (moveOnlyIndex != -1 && index > moveOnlyIndex)
-            additionalOffset += actionLine.Actions.GetMoveOnly().Count();
-        if (customBindingIndex != -1 && index > customBindingIndex)
-            additionalOffset += actionLine.CustomBindings.Count;
+        for (int i = 0; i < index; i++) {
+            switch (sorted[i].Data()) {
+                case ActionData.KeyModifier modifier:
+                    additionalOffset += actionLine.Actions.CountIn(modifier.DerivedGroup);
+                    break;
+                case ActionData.CustomKey:
+                    additionalOffset += actionLine.CustomBindings.Count;
+                    break;
+            }
+        }
 
         return ActionLine.MaxFramesDigits + (index + 1) * 2 + additionalOffset;
     }
