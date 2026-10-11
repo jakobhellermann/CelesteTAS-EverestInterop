@@ -63,16 +63,10 @@ public struct ActionLine() {
             var data = action.Data();
             actionLine.Actions |= action;
 
-            // Parse dash-only/move-only/custom bindings
-            if (action is Actions.DashOnly) {
+            // Parse modifier / custom-key / degree contents
+            if (data is ActionData.KeyModifier modifier) {
                 for (int j = 1; j < tokens[i].Length; j++) {
-                    actionLine.Actions |= tokens[i][j].ActionForChar().ToDashOnlyActions();
-                }
-                continue;
-            }
-            if (action is Actions.MoveOnly) {
-                for (int j = 1; j < tokens[i].Length; j++) {
-                    actionLine.Actions |= tokens[i][j].ActionForChar().ToMoveOnlyActions();
+                    actionLine.Actions |= tokens[i][j].ActionForChar().ToDerived(modifier);
                 }
                 continue;
             }
@@ -143,12 +137,13 @@ public struct ActionLine() {
     }
 
     /// Parses action-lines, which mostly are correct (for example: "1gd")
-    private enum ParseState { Frame, Action, DashOnly, MoveOnly, PressedKey, FeatherAngle, FeatherMagnitude }
+    private enum ParseState { Frame, Action, Modifier, CustomKey, DegreeAngle, DegreeMagnitude }
     public static bool TryParseLoose(string line, out ActionLine actionLine, bool ignoreInvalidFloats = true) {
         actionLine = default;
         actionLine.CustomBindings = new HashSet<char>();
 
         ParseState state = ParseState.Frame;
+        ActionData.KeyModifier? currModifier = null;
         string currValue = "";
 
         foreach (char c in line) {
@@ -195,17 +190,25 @@ public struct ActionLine() {
 
                     var action = c.ActionForChar();
                     actionLine.Actions |= action;
-                    state = action switch {
-                        Actions.DashOnly => ParseState.DashOnly,
-                        Actions.MoveOnly => ParseState.MoveOnly,
-                        Actions.PressedKey => ParseState.PressedKey,
-                        Actions.Feather => ParseState.FeatherAngle,
-                        _ => ParseState.Action,
-                    };
+                    switch (action.Data()) {
+                        case ActionData.KeyModifier modifier:
+                            currModifier = modifier;
+                            state = ParseState.Modifier;
+                            break;
+                        case ActionData.CustomKey:
+                            state = ParseState.CustomKey;
+                            break;
+                        case ActionData.Degree:
+                            state = ParseState.DegreeAngle;
+                            break;
+                        default:
+                            state = ParseState.Action;
+                            break;
+                    }
                     break;
                 }
 
-                case ParseState.DashOnly:
+                case ParseState.Modifier:
                 {
                     if (c == Delimiter) {
                         state = ParseState.Action;
@@ -213,29 +216,14 @@ public struct ActionLine() {
                     }
 
                     var action = c.ActionForChar();
-                    if (action is not (Actions.Left or Actions.Right or Actions.Up or Actions.Down)) {
+                    if ((currModifier!.AppliesTo & action) == 0) {
                         goto case ParseState.Action;
                     }
-                    actionLine.Actions |= action.ToDashOnlyActions();
+                    actionLine.Actions |= action.ToDerived(currModifier);
                     break;
                 }
 
-                case ParseState.MoveOnly:
-                {
-                    if (c == Delimiter) {
-                        state = ParseState.Action;
-                        continue;
-                    }
-
-                    var action = c.ActionForChar();
-                    if (action is not (Actions.Left or Actions.Right or Actions.Up or Actions.Down)) {
-                        goto case ParseState.Action;
-                    }
-                    actionLine.Actions |= action.ToMoveOnlyActions();
-                    break;
-                }
-
-                case ParseState.PressedKey:
+                case ParseState.CustomKey:
                 {
                     if (c == Delimiter) {
                         state = ParseState.Action;
@@ -246,10 +234,10 @@ public struct ActionLine() {
                     break;
                 }
 
-                case ParseState.FeatherAngle:
+                case ParseState.DegreeAngle:
                 {
                     if (c == Delimiter) {
-                        state = ParseState.FeatherMagnitude;
+                        state = ParseState.DegreeMagnitude;
                         continue;
                     }
 
@@ -262,7 +250,7 @@ public struct ActionLine() {
                     break;
                 }
 
-                case ParseState.FeatherMagnitude:
+                case ParseState.DegreeMagnitude:
                 {
                     if (c == Delimiter) {
                         state = ParseState.Action;
@@ -304,15 +292,19 @@ public struct ActionLine() {
         var customBindings = CustomBindings.ToList();
         customBindings.Sort();
 
-        string actions = Actions.Sorted().Aggregate("", (s, a) => $"{s}{Delimiter}{a switch {
-            Actions.DashOnly => $"{Actions.DashOnly.CharForAction()}{string.Join("", tasActions.GetDashOnly().Select(ActionsUtils.CharForAction))}",
-            Actions.MoveOnly => $"{Actions.MoveOnly.CharForAction()}{string.Join("", tasActions.GetMoveOnly().Select(ActionsUtils.CharForAction))}",
-            Actions.PressedKey => $"{Actions.PressedKey.CharForAction()}{string.Join("", customBindings)}",
+        string actions = Actions.Sorted().Aggregate("", (s, a) => $"{s}{Delimiter}{a.Data() switch {
+            ActionData.KeyModifier modifier => $"{a.CharForAction()}{string.Join("", tasActions.InGroup(modifier.DerivedGroup).Select(ActionsUtils.CharForAction))}",
+            ActionData.CustomKey => $"{a.CharForAction()}{string.Join("", customBindings)}",
             _ => a.CharForAction().ToString(),
         }}");
-        string featherAngle = Actions.HasFlag(Actions.Feather) ? $"{Delimiter}{FeatherAngle ?? ""}" : string.Empty;
-        string featherMagnitude = Actions.HasFlag(Actions.Feather) && FeatherMagnitude != null ? $"{Delimiter}{FeatherMagnitude}" : string.Empty;
 
-        return $"{Frames,MaxFramesDigits}{actions}{featherAngle}{featherMagnitude}";
+        string degreeSuffix = string.Empty;
+        if (Actions.Sorted().Any(a => a.Data() is ActionData.Degree)) {
+            degreeSuffix = $"{Delimiter}{FeatherAngle ?? ""}";
+            if (FeatherMagnitude != null)
+                degreeSuffix += $"{Delimiter}{FeatherMagnitude}";
+        }
+
+        return $"{Frames,MaxFramesDigits}{actions}{degreeSuffix}";
     }
 }

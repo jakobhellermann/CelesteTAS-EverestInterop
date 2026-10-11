@@ -101,6 +101,22 @@ public static class ActionsUtils {
         return count;
     }
 
+    /// Actions which are set within the given group, ordered by their bit
+    public static IEnumerable<Actions> InGroup(this Actions actions, Actions group) {
+        uint remaining = (uint) (actions & group);
+        while (remaining != 0) {
+            yield return (Actions) (remaining & ~remaining + 1);
+            remaining &= remaining - 1;
+        }
+    }
+
+    /// Pairs of actions which can be swapped in-place
+    public static readonly (Actions A, Actions B)[] SwappablePairs = [
+        (Actions.Left, Actions.Right),
+        (Actions.Jump, Actions.Jump2),
+        (Actions.Dash, Actions.Dash2),
+    ];
+
     public static readonly ReadOnlyDictionary<char, Actions> Chars = new(
         new Dictionary<char, Actions> {
             {'L', Actions.Left},
@@ -123,22 +139,6 @@ public static class ActionsUtils {
             {'M', Actions.MoveOnly},
             {'P', Actions.PressedKey},
             {'F', Actions.Feather},
-        });
-
-    public static readonly ReadOnlyDictionary<char, Actions> DashOnlyChars = new(
-        new Dictionary<char, Actions> {
-            {'L', Actions.LeftDashOnly},
-            {'R', Actions.RightDashOnly},
-            {'U', Actions.UpDashOnly},
-            {'D', Actions.DownDashOnly},
-        });
-
-    public static readonly ReadOnlyDictionary<char, Actions> MoveOnlyChars = new(
-        new Dictionary<char, Actions> {
-            {'L', Actions.LeftMoveOnly},
-            {'R', Actions.RightMoveOnly},
-            {'U', Actions.UpMoveOnly},
-            {'D', Actions.DownMoveOnly},
         });
 
     public static bool TryParse(char c, out Actions actions) {
@@ -238,41 +238,6 @@ public static class ActionsUtils {
             Actions.LeftMoveOnly or Actions.RightMoveOnly => (actions & ~(Actions.LeftMoveOnly | Actions.RightMoveOnly)) | other,
             Actions.UpMoveOnly or Actions.DownMoveOnly => (actions & ~(Actions.UpMoveOnly | Actions.DownMoveOnly)) | other,
             _ => actions | other,
-        };
-    }
-
-    public static IEnumerable<Actions> GetDashOnly(this Actions actions) => new[] {
-        Actions.LeftDashOnly,
-        Actions.RightDashOnly,
-        Actions.UpDashOnly,
-        Actions.DownDashOnly,
-    }.Where(e => actions.HasFlag(e));
-
-    public static IEnumerable<Actions> GetMoveOnly(this Actions actions) => new[] {
-        Actions.LeftMoveOnly,
-        Actions.RightMoveOnly,
-        Actions.UpMoveOnly,
-        Actions.DownMoveOnly,
-    }.Where(e => actions.HasFlag(e));
-
-
-    public static Actions ToDashOnlyActions(this Actions actions) {
-        return actions switch {
-            Actions.Left => Actions.LeftDashOnly,
-            Actions.Right => Actions.RightDashOnly,
-            Actions.Up => Actions.UpDashOnly,
-            Actions.Down => Actions.DownDashOnly,
-            _ => actions
-        };
-    }
-
-    public static Actions ToMoveOnlyActions(this Actions actions) {
-        return actions switch {
-            Actions.Left => Actions.LeftMoveOnly,
-            Actions.Right => Actions.RightMoveOnly,
-            Actions.Up => Actions.UpMoveOnly,
-            Actions.Down => Actions.DownMoveOnly,
-            _ => actions
         };
     }
 }
