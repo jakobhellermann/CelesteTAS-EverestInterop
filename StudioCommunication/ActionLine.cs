@@ -60,6 +60,7 @@ public struct ActionLine() {
             if (string.IsNullOrWhiteSpace(tokens[i])) continue;
 
             var action = tokens[i][0].ActionForChar();
+            var data = action.Data();
             actionLine.Actions |= action;
 
             // Parse dash-only/move-only/custom bindings
@@ -75,7 +76,7 @@ public struct ActionLine() {
                 }
                 continue;
             }
-            if (action is Actions.PressedKey) {
+            if (data is ActionData.CustomKey) {
                 actionLine.CustomBindings = tokens[i][1..].Select(char.ToUpper).ToHashSet();
                 continue;
             }
@@ -86,7 +87,7 @@ public struct ActionLine() {
 
             // Parse feather angle/magnitude
             bool validAngle = true;
-            if (action == Actions.Feather && i + 1 < tokens.Length && (validAngle = float.TryParse(tokens[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out float angle))) {
+            if (data is ActionData.Degree && i + 1 < tokens.Length && (validAngle = float.TryParse(tokens[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out float angle))) {
                 if (angle > 360.0f)
                     actionLine.FeatherAngle = "360";
                 else if (angle < 0.0f)

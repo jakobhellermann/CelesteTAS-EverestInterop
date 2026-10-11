@@ -5,6 +5,26 @@ using System.Linq;
 
 namespace StudioCommunication;
 
+public abstract record ActionData {
+    public sealed record Regular : ActionData;
+
+    public sealed record Degree : ActionData;
+
+    public sealed record CustomKey : ActionData;
+
+    public sealed record KeyModifier(Actions AppliesTo, Actions DerivedGroup) : ActionData {
+        public int DerivedCountOf(Actions actions) {
+            int count = 0;
+            uint remaining = (uint) (actions & DerivedGroup);
+            while (remaining != 0) {
+                remaining &= remaining - 1;
+                count++;
+            }
+            return count;
+        }
+    }
+}
+
 [Flags]
 public enum Actions {
     None = 0,
@@ -39,6 +59,45 @@ public enum Actions {
 }
 
 public static class ActionsUtils {
+    private static readonly ActionData.Regular RegularData = new();
+    private static readonly ActionData.Degree DegreeData = new();
+    private static readonly ActionData.CustomKey CustomKeyData = new();
+
+    private static readonly ActionData.KeyModifier DashOnlyData = new(
+        Actions.Left | Actions.Right | Actions.Up | Actions.Down,
+        Actions.LeftDashOnly | Actions.RightDashOnly | Actions.UpDashOnly | Actions.DownDashOnly);
+    private static readonly ActionData.KeyModifier MoveOnlyData = new(
+        Actions.Left | Actions.Right | Actions.Up | Actions.Down,
+        Actions.LeftMoveOnly | Actions.RightMoveOnly | Actions.UpMoveOnly | Actions.DownMoveOnly);
+
+    public static ActionData Data(this Actions actions) => actions switch {
+        Actions.DashOnly => DashOnlyData,
+        Actions.MoveOnly => MoveOnlyData,
+        Actions.Feather => DegreeData,
+        Actions.PressedKey => CustomKeyData,
+        _ => RegularData,
+    };
+
+    public static Actions ActionModifierOf(Actions action) {
+        if (action != Actions.None && DashOnlyData.DerivedGroup.HasFlag(action))
+            return Actions.DashOnly;
+        if (action != Actions.None && MoveOnlyData.DerivedGroup.HasFlag(action))
+            return Actions.MoveOnly;
+        return Actions.None;
+    }
+
+    public static Actions ToDerived(this Actions action, ActionData.KeyModifier modifier) {
+        uint remaining = (uint) modifier.DerivedGroup;
+        while (remaining != 0) {
+            var derived = (Actions) (remaining & ~remaining + 1);
+            remaining &= remaining - 1;
+
+            if (derived.CharForAction() == action.CharForAction())
+                return derived;
+        }
+        return action;
+    }
+
     public static readonly ReadOnlyDictionary<char, Actions> Chars = new(
         new Dictionary<char, Actions> {
             {'L', Actions.Left},
