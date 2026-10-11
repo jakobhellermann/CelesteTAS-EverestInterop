@@ -32,6 +32,7 @@ public sealed class Editor : TextEditor {
         => new(identifier, displayName, Binding.Category.Editor, defaultHotkey, action);
 
     private static readonly InstanceBinding SetFrameCountToStepAmount = CreateAction("Editor_SetFrameCountToStepAmount", "Set Frame Count to current Step Amount", Hotkey.None, editor => editor.OnSetFrameCountToStepAmount());
+    private static readonly InstanceBinding BisectFrameCount = CreateAction("Editor_BisectFrameCount", "Bisect Frame Count...", Hotkey.None, editor => editor.OnBisectFrameCount());
 
     private static readonly InstanceBinding InsertRemoveBreakpoint = CreateAction("Editor_InsertRemoveBreakpoint", "Insert / Remove Breakpoint", Hotkey.KeyCtrl(Keys.Period), editor => editor.InsertOrRemoveText(UncommentedBreakpointRegex, "***"));
     private static readonly InstanceBinding InsertRemoveSavestateBreakpoint = CreateAction("Editor_InsertRemoveSavestateBreakpoint", "Insert / Remove Savestate Breakpoint", Hotkey.KeyCtrl(Keys.Period | Keys.Shift), editor => editor.InsertOrRemoveText(UncommentedBreakpointRegex, "***S"));
@@ -92,7 +93,7 @@ public sealed class Editor : TextEditor {
         Undo, Redo,
         SelectAll, SelectBlock,
         Find, GoTo, ToggleFolding,
-        DeleteSelectedLines, SetFrameCountToStepAmount,
+        DeleteSelectedLines, SetFrameCountToStepAmount, BisectFrameCount,
         InsertRemoveBreakpoint, InsertRemoveSavestateBreakpoint, RemoveAllUncommentedBreakpoints, RemoveAllBreakpoints, ToggleCommentBreakpoints, ToggleCommentInputs, ToggleCommentText,
         InsertRoomName, InsertChapterTime, RemoveAllTimestamps,
         InsertPlayerPosition, InsertPlayerSpeed, InsertConsoleLoadCommand, InsertSimpleConsoleLoadCommand, InsertModInfo, InsertRequireDependency,
@@ -273,6 +274,7 @@ public sealed class Editor : TextEditor {
                 new SeparatorMenuItem(),
                 DeleteSelectedLines.CreateItem(this),
                 SetFrameCountToStepAmount.CreateItem(this),
+                BisectFrameCount.CreateItem(this),
                 new SeparatorMenuItem(),
                 InsertRemoveBreakpoint.CreateItem(this),
                 InsertRemoveSavestateBreakpoint.CreateItem(this),
@@ -450,6 +452,14 @@ public sealed class Editor : TextEditor {
     #endregion
 
     protected override void OnKeyDown(KeyEventArgs e) {
+        if (bisectState != null && e.Modifiers == Keys.None) {
+            BisectHandleKey(e);
+            if (e.Handled) {
+                Invalidate();
+                return;
+            }
+        }
+
         string lineTrimmed = Document.Lines[Document.Caret.Row].TrimStart();
 
         // Send inputs to Celeste if applicable
@@ -560,6 +570,11 @@ public sealed class Editor : TextEditor {
         if (calculationState != null) {
             CalculationHandleKey(e);
             Invalidate();
+            return;
+        }
+        // Editing would invalidate the bisected line
+        if (bisectState != null) {
+            e.Handled = true;
             return;
         }
 
@@ -949,7 +964,7 @@ public sealed class Editor : TextEditor {
     #region Editing Actions
 
     protected override void OnTextInput(TextInputEventArgs e) {
-        if (e.Text.Length == 0 || char.IsControl(e.Text[0])) {
+        if (e.Text.Length == 0 || char.IsControl(e.Text[0]) || bisectState != null) {
             return;
         }
 
@@ -1513,6 +1528,89 @@ public sealed class Editor : TextEditor {
             ActionLine.TryParse(Document.Lines[CommunicationWrapper.CurrentLine], out var actionLine))
         {
             Document.ReplaceLine(CommunicationWrapper.CurrentLine, (actionLine with { FrameCount = Math.Clamp(CommunicationWrapper.CurrentFrameInInput, 0, ActionLine.MaxFrames) }).ToString());
+        }
+    }
+
+    private sealed class BisectState(int row, ActionLine actionLine) {
+        public readonly int Row = row;
+        public readonly ActionLine ActionLine = actionLine;
+        public readonly int OriginalFrameCount = actionLine.FrameCount;
+
+        /// Smallest frame count which can still work
+        public int Low = 0;
+        /// Smallest frame count known to work
+        public int High = actionLine.FrameCount;
+        public int Mid;
+        public int? LastRun;
+    }
+    private BisectState? bisectState;
+
+    /// Binary-searches the smallest working frame count of the caret's input line, asking the user after each restart.
+    private void OnBisectFrameCount() {
+        int row = Document.Caret.Row;
+        if (!ActionLine.TryParse(Document.Lines[row], out var actionLine)) {
+            ShowToastMessage("Bisect: The caret is not on an input line", DefaultToastTime);
+            return;
+        }
+        if (!CommunicationWrapper.Connected) {
+            ShowToastMessage("Bisect: Requires a connected game", DefaultToastTime);
+            return;
+        }
+
+        bisectState = new BisectState(row, actionLine);
+        BisectStep();
+    }
+
+    private void BisectStep() {
+        var state = bisectState!;
+        if (state.Low < state.High) {
+            state.Mid = (state.Low + state.High) / 2;
+            BisectSetFrameCount(state.Mid);
+            CommunicationWrapper.SendHotkey(HotkeyID.Restart);
+            state.LastRun = state.Mid;
+            int stepsLeft = (int) Math.Ceiling(Math.Log2(state.High - state.Low + 1));
+            ShowToastMessage($"Bisect: {state.Mid} frames, ~{stepsLeft} steps left ({state.Low}..{state.High})\nworks: Enter   doesn't: Backspace   cancel: Esc", Timeout.InfiniteTimeSpan);
+            return;
+        }
+
+        BisectSetFrameCount(state.High);
+        if (state.LastRun != state.High) {
+            CommunicationWrapper.SendHotkey(HotkeyID.Restart);
+        }
+        bisectState = null;
+        ShowToastMessage($"Bisect: {state.High} frames is the first working frame count", DefaultToastTime);
+    }
+
+    private void BisectHandleKey(KeyEventArgs e) {
+        var state = bisectState!;
+        switch (e.Key) {
+            case Keys.Enter:
+                state.High = state.Mid;
+                BisectStep();
+                break;
+            case Keys.Backspace:
+                state.Low = state.Mid + 1;
+                BisectStep();
+                break;
+            case Keys.Escape:
+                BisectSetFrameCount(state.OriginalFrameCount);
+                bisectState = null;
+                ShowToastMessage("Bisect: Cancelled", DefaultToastTime);
+                break;
+            default:
+                return;
+        }
+        e.Handled = true;
+    }
+
+    private void BisectSetFrameCount(int frameCount) {
+        var state = bisectState!;
+        using (Document.Update()) {
+            Document.ReplaceLine(state.Row, (state.ActionLine with { FrameCount = frameCount }).ToString());
+        }
+        // The game reads the file from disk
+        if (!Settings.Instance.AutoSave) {
+            Document.Save();
         }
     }
 
@@ -2130,8 +2228,8 @@ public sealed class Editor : TextEditor {
                 Settings.Instance.Theme.PopupMenuBgPaint);
 
             foreach (string line in lines) {
-                canvas.DrawText(line, x, y + Font.Offset(), font, Settings.Instance.Theme.PopupMenuFgPaint);
-                y += Font.LineHeight();
+                canvas.DrawText(line, x, y + font.Offset(), font, Settings.Instance.Theme.PopupMenuFgPaint);
+                y += font.LineHeight();
             }
         }
     }
