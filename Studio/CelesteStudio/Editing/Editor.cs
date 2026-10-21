@@ -2127,8 +2127,8 @@ public sealed class Editor : TextEditor {
                 Settings.Instance.Theme.PopupMenuBgPaint);
 
             foreach (string line in lines) {
-                canvas.DrawText(line, x, y + Font.Offset(), font, Settings.Instance.Theme.PopupMenuFgPaint);
-                y += Font.LineHeight();
+                canvas.DrawText(line, x, y + font.Offset(), font, Settings.Instance.Theme.PopupMenuFgPaint);
+                y += font.LineHeight();
             }
         }
     }
