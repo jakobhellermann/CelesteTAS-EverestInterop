@@ -28,7 +28,7 @@ public static class SetCommand {
             if (args.Length <= 1) {
                 using var enumerator = TargetQuery.ResolveAutoCompleteEntries(targetQueryArgs, TargetQuery.Variant.Set);
                 while (enumerator.MoveNext()) {
-                    yield return enumerator.Current with { HasNext = true };
+                    yield return enumerator.Current.ToStudio() with { HasNext = true };
                 }
                 yield break;
             }
@@ -44,7 +44,7 @@ public static class SetCommand {
 
                 using var enumerator = TargetQuery.ResolveAutoCompleteEntries(paramQueryArgs, TargetQuery.Variant.Get, targetTypes!);
                 while (enumerator.MoveNext()) {
-                    yield return enumerator.Current;
+                    yield return enumerator.Current.ToStudio();
                 }
             }
         }

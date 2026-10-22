@@ -35,7 +35,7 @@ public static class GetCommand {
             string[] queryArgs = args.Length > 0 ? args[0].Split('.') : [];
             using var enumerator = TargetQuery.ResolveAutoCompleteEntries(queryArgs, TargetQuery.Variant.Get);
             while (enumerator.MoveNext()) {
-                yield return enumerator.Current;
+                yield return enumerator.Current.ToStudio();
             }
         }
     }

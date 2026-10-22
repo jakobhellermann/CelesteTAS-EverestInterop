@@ -2,15 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using TAS.ModInterop;
 using TAS.Utils;
-using StudioCommunication;
-using StudioCommunication.Util;
 using System.Collections;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
-using TAS.EverestInterop;
 
 namespace TAS.InfoHUD;
 
@@ -19,6 +15,24 @@ namespace TAS.InfoHUD;
 public static class TargetQuery {
     internal enum Variant {
         Get, Set, Invoke
+    }
+
+    public struct AutoCompleteEntry() {
+        public required string Name;
+        public string Prefix = string.Empty;
+        public string Suffix = string.Empty;
+        public string Extra = string.Empty;
+        public bool Suggestion = false;
+        public bool IsDone = true;
+        public bool? HasNext = null;
+        public string? StorageKey = null;
+        public string? StorageName = null;
+    }
+
+    private static ITargetQueryHost? host;
+    public static ITargetQueryHost Host {
+        get => host ?? throw new InvalidOperationException($"{nameof(TargetQuery)}.{nameof(Host)} is not set");
+        set => host = value;
     }
 
     /// Handler to provide support for Celeste-specific special cases
@@ -99,20 +113,20 @@ public static class TargetQuery {
 
         /// Provide a list of auto-complete entries which should be listed along base-types.
         // [MustDisposeResource]
-        public virtual IEnumerator<CommandAutoCompleteEntry> ProvideGlobalEntries(string[] queryArgs, string queryPrefix, Variant variant) {
+        public virtual IEnumerator<AutoCompleteEntry> ProvideGlobalEntries(string[] queryArgs, string queryPrefix, Variant variant) {
             yield break;
         }
 
         /// Overwrite the list of auto-complete entries which are provided for the members of the type
         /// Only invoked if <see cref="CanEnumerateMemberEntries"/> returned <c>true</c> for the type. <br/>
         // [MustDisposeResource]
-        public virtual IEnumerator<CommandAutoCompleteEntry> EnumerateMemberEntries(Type type, Variant variant, string queryPrefix, int memberIdx, string[] memberArgs) {
+        public virtual IEnumerator<AutoCompleteEntry> EnumerateMemberEntries(Type type, Variant variant, string queryPrefix, int memberIdx, string[] memberArgs) {
             yield break;
         }
         /// Overwrite the list of auto-complete entries which are provided for the values of the type
         /// Only invoked if <see cref="CanEnumerateTypeEntries"/> returned <c>true</c> for the type. <br/>
         // [MustDisposeResource]
-        public virtual IEnumerator<CommandAutoCompleteEntry> EnumerateTypeEntries(Type type) {
+        public virtual IEnumerator<AutoCompleteEntry> EnumerateTypeEntries(Type type) {
             yield break;
         }
     }
@@ -128,18 +142,17 @@ public static class TargetQuery {
         new CollectionQueryHandler(),
     ];
 
-    [Initialize(ConsoleEnhancements.InitializePriority + 1)]
-    private static void CollectAllTypes() {
+    internal static void CollectAllTypes() {
         AllTypes.Clear();
         BaseTypeCache.Clear();
 
-        foreach (var type in ModUtils.GetTypes()) {
+        foreach (var type in Host.GetTypes()) {
             if (type.FullName is not { } fullName) {
                 continue;
             }
 
             string assemblyName = type.Assembly.GetName().Name!;
-            string modName = ConsoleEnhancements.GetModName(type);
+            string modName = Host.GetModName(type);
 
             // Use '.' instead of '+' for nested types
             fullName = fullName.Replace('+', '.');
@@ -467,7 +480,7 @@ public static class TargetQuery {
                 IsMethodUsable(m, variant, isFinal: true));
     }
 
-    internal static IEnumerator<CommandAutoCompleteEntry> ResolveAutoCompleteEntries(string[] queryArgs, Variant variant, Type[]? targetTypeFilter = null) {
+    internal static IEnumerator<AutoCompleteEntry> ResolveAutoCompleteEntries(string[] queryArgs, Variant variant, Type[]? targetTypeFilter = null) {
         // Process query arguments
         queryArgs = Handlers.Aggregate((IEnumerable<string>) queryArgs, (current, handler) => handler.ProcessQueryArguments(current, isAutoComplete: true)).ToArray();
         // Drop last argument for prefix
@@ -485,11 +498,11 @@ public static class TargetQuery {
                 }
 
                 if (targetType == typeof(bool)) {
-                    yield return new CommandAutoCompleteEntry { Name = "true", Extra = targetType.CSharpName(), IsDone = true, StorageKey = $"{nameof(Variant.Get)}_{typeof(bool).FullName}", Suggestion = true };
-                    yield return new CommandAutoCompleteEntry { Name = "false", Extra = targetType.CSharpName(), IsDone = true, StorageKey = $"{nameof(Variant.Get)}_{typeof(bool).FullName}", Suggestion = true };
+                    yield return new AutoCompleteEntry { Name = "true", Extra = targetType.CSharpName(), IsDone = true, StorageKey = $"{nameof(Variant.Get)}_{typeof(bool).FullName}", Suggestion = true };
+                    yield return new AutoCompleteEntry { Name = "false", Extra = targetType.CSharpName(), IsDone = true, StorageKey = $"{nameof(Variant.Get)}_{typeof(bool).FullName}", Suggestion = true };
                 } else if (targetType.IsEnum) {
                     foreach (object value in Enum.GetValues(targetType)) {
-                        yield return new CommandAutoCompleteEntry { Name = value.ToString()!, Extra = targetType.CSharpName(), IsDone = true, StorageKey = targetType.FullName == null ? null : $"{nameof(Variant.Get)}_{targetType.FullName}", Suggestion = true };
+                        yield return new AutoCompleteEntry { Name = value.ToString()!, Extra = targetType.CSharpName(), IsDone = true, StorageKey = targetType.FullName == null ? null : $"{nameof(Variant.Get)}_{targetType.FullName}", Suggestion = true };
                     }
                 }
 
@@ -550,7 +563,7 @@ public static class TargetQuery {
 
                 foreach (var field in EnumerateViableFields(currentType, variant, bindingFlags).OrderBy(f => f.Name)) {
                     bool isFinal = GuessIsFinal(field.FieldType) && (targetTypeFilter == null || targetTypeFilter.Any(type => field.FieldType.CanCoerceTo(type)));
-                    yield return new CommandAutoCompleteEntry {
+                    yield return new AutoCompleteEntry {
                         Name = isFinal ? field.Name : field.Name + ".",
                         Extra = field.FieldType.CSharpName(),
                         Prefix = memberQueryPrefix,
@@ -562,7 +575,7 @@ public static class TargetQuery {
                 }
                 foreach (var property in EnumerateViableProperties(currentType, variant, bindingFlags).OrderBy(p => p.Name)) {
                     bool isFinal = GuessIsFinal(property.PropertyType) && (targetTypeFilter == null || targetTypeFilter.Any(type => property.PropertyType.CanCoerceTo(type)));
-                    yield return new CommandAutoCompleteEntry {
+                    yield return new AutoCompleteEntry {
                         Name = isFinal ? property.Name : property.Name + ".",
                         Extra = property.PropertyType.CSharpName(),
                         Prefix = memberQueryPrefix,
@@ -573,7 +586,7 @@ public static class TargetQuery {
                     };
                 }
                 foreach (var method in EnumerateViableMethods(currentType, variant, bindingFlags).OrderBy(m => m.Name)) {
-                    yield return new CommandAutoCompleteEntry {
+                    yield return new AutoCompleteEntry {
                         Name = method.Name,
                         Extra = $"({string.Join(", ", method.GetParameters().Select(p => p.HasDefaultValue ? $"[{p.ParameterType.CSharpName()}]" : p.ParameterType.CSharpName()))})",
                         Prefix = memberQueryPrefix,
@@ -588,8 +601,8 @@ public static class TargetQuery {
             NextType:;
         }
     }
-    internal static IEnumerator<CommandAutoCompleteEntry> ResolveBaseTypeAutoCompleteEntries(string[] queryArgs, string queryPrefix, Variant variant, Predicate<Type>? typeFilterPredicate = null, Predicate<Type>? typeSuggestionPredicate = null) {
-        var types = ModUtils.GetTypes()
+    internal static IEnumerator<AutoCompleteEntry> ResolveBaseTypeAutoCompleteEntries(string[] queryArgs, string queryPrefix, Variant variant, Predicate<Type>? typeFilterPredicate = null, Predicate<Type>? typeSuggestionPredicate = null) {
+        var types = Host.GetTypes()
             .Where(type =>
                 (typeFilterPredicate?.Invoke(type) ?? true) &&
                 IsTypeViable(type, variant) &&
@@ -634,7 +647,7 @@ public static class TargetQuery {
                 continue;
             }
 
-            yield return new CommandAutoCompleteEntry {
+            yield return new AutoCompleteEntry {
                 Name = $"{string.Join('.', ns[(queryArgs.Length - 1)..])}.",
                 Extra = "Namespace",
                 Prefix = queryPrefix,
@@ -651,7 +664,7 @@ public static class TargetQuery {
             }
 
             string assemblyName = type.Assembly.GetName().Name!;
-            string modName = ConsoleEnhancements.GetModName(type);
+            string modName = Host.GetModName(type);
 
             // Use '.' instead of '+' for nested types
             string fullName = type.FullName!.Replace('+', '.');
@@ -666,7 +679,7 @@ public static class TargetQuery {
 
             // Use short name if possible, otherwise specify mod name / assembly name
             if (AllTypes[shortName].Count == 1) {
-                yield return new CommandAutoCompleteEntry {
+                yield return new AutoCompleteEntry {
                     Name = $"{shortName}.",
                     Extra = type.Namespace ?? string.Empty,
                     Prefix = queryPrefix,
@@ -676,7 +689,7 @@ public static class TargetQuery {
                     StorageName = type.FullName,
                 };
             } else if (AllTypes[$"{shortName}@{modName}"].Count == 1) {
-                yield return new CommandAutoCompleteEntry {
+                yield return new AutoCompleteEntry {
                     Name = $"{shortName}@{modName}.",
                     Extra = type.Namespace ?? string.Empty,
                     Prefix = queryPrefix,
@@ -686,7 +699,7 @@ public static class TargetQuery {
                     StorageName = type.FullName,
                 };
             } else if (AllTypes[$"{shortName}@{assemblyName}"].Count == 1) {
-                yield return new CommandAutoCompleteEntry {
+                yield return new AutoCompleteEntry {
                     Name = $"{shortName}@{assemblyName}.",
                     Extra = type.Namespace ?? string.Empty,
                     Prefix = queryPrefix,
@@ -699,7 +712,7 @@ public static class TargetQuery {
                 foreach (var possibleType in AllTypes[shortName]) {
                     if (possibleType == type) {
                         if (queryPrefix.TrimEnd('.') == (possibleType.Namespace ?? "")) {
-                            yield return new CommandAutoCompleteEntry {
+                            yield return new AutoCompleteEntry {
                                 Name = $"{shortName}.",
                                 Extra = type.Namespace ?? string.Empty,
                                 Prefix = queryPrefix,
@@ -1602,7 +1615,7 @@ public static class TargetQuery {
 
                 NextArg:;
             } catch (Exception ex) {
-                ex.LogException($"Failed to resolve value for type '{targetType}'");
+                Host.LogException(ex, $"Failed to resolve value for type '{targetType}'");
                 return Result<object?[], QueryError>.Fail(new QueryError.UnknownException(ex));
             }
         }
