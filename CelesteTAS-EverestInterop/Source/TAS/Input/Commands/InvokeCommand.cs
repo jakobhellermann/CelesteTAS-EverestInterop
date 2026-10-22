@@ -33,7 +33,7 @@ public static class InvokeCommand {
             if (args.Length <= 1) {
                 using var enumerator = TargetQuery.ResolveAutoCompleteEntries(targetQueryArgs, TargetQuery.Variant.Invoke);
                 while (enumerator.MoveNext()) {
-                    yield return enumerator.Current with { HasNext = true };
+                    yield return enumerator.Current.ToStudio() with { HasNext = true };
                 }
                 yield break;
             }
@@ -49,7 +49,7 @@ public static class InvokeCommand {
                 string[] paramQueryArgs = args[i].Split('.');
                 using var enumerator = TargetQuery.ResolveAutoCompleteEntries(paramQueryArgs, TargetQuery.Variant.Get, [targetTypes[i - 1]!]);
                 while (enumerator.MoveNext()) {
-                    yield return enumerator.Current with { HasNext = i < targetTypes.Length };
+                    yield return enumerator.Current.ToStudio() with { HasNext = i < targetTypes.Length };
                 }
             }
         }

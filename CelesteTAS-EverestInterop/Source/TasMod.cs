@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using PlayerLoopHelper;
 using TAS.Communication;
 using TAS.EverestInterop.Hitboxes;
+using TAS.InfoHUD;
 using TAS.Module;
 using TAS.Tracer;
 using TAS.Utils;
@@ -46,6 +47,7 @@ public class TasMod : BaseUnityPlugin {
 
     private void Awake() {
         Log.Init(Logger);
+        TargetQuery.Host = new TargetQueryHost();
         Instance = this;
 
         try {
