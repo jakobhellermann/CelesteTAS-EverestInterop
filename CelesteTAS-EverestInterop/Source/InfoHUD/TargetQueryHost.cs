@@ -8,6 +8,11 @@ using TAS.ModInterop;
 namespace TAS.InfoHUD;
 
 internal class TargetQueryHost : ITargetQueryHost {
+    public TargetQuery.Handler[] Handlers { get; } = [
+        new MonobehaviourQueryHandler(),
+        new CollectionQueryHandler(),
+    ];
+
     public IEnumerable<Type> GetTypes() => ModUtils.GetTypes();
     public string GetModName(Type type) => ConsoleEnhancements.GetModName(type);
     public void LogError(string message) => message.Log(LogLevel.Error);
