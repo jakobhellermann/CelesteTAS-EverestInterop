@@ -30,7 +30,7 @@ public static class TargetQuery {
     }
 
     private static ITargetQueryHost? host;
-    public static ITargetQueryHost Host {
+    internal static ITargetQueryHost Host {
         get => host ?? throw new InvalidOperationException($"{nameof(TargetQuery)}.{nameof(Host)} is not set");
         set => host = value;
     }
@@ -137,10 +137,7 @@ public static class TargetQuery {
     internal static readonly Dictionary<string, HashSet<Type>> AllTypes = new();
     internal static readonly Dictionary<string, (HashSet<Type> Types, string[] MemberArgs)> BaseTypeCache = new();
 
-    internal static readonly Handler[] Handlers = [
-        new MonobehaviourQueryHandler(),
-        new CollectionQueryHandler(),
-    ];
+    internal static Handler[] Handlers => Host.Handlers;
 
     internal static void CollectAllTypes() {
         AllTypes.Clear();

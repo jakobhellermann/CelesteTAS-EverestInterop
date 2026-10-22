@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace TAS.InfoHUD;
 
-public interface ITargetQueryHost {
+internal interface ITargetQueryHost {
+    TargetQuery.Handler[] Handlers { get; }
     IEnumerable<Type> GetTypes();
     string GetModName(Type type);
     void LogError(string message);
