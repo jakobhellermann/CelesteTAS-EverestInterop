@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TAS.Module;
+using TAS.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -248,16 +249,4 @@ public class HitboxModule : MonoBehaviour {
         WorldToScreenPoint(camera, collider2D.transform.TransformPoint(point + collider2D.offset));
 
     #endregion
-}
-
-internal static class CollectionExtensions {
-    public static void AddToKey<TKey, TValue>(this IDictionary<TKey, HashSet<TValue>> dict, TKey key,
-        TValue value) {
-        if (dict.TryGetValue(key, out var list)) {
-            list.Add(value);
-            return;
-        }
-
-        dict[key] = [value];
-    }
 }
