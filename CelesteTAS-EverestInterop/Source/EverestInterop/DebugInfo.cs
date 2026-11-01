@@ -43,6 +43,35 @@ public static class DebugInfo {
         list.Add((__instance.ActiveStateName, transition.EventName, transition.ToState));
     }
 
+    private static bool observing;
+
+    /// CanDoubleJump/CanFloat reach TryQueueWallJumpInterrupt, which queues a walljump the game then performs from move
+    /// input alone. While the panel observes them, answer without queueing.
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(HeroController), "TryQueueWallJumpInterrupt")]
+    private static bool ObserveWallJumpInterrupt(HeroController __instance, ref bool __result) {
+        if (!observing) {
+            return true;
+        }
+
+        __result = __instance.GetFieldValue<bool>("queuedWallJumpInterrupt")
+                   || WouldQueueWallJumpInterrupt(__instance, __instance.move_input);
+        return false;
+    }
+
+    /// TryQueueWallJumpInterrupt's condition, with CanChainWallJumps evaluated for the given move input.
+    private static bool WouldQueueWallJumpInterrupt(HeroController player, float moveInput) {
+        if (!player.playerData.hasWalljump
+            || player.cState.touchingNonSlider
+            || player.dashingDown
+            || !player.IsFacingNearWall(player.cState.facingRight, player.WALLJUMP_BROLLY_RAY_LENGTH, Color.green)) {
+            return false;
+        }
+
+        return player.wallLocked || player.GetFieldValue<int>("wallJumpChainStepsLeft") > 0
+                                 || Mathf.Abs(moveInput) > Mathf.Epsilon;
+    }
+
     /// The from→event→to chain an FSM went through this frame, e.g. "Dashed --VAULT--> Dash To Vault --CANCEL-->
     /// No Sprint". Empty when nothing fired. Prefixed with a separator so it appends cleanly after the state.
     private static string FsmStateAndActivity(Fsm fsm) {
@@ -186,7 +215,7 @@ public static class DebugInfo {
         List<(bool, string)> can = [
             (Can("CanAttack") || CanSprintAttack(), "Attack"),
             (Can("CanJump"), "Jump"),
-            (CanWithoutQueueingInterrupt(() => player.CanDoubleJump()), "DoubleJump"),
+            (Observe(() => player.CanDoubleJump()), "DoubleJump"),
             (Can("CanDash"), "Dash"),
             (Can("CanWallJump", true), "WallJump"),
             (CanQueueWallJumpInterrupt(), "WallJumpInterrupt"),
@@ -196,7 +225,7 @@ public static class DebugInfo {
             (Can("CanNailCharge"), "NailCharge"),
             (Can("CanCast"), "Cast"),
             (Can("CanBind"), "Bind"),
-            (CanWithoutQueueingInterrupt(() => player.InvokeMethod<bool>("CanFloat", true)), "Float"),
+            (Observe(() => player.InvokeMethod<bool>("CanFloat", true)), "Float"),
         ];
 
         text += "Can: " + Flags(can) + "\n";
@@ -254,35 +283,19 @@ public static class DebugInfo {
 
         return text;
 
-        // CanDoubleJump/CanFloat set queuedWallJumpInterrupt as a side effect (TryQueueWallJumpInterrupt), which
-        // makes the game wall-jump from move input alone. Observe without mutating.
-        bool CanWithoutQueueingInterrupt(Func<bool> can) {
-            bool queued = player.GetFieldValue<bool>("queuedWallJumpInterrupt");
-            var wallObj = player.GetFieldValue<GameObject>("touchingWallObj");
+        static bool Observe(Func<bool> can) {
+            observing = true;
             try {
                 return can();
             } finally {
-                player.SetFieldValue("queuedWallJumpInterrupt", queued);
-                player.SetFieldValue("touchingWallObj", wallObj);
+                observing = false;
             }
         }
 
-        // TryQueueWallJumpInterrupt without setting the flag. move_input is frozen while !acceptingInput, so use the
-        // held direction, as RegainControl refreshes it before re-evaluating a jump.
-        bool CanQueueWallJumpInterrupt() {
-            if (!player.playerData.hasWalljump
-                || player.cState.touchingNonSlider
-                || !player.IsFacingNearWall(player.cState.facingRight, player.WALLJUMP_BROLLY_RAY_LENGTH, Color.green)) {
-                return false;
-            }
-            float moveInput = player.GetFieldValue<float>("move_input");
-            try {
-                player.SetFieldValue("move_input", player.GetFieldValue<InputHandler>("inputHandler").inputActions.MoveVector.Vector.x);
-                return Can("CanChainWallJumps");
-            } finally {
-                player.SetFieldValue("move_input", moveInput);
-            }
-        }
+        // move_input is frozen while !acceptingInput, so use the held direction, as RegainControl refreshes it before
+        // re-evaluating a jump.
+        bool CanQueueWallJumpInterrupt() => WouldQueueWallJumpInterrupt(player,
+            player.GetFieldValue<InputHandler>("inputHandler").inputActions.MoveVector.Vector.x);
 
         // Computed "what can I do right now" predicates — the HeroController's own gates, so you get the answer
         // without tracing which cooldown/state blocks an action.
