@@ -150,6 +150,7 @@ public class TasMod : BaseUnityPlugin {
 
     private void FixedUpdate() {
         TasTracer.BeginStage("FixedUpdate");
+        DebugInfo.FixedUpdate();
     }
 
     private static void TraceBefore() => TasTracer.BeginStage($"TraceBefore-{AlsoTraceAround}");
