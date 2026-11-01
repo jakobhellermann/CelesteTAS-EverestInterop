@@ -114,6 +114,10 @@ public class TasMod : BaseUnityPlugin {
 
     private struct LastUpdateSystem;
 
+    private struct FixedSimulationCounterSystem;
+
+    private struct UpdateSimulationCounterSystem;
+
     private void Start() {
         PlayerLoopSystemHelper.Register(typeof(EarlyUpdateSystem),
             InsertPosition.FirstChildOf,
@@ -131,6 +135,16 @@ public class TasMod : BaseUnityPlugin {
             InsertPosition.FirstChildOf,
             typeof(UnityEngine.PlayerLoop.PostLateUpdate),
             PostLateUpdate);
+        if (!PlayerLoopSystemHelper.Register(typeof(FixedSimulationCounterSystem),
+                InsertPosition.After,
+                typeof(UnityEngine.PlayerLoop.FixedUpdate.Physics2DFixedUpdate),
+                () => DebugInfo.AfterAutoSimulation(SimulationMode2D.FixedUpdate))
+            || !PlayerLoopSystemHelper.Register(typeof(UpdateSimulationCounterSystem),
+                InsertPosition.After,
+                typeof(UnityEngine.PlayerLoop.PreUpdate.Physics2DUpdate),
+                () => DebugInfo.AfterAutoSimulation(SimulationMode2D.Update))) {
+            throw new InvalidOperationException("Physics2D PlayerLoop systems not found, can't count physics steps");
+        }
 
         if (AlsoTraceAround is { } system) {
             PlayerLoopSystemHelper.Register(typeof(TasMod),
@@ -154,6 +168,7 @@ public class TasMod : BaseUnityPlugin {
 
     private void FixedUpdate() {
         TasTracer.BeginStage("FixedUpdate");
+        DebugInfo.FixedUpdate();
     }
 
     private static void TraceBefore() => TasTracer.BeginStage($"TraceBefore-{AlsoTraceAround}");
@@ -215,6 +230,8 @@ public class TasMod : BaseUnityPlugin {
         PlayerLoopSystemHelper.Unregister(typeof(FirstUpdateSystem));
         PlayerLoopSystemHelper.Unregister(typeof(LastUpdateSystem));
         PlayerLoopSystemHelper.Unregister(typeof(PostLateUpdateSystem));
+        PlayerLoopSystemHelper.Unregister(typeof(FixedSimulationCounterSystem));
+        PlayerLoopSystemHelper.Unregister(typeof(UpdateSimulationCounterSystem));
         PlayerLoopSystemHelper.Unregister(typeof(TasMod));
 
         AttributeUtils.Invoke<UnloadAttribute>();
