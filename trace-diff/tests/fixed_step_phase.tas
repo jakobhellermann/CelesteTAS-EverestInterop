@@ -1,0 +1,15 @@
+#! Mode=compareTraces
+#! each pre=2,3
+# At 100 fps physics steps every other frame; which frames step after a `load` must not depend on the frames before it.
+Framerate, 100
+  {pre}
+BeginTrace, scenario
+load Arborium_10 22.38 5.57
+   1
+  10,R
+   5,R,X
+  20,R,J
+   8,R,J,X
+  10,L,X
+  15,R
+EndTrace

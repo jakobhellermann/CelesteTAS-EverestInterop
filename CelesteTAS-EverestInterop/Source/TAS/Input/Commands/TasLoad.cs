@@ -19,6 +19,7 @@ internal static class TasLoad {
     /// Begin a load: pauses playback until <see cref="End"/> plus the next frame boundary.
     public static void Begin() {
         IsLoading = true;
+        InputHelper.RequestFixedStepAlignment();
     }
 
     /// Mark the load's work done; <see cref="IsLoading"/> drops on the next <see cref="BeforeTasFrame"/>.
