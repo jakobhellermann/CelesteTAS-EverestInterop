@@ -263,6 +263,7 @@ internal sealed class TrackedRoutine(IEnumerator inner, string label, string own
 
     private bool registered;
     private bool done;
+    private int? startFrame;
 
     /// Label plus the current suspension point: the generated iterator's <c>&lt;&gt;1__state</c> (which yield it is
     /// parked at) and what it is waiting on (WaitForSeconds' duration etc.) — so the display shows how far along and
@@ -271,6 +272,9 @@ internal sealed class TrackedRoutine(IEnumerator inner, string label, string own
         var desc = $"{Label} [{owner}]";
         if (CoroutineTracker.StateField(inner.GetType())?.GetValue(inner) is int state) {
             desc += $"@s{state}";
+        }
+        if (startFrame is { } frame) {
+            desc += $" since f{frame}";
         }
 
         switch (inner.Current) {
@@ -292,6 +296,9 @@ internal sealed class TrackedRoutine(IEnumerator inner, string label, string own
 
         if (!registered) {
             registered = true;
+            if (Manager.Running) {
+                startFrame = Manager.Controller.CurrentFrameInTas;
+            }
             CoroutineTracker.Register(this);
         }
 

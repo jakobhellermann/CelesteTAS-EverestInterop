@@ -316,6 +316,17 @@ internal static class GameTrace {
         ]);
     }
 
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(HeroController), nameof(HeroController.TakeDamage))]
+    private static void HeroTakeDamage(HeroController __instance, GameObject go, CollisionSide damageSide, int damageAmount, HazardType hazardType) {
+        if (!TasTracer.ShouldTrace(TasTracerFilter.Miscellaneous)) return;
+
+        TasTracer.AddFrameHistory([
+            $"HeroController.TakeDamage from {ObjectPath(go)} side={damageSide} dmg={damageAmount} hazard={hazardType} heroPos={__instance.transform.position} recoilFrozen={__instance.cState.recoilFrozen} invulnerable={__instance.cState.invulnerable}",
+            ..Context(),
+        ]);
+    }
+
     /// Which GameObject (re)starts a TimedEventCaller coroutine and when. These restart on OnEnable (so
     /// fresh on every scene load) and draw Random immediately for their delay — a prime load-window churn source.
     [HarmonyPostfix]
