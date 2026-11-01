@@ -196,7 +196,8 @@ public class TasMod : BaseUnityPlugin {
 
             // TODO: ensure consistent fixedupdate
         } catch (Exception e) {
-            e.LogException("");
+            e.LogException("TAS frame failed");
+            if (Manager.Running) Manager.LastAbortMessage ??= $"TAS frame failed: {e.Message}";
             Manager.DisableRun();
         }
     }
