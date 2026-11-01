@@ -24,6 +24,19 @@ public static class DeterministicTimePatch {
         timeInTas = null;
     }
 
+    /// The engine's own scaled time, which the TAS clock replaces
+    public static double EngineTime {
+        get {
+            var time = timeInTas;
+            timeInTas = null;
+            try {
+                return Time.timeAsDouble;
+            } finally {
+                timeInTas = time;
+            }
+        }
+    }
+
     // Re-base the clock onto a loaded savestate's capture time, else its absolute-time/-frame state is stale.
     public static void RebaseClock(float time, int frameCount) {
         if (timeInTas != null) {
