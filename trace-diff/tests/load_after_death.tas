@@ -1,0 +1,15 @@
+# A `load` while a lava death is underway must cancel it like a savestate load does. By then the death's respawn
+# preload is issued; the load force-ends it, and the game's ScenePreloader.Cleanup unloads it by an Addressables key
+# SceneManager can't resolve, so it stayed loaded as a duplicate room. The death itself ran on through the load and the
+# hero stayed on the death's non-colliding layer 2, falling through the floor into the lava again.
+load Bone_East_12 104.93 7.57
+SetHp, 1
+   1
+
+  34,R
+  25
+
+load Bone_East_12 104.93 8
+ 100
+Assert, Equal, "scenes=1 dead=False layer=9", "scenes={SceneManager.sceneCount} dead={HeroController.cState.dead} layer={HeroController.gameObject.layer}"
+***
