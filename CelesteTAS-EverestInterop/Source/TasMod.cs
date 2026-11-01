@@ -218,12 +218,21 @@ public class TasMod : BaseUnityPlugin {
         PlayerLoopSystemHelper.Unregister(typeof(TasMod));
 
         AttributeUtils.Invoke<UnloadAttribute>();
-        harmony?.UnpatchSelf();
+        if (harmony != null) UnpatchSelf(harmony);
 
         if (HitboxModule?.gameObject) Destroy(HitboxModule!.gameObject);
 
         CommunicationWrapper.SendReset();
         CommunicationWrapper.Stop();
+    }
+
+    // UnpatchSelf skips prefixes/postfixes of bodyless methods (engine icalls like Time.time)
+    internal static void UnpatchSelf(Harmony harmony) {
+        foreach (var method in Harmony.GetAllPatchedMethods().ToList()) {
+            if (Harmony.GetPatchInfo(method).Owners.Contains(harmony.Id)) {
+                harmony.Unpatch(method, HarmonyPatchType.All, harmony.Id);
+            }
+        }
     }
 }
 

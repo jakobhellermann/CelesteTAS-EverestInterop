@@ -28,7 +28,7 @@ internal static class TracerPatches {
     [Unload]
     private static void Unload() {
         TasMod.Instance.ConfigTasTraceFrameHistory.SettingChanged -= OnSettingChanged;
-        harmony?.UnpatchSelf();
+        if (harmony != null) TasMod.UnpatchSelf(harmony);
         harmony = null;
     }
 
