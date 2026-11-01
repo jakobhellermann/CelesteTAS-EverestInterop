@@ -104,7 +104,9 @@ public static class RaycastDrawing {
             linecasts.Clear();
             return;
         }
-        
+
+        // Other IMGUI events use a different projection and would draw a shifted, y-flipped copy
+        if (Event.current?.type != EventType.Repaint) return;
         if (GameInterop.MainCamera is not { } camera) return;
 
         foreach (var (origin, direction, distance, _, _) in raycasts) {
