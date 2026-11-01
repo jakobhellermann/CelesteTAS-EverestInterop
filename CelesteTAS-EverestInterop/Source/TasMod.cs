@@ -194,6 +194,7 @@ public class TasMod : BaseUnityPlugin {
 
             Manager.UpdateMeta();
             Manager.Update();
+            InputHelper.AlignFixedStep();
             Input.Commands.SavestateLoad.ApplyPendingRestore();
 
             // TODO: ensure consistent fixedupdate

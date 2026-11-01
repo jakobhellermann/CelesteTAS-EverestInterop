@@ -60,6 +60,8 @@ public static class InputHelper {
         // Physics simulation in FixedUpdate can't easily be synced to TAS playback,
         // so it is simulated in TasMod.FirstUpdate
         Physics2D.simulationMode = SimulationMode2D.Script;
+
+        RequestFixedStepAlignment();
     }
 
     [DisableRun]
@@ -68,6 +70,42 @@ public static class InputHelper {
 
         Time.fixedDeltaTime = 0.02f;
         Physics2D.simulationMode = SimulationMode2D.Update;
+
+        alignFixedStep = false;
+        restoreCaptureFramerate = false;
+    }
+
+    private static bool alignFixedStep;
+    private static bool restoreCaptureFramerate;
+    private static float? timeScaleBeforeAlignment;
+
+    /// Spend the next frame on <see cref="AlignFixedStep"/>
+    public static void RequestFixedStepAlignment() => alignFixedStep = true;
+
+    /// The FixedUpdate phase is left over from what ran before, so one frame gets the length that leaves the next
+    /// step boundary an irrational fraction of a TAS frame ahead: the frame after steps physics, and no integer
+    /// framerate lands exactly on a boundary, where float rounding of this frame would decide (Unity compares
+    /// exact integer ticks).
+    public static void AlignFixedStep() {
+        if (restoreCaptureFramerate) {
+            restoreCaptureFramerate = false;
+            Time.captureFramerate = CurrentTasFramerate;
+            // A load that started meanwhile has already replaced the override
+            if (DeterministicTimePatch.OverwriteTimeScale == 1) {
+                DeterministicTimePatch.OverwriteTimeScale = timeScaleBeforeAlignment;
+            }
+        }
+        if (!alignFixedStep) return;
+        alignFixedStep = false;
+
+        double step = Time.fixedDeltaTime;
+        var phase = DeterministicTimePatch.EngineTime - Time.fixedTimeAsDouble;
+        var target = step - (Math.Sqrt(2) - 1) / CurrentTasFramerate % step;
+        Time.captureDeltaTime = (float)(step - phase + target);
+        // e.g. a load during the death freeze
+        timeScaleBeforeAlignment = DeterministicTimePatch.OverwriteTimeScale;
+        DeterministicTimePatch.OverwriteTimeScale = 1;
+        restoreCaptureFramerate = true;
     }
 
     private static InputFrame? currentFeed;
