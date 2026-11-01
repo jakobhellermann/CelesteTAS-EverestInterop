@@ -201,6 +201,7 @@ internal static class TasTracer {
         LastSavedTracePath = null;
         traceSaved = false;
         segmentStart = -1;
+        loadingEvents.Clear();
         dynamicProbes.Clear();
         trace.Trace.Clear();
         trace.Checksum = Manager.Controller.Checksum;
@@ -222,6 +223,10 @@ internal static class TasTracer {
 
     [DisableRun]
     private static void EndTrace() {
+        if (loadingEvents.Count > 0) {
+            TraceEvent("UnflushedLoadWindow", loadingEvents.ToList());
+            loadingEvents.Clear();
+        }
         TraceEvent("DisableRun");
 
         // A run that ended without completing — an aborted assert, a wedge, or a manual stop. If it traced any frames,
@@ -307,6 +312,8 @@ internal static class TasTracer {
 
     public static void TraceFrame() {
         if (!TraceLoadingFrames && EverestInterop.GameInterop.IsLoading()) {
+            loadingEvents.InsertRange(0, frameWindowEvents);
+            frameWindowEvents.Clear();
             return;
         }
 
@@ -485,8 +492,14 @@ internal static class TasTracer {
             traceVarsState[name] = newVal;
         }
 
-        if (FrameHistoryEnabled && frameStages.Any(s => s.HasContent)) {
-            data.Add("FrameHistory", frameStages.Where(s => s.HasContent).Select(s => s.ToDict()).ToList());
+        if (FrameHistoryEnabled && (loadingEvents.Count > 0 || frameStages.Any(s => s.HasContent))) {
+            List<object?> stages = [];
+            if (loadingEvents.Count > 0) {
+                stages.Add(new Dictionary<string, object?> { ["Stage"] = "loading", ["Events"] = loadingEvents.ToList() });
+                loadingEvents.Clear();
+            }
+            stages.AddRange(frameStages.Where(s => s.HasContent).Select(s => s.ToDict()));
+            data.Add("FrameHistory", stages);
         }
 
         if (changes.Count > 0) {
@@ -502,6 +515,25 @@ internal static class TasTracer {
     [BeforeTasFrame]
     private static void BeforeTasFrame() {
         ClearFrameHistory();
+        frameWindowEvents.Clear();
+    }
+
+    // Recorded on untraced loading frames too; surfaces as a "loading" stage of the next traced frame
+    private static readonly List<object?> loadingEvents = [];
+    // This frame's load-window events, kept in case the frame turns out untraced
+    private static readonly List<object?> frameWindowEvents = [];
+
+    /// ShouldTrace for rare events that matter even inside a load window (scene loads/unloads, transitions).
+    internal static bool ShouldTraceLoadWindow(TasTracerFilter filter) =>
+        FrameHistoryEnabled && Manager.Running && Filter.HasFlag(filter);
+
+    internal static void AddLoadWindowEvent(string evt) {
+        if (!TraceLoadingFrames && EverestInterop.GameInterop.IsLoading()) {
+            loadingEvents.Add(evt);
+        } else {
+            AddFrameHistory(evt);
+            frameWindowEvents.Add(evt);
+        }
     }
 
     #endregion
