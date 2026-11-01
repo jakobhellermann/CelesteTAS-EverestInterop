@@ -132,6 +132,8 @@ internal static class CoroutineTracker {
 
     internal static void Register(TrackedRoutine routine) => running.Add(routine);
 
+    internal static TrackedRoutine? FindByInner(IEnumerator inner) => running.FirstOrDefault(r => r.Inner == inner);
+
     internal static void Unregister(TrackedRoutine routine) {
         running.Remove(routine);
         if (routine.Handle is { } handle) {
@@ -243,6 +245,7 @@ internal static class CoroutineTracker {
 internal sealed class TrackedRoutine(IEnumerator inner, string label, string owner, MonoBehaviour? ownerBehaviour)
     : IEnumerator {
     internal string Label { get; } = label;
+    internal IEnumerator Inner => inner;
 
     /// The MonoBehaviour that started this coroutine, for StopAllCoroutines matching (null if it was destroyed / the
     /// start had no instance).
@@ -382,7 +385,11 @@ internal static class CoroutineTrackerPatch {
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(MonoBehaviour), nameof(MonoBehaviour.StopCoroutine), typeof(IEnumerator))]
-    private static void StopCoroutineByEnumerator(IEnumerator routine) {
+    private static void StopCoroutineByEnumerator(ref IEnumerator routine) {
+        // Callers stop by the enumerator they started, but Unity runs our wrapper
+        if (routine != null && routine is not TrackedRoutine && CoroutineTracker.FindByInner(routine) is { } wrapper) {
+            routine = wrapper;
+        }
         if (routine is TrackedRoutine tracked) {
             tracked.ForceFinish();
         }
