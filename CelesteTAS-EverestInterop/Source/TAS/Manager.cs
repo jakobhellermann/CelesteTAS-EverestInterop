@@ -177,6 +177,11 @@ public static class Manager {
 
     /// Stop all gameplay MonoBehaviour Update/LateUpdate while paused.
     private static void FreezeScriptUpdates() {
+        if (loopBeforePause != null) {
+            // Re-snapshotting would capture the frozen loop, and unfreezing would then restore it
+            Log.Error($"FreezeScriptUpdates while already frozen, skipping:\n{Environment.StackTrace}");
+            return;
+        }
         loopBeforePause = PlayerLoop.GetCurrentPlayerLoop();
         PlayerLoopSystemHelper.Unregister(typeof(UnityEngine.PlayerLoop.Update.ScriptRunBehaviourUpdate));
         PlayerLoopSystemHelper.Unregister(typeof(UnityEngine.PlayerLoop.PreLateUpdate.ScriptRunBehaviourLateUpdate));
