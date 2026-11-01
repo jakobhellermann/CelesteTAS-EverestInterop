@@ -1,0 +1,15 @@
+#! each run=33,35,36
+# A `load` racing a lava death must not deadlock. Unity activates async scene loads in queue order, and SceneLoad
+# activates pending preloads before its own scene, so a respawn preload whose scene op queues after the load's own
+# deadlocks both. 33: the load lands on the frame the hero reaches the lava. 35: the respawn preload is started but
+# not yet issued (it must be stopped). 36: it is issued but still loading its bundles (the load must wait for it).
+load Bone_East_12 104.93 7.57
+SetHp, 1
+   1
+
+  {run},R
+
+load Bone_East_12 104.93 7.57
+ 100
+Assert, Equal, "scenes=1 dead=False layer=9", "scenes={SceneManager.sceneCount} dead={HeroController.cState.dead} layer={HeroController.gameObject.layer}"
+***
