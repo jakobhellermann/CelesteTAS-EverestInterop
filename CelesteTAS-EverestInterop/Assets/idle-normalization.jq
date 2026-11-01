@@ -1,6 +1,6 @@
 # Derives the embedded idle-normalization fixture from a full savestate capture (idle-normalization.base.json).
 # Keeps only what a scene-less normalize-`load` must restore deterministically:
-#   - hero pose snapshots (Component/Fsm/AudioTable)
+#   - hero pose snapshots (Component/Fsm/AudioTable) and the hero GameObject's layer (a death moves it to layer 2)
 #   - RandomState + GameTime/GameFrameCount (pinned so RNG and the deterministic clock are prior-independent).
 #     RandomState is load-bearing: `load` does Random.InitState(0) up front, but the scene transition then churns RNG a
 #     prior-dependent amount; NormalizeToIdle's fixture apply re-pins RandomState *after* the churn. Dropping it here
@@ -24,6 +24,7 @@
         else . end
       )),
   FsmSnapshots: (.FsmSnapshots | map(select(.Path | startswith("Hero_Hornet(Clone)")))),
+  GameObjectSnapshots: (.GameObjectSnapshots | map(select(.Path == "Hero_Hornet(Clone)"))),
   AudioTableSnapshots,
   RandomState,
   GameTime,
