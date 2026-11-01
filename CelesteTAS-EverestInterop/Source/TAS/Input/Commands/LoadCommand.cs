@@ -117,14 +117,11 @@ public static class LoadCommand {
             return;
         }
 
-        Normalize();
-
         // Go through the game's own scene transition (not raw SceneManager.LoadScene) so the level loads properly —
         // GameManager state, hero, camera. Same async path PreciseSavestates uses for savestate loads; the shared
         // TasLoad gate pauses playback until the scene has finished entering, and we drop the hero at (x, y) then.
-        TasLoad.Begin();
         pendingPosition = new Vector2(x, y);
-        GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo {
+        var info = new GameManager.SceneLoadInfo {
             SceneName = scene,
             HeroLeaveDirection = GatePosition.unknown,
             EntryGateName = "dreamGate",
@@ -132,7 +129,33 @@ public static class LoadCommand {
             PreventCameraFadeOut = true,
             WaitForSceneTransitionCameraFade = false,
             Visualization = GameManager.SceneLoadVisualizations.Default,
+        };
+        PrepareThen(commandLine.Command, () => {
+            Normalize();
+            GameManager.instance.BeginSceneTransition(info);
         });
+    }
+
+    /// PreciseSavestates' PrepareSceneLoad, whose wait for pending scene preloads the TasLoad gate hides from the TAS.
+    private static async void PrepareThen(string command, Action begin) {
+        TasLoad.Begin();
+        try {
+            if (PreciseSavestatesInterop.Instance is not { } interop) {
+                throw new InvalidOperationException("PreciseSavestates is not loaded");
+            }
+            await interop.PrepareSceneLoad();
+
+            if (!Manager.Running) {
+                pendingPosition = null;
+                TasLoad.EndNow();
+                return;
+            }
+            begin();
+        } catch (Exception e) {
+            pendingPosition = null;
+            TasLoad.EndNow();
+            AbortTas($"Can't {command}: {(e as TargetInvocationException)?.InnerException?.Message ?? e.Message}", log: true);
+        }
     }
 
     [TasCommand("LoadTransition", MetaDataProvider = typeof(LoadTransitionMeta))]
@@ -152,8 +175,6 @@ public static class LoadCommand {
             return;
         }
 
-        Normalize();
-
         // Unlike `load` (dreamGate + guessed x/y), enter at a named TransitionPoint gate so the game's entry flow
         // positions the hero. That flow (EnterHero → PositionHeroAtSceneEntrance → walk-in animation + entryDelay)
         // needs *frames* to run, so we must NOT hold the TasLoad gate: TasLoad freezes the clock (timeScale = 0) and
@@ -162,8 +183,7 @@ public static class LoadCommand {
         // clean idle up front (prior-independent RNG/clock/timers + idle pose), then kick off the transition and let it
         // advance over visible TAS frames. SceneTransitionGate already hides only the variable async fetch, so the
         // fade + gate entry stay deterministic-and-visible and playback continues normally once the hero has entered.
-        NormalizeToIdle();
-        GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo {
+        var info = new GameManager.SceneLoadInfo {
             SceneName = scene,
             HeroLeaveDirection = GatePosition.unknown,
             EntryGateName = gate,
@@ -171,6 +191,13 @@ public static class LoadCommand {
             PreventCameraFadeOut = true,
             WaitForSceneTransitionCameraFade = false,
             Visualization = GameManager.SceneLoadVisualizations.Default,
+        };
+        PrepareThen(commandLine.Command, () => {
+            Normalize();
+            NormalizeToIdle();
+            // Only the preparation is hidden; the entry flow needs visible frames
+            TasLoad.EndNow();
+            GameManager.instance.BeginSceneTransition(info);
         });
     }
 

@@ -3292,6 +3292,13 @@
       "ObjectVariables": {}
     }
   ],
+  "GameObjectSnapshots": [
+    {
+      "Path": "Hero_Hornet(Clone)",
+      "Layer": 9,
+      "Active": true
+    }
+  ],
   "AudioTableSnapshots": [
     {
       "Name": "Attack Normal Hornet Voice",

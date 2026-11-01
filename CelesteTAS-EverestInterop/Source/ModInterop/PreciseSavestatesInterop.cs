@@ -50,6 +50,7 @@ public class PreciseSavestatesInterop {
     private readonly PropertyInfo deferSnapshotRestore;
     private readonly PropertyInfo snapshotPending;
     private readonly MethodInfo applyPendingSnapshot;
+    private readonly MethodInfo prepareSceneLoad;
 
     private PreciseSavestatesInterop(BaseUnityPlugin plugin) {
         this.plugin = plugin;
@@ -70,6 +71,7 @@ public class PreciseSavestatesInterop {
         deferSnapshotRestore = ResolveProperty(type, "DeferSnapshotRestore");
         snapshotPending = ResolveProperty(type, "SnapshotPending");
         applyPendingSnapshot = Resolve(type, "ApplyPendingSnapshot");
+        prepareSceneLoad = Resolve(type, "PrepareSceneLoad");
     }
 
     private static MethodInfo Resolve(Type type, string name, params Type[] parameterTypes) =>
@@ -114,4 +116,7 @@ public class PreciseSavestatesInterop {
     public bool SnapshotPending => (bool) snapshotPending.GetValue(interop)!;
 
     public void ApplyPendingSnapshot() => applyPendingSnapshot.Invoke(interop, []);
+
+    /// The step a savestate load runs before its scene transition (PLAYING check, no pending preloads, no death).
+    public Task PrepareSceneLoad() => (Task)prepareSceneLoad.Invoke(interop, [])!;
 }
