@@ -319,12 +319,95 @@ internal static class GameTrace {
     [HarmonyPrefix]
     [HarmonyPatch(typeof(HeroController), nameof(HeroController.TakeDamage))]
     private static void HeroTakeDamage(HeroController __instance, GameObject go, CollisionSide damageSide, int damageAmount, HazardType hazardType) {
-        if (!TasTracer.ShouldTrace(TasTracerFilter.Miscellaneous)) return;
+        if (!TasTracer.ShouldTraceLoadWindow(TasTracerFilter.Miscellaneous)) return;
 
-        TasTracer.AddFrameHistory([
-            $"HeroController.TakeDamage from {ObjectPath(go)} side={damageSide} dmg={damageAmount} hazard={hazardType} heroPos={__instance.transform.position} recoilFrozen={__instance.cState.recoilFrozen} invulnerable={__instance.cState.invulnerable}",
-            ..Context(),
-        ]);
+        TasTracer.AddLoadWindowEvent(
+            $"HeroController.TakeDamage from {ObjectPath(go)} side={damageSide} dmg={damageAmount} hazard={hazardType} heroPos={__instance.transform.position} recoilFrozen={__instance.cState.recoilFrozen} invulnerable={__instance.cState.invulnerable}");
+    }
+
+    // Short caller chain, independent of the (expensive) full stack trace option
+    private static string Callers(int skip = 2, int count = 6) =>
+        string.Join(" <- ", new StackTrace(skip, false).GetFrames()?
+            .Select(f => f.GetMethod())
+            .Where(m => m != null && m.DeclaringType?.Namespace?.StartsWith("HarmonyLib") != true)
+            .Take(count)
+            .Select(m => $"{m!.DeclaringType?.Name}.{m.Name}") ?? []);
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(GameManager), nameof(GameManager.BeginSceneTransition))]
+    private static void BeginSceneTransitionTrace(GameManager.SceneLoadInfo info) {
+        if (!TasTracer.ShouldTraceLoadWindow(TasTracerFilter.Miscellaneous)) return;
+        TasTracer.AddLoadWindowEvent($"GameManager.BeginSceneTransition -> {info.SceneName} gate={info.EntryGateName} from {Callers()}");
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(ScenePreloader), nameof(ScenePreloader.SpawnPreloader))]
+    private static void SpawnPreloaderTrace(string sceneName, UnityEngine.SceneManagement.LoadSceneMode mode) {
+        if (!TasTracer.ShouldTraceLoadWindow(TasTracerFilter.Miscellaneous)) return;
+        TasTracer.AddLoadWindowEvent($"ScenePreloader.SpawnPreloader {sceneName} {mode} from {Callers()}");
+    }
+
+    [HarmonyPatch]
+    private static class SceneUnloadTrace {
+        private static IEnumerable<MethodBase> TargetMethods() =>
+            typeof(UnityEngine.SceneManagement.SceneManager).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Where(m => m.Name == nameof(UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync));
+
+        private static void Prefix(object[] __args) {
+            if (!TasTracer.ShouldTraceLoadWindow(TasTracerFilter.Miscellaneous)) return;
+            var target = __args[0] is UnityEngine.SceneManagement.Scene scene ? scene.name : __args[0]?.ToString();
+            TasTracer.AddLoadWindowEvent($"SceneManager.UnloadSceneAsync {target} from {Callers()}");
+        }
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(HeroController), "Die")]
+#pragma warning disable HARMONIZE001
+    private static void HeroDieTrace() {
+#pragma warning restore HARMONIZE001
+        if (!TasTracer.ShouldTraceLoadWindow(TasTracerFilter.Miscellaneous)) return;
+        TasTracer.AddLoadWindowEvent($"HeroController.Die from {Callers()}");
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(GameManager), nameof(GameManager.PlayerDead))]
+    private static void PlayerDeadTrace() {
+        if (!TasTracer.ShouldTraceLoadWindow(TasTracerFilter.Miscellaneous)) return;
+        TasTracer.AddLoadWindowEvent($"GameManager.PlayerDead from {Callers()}");
+    }
+
+    [HarmonyPatch]
+    private static class AddressablesLoadSceneTrace {
+        private static IEnumerable<MethodBase> TargetMethods() =>
+            AccessTools.TypeByName("UnityEngine.AddressableAssets.Addressables").GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Where(m => m.Name == "LoadSceneAsync");
+
+        private static void Prefix(object[] __args) {
+            if (!TasTracer.ShouldTraceLoadWindow(TasTracerFilter.Miscellaneous)) return;
+            TasTracer.AddLoadWindowEvent($"Addressables.LoadSceneAsync {__args[0]} from {Callers()}");
+        }
+    }
+
+    private static void SceneLoadedTrace(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode) {
+        if (!TasTracer.ShouldTraceLoadWindow(TasTracerFilter.Miscellaneous)) return;
+        TasTracer.AddLoadWindowEvent($"Scene loaded: {scene.name} {mode}");
+    }
+
+    private static void SceneUnloadedTrace(UnityEngine.SceneManagement.Scene scene) {
+        if (!TasTracer.ShouldTraceLoadWindow(TasTracerFilter.Miscellaneous)) return;
+        TasTracer.AddLoadWindowEvent($"Scene unloaded: {scene.name}");
+    }
+
+    [Initialize]
+    private static void SubscribeSceneEvents() {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += SceneLoadedTrace;
+        UnityEngine.SceneManagement.SceneManager.sceneUnloaded += SceneUnloadedTrace;
+    }
+
+    [Unload]
+    private static void UnsubscribeSceneEvents() {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= SceneLoadedTrace;
+        UnityEngine.SceneManagement.SceneManager.sceneUnloaded -= SceneUnloadedTrace;
     }
 
     /// Which GameObject (re)starts a TimedEventCaller coroutine and when. These restart on OnEnable (so
