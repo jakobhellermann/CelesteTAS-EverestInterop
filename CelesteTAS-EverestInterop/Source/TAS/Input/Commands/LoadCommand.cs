@@ -9,6 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json.Linq;
 using TAS.ModInterop;
 using TAS.Tracer;
+using TAS.Utils;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -216,6 +217,8 @@ public static class LoadCommand {
             return;
         }
 
+        UnpauseGame();
+
         var fixturePath = IdleFixturePath();
         _ = interop.LoadSavestateFromFile(fixturePath);
 
@@ -223,6 +226,20 @@ public static class LoadCommand {
         if (JObject.Parse(File.ReadAllText(fixturePath))["PlayerData"] is { } fixturePlayerData) {
             JsonUtility.FromJsonOverwrite(fixturePlayerData.ToString(), PlayerData.instance);
         }
+    }
+
+    // A load from the pause menu leaves gm.isPaused set, which makes HeroController.LookForInput ignore all input
+    private static void UnpauseGame() {
+        var gm = GameManager.instance;
+        if (!gm.isPaused) {
+            return;
+        }
+
+        "Load started while the game was paused, unpausing".Log();
+        gm.isPaused = false;
+        gm.ui.SetState(UIState.PLAYING);
+        gm.InvokeMethod("SetPausedState", false);
+        HeroController.instance.UnPause();
     }
 
     // Deterministic hazard-respawn failsafe for `load`. hazardRespawnLocation is [NonSerialized] (never persisted;
