@@ -1,4 +1,5 @@
 using HarmonyLib;
+using TAS.Utils;
 using UnityEngine;
 
 namespace TAS;
@@ -38,10 +39,10 @@ public static class DeterministicTimePatch {
     private static void Update() {
         var loading = Input.Commands.TasLoad.IsLoading;
 
-        // Freeze world simulation during the load via the timeScale override; clearing it restores the game's own time
-        // scale (the real value) rather than hardcoding 1. A resumed savestate lifts the freeze itself at its restore
-        // boundary (see SavestateLoad.ApplyPendingRestore) so the first live frame's physics isn't frozen; this edge
-        // only covers loads that finish without a deferred restore (e.g. the `load` command).
+        // Freeze world simulation during the load via the timeScale override; clearing it restores the game's timeScale
+        // (the real value) rather than hardcoding 1. A resumed savestate lifts the freeze itself at its restore
+        // boundary (see SavestateLoad.ApplyPendingRestore) so the first live frame's physics isn't frozen; this
+        // edge only covers loads that finish without a deferred restore (e.g. the `load` command).
         if (loading) {
             OverwriteTimeScale = 0;
         } else if (wasLoading) {
@@ -157,14 +158,18 @@ public static class DeterministicTimePatch {
 
     #region Timescale Override
 
-    internal static float gameTimeScale = Time.timeScale;
     private static float? overwrittenTimeScale = null;
 
     public static float? OverwriteTimeScale {
         get => overwrittenTimeScale;
         set {
             overwrittenTimeScale = value;
-            Time.timeScale = value ?? gameTimeScale;
+            if (value is { } timeScale) {
+                Time.timeScale = timeScale;
+            } else {
+                // The game's own value (time controls, pause, debug scale), which it only reapplies on change
+                typeof(TimeManager).InvokeMethod("UpdateTimeScale");
+            }
         }
     }
 
