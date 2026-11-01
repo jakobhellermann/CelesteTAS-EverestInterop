@@ -202,6 +202,9 @@ public class TasMod : BaseUnityPlugin {
     }
 
     private void OnDestroy() {
+        // Unpausing restores the pre-pause PlayerLoop snapshot, which still contains our systems
+        if (Manager.Running) Manager.DisableRun();
+
         PlayerLoopSystemHelper.Unregister(typeof(EarlyUpdateSystem));
         PlayerLoopSystemHelper.Unregister(typeof(FirstUpdateSystem));
         PlayerLoopSystemHelper.Unregister(typeof(LastUpdateSystem));
@@ -209,7 +212,6 @@ public class TasMod : BaseUnityPlugin {
         PlayerLoopSystemHelper.Unregister(typeof(TasMod));
 
         AttributeUtils.Invoke<UnloadAttribute>();
-        if (Manager.Running) Manager.DisableRun();
         harmony?.UnpatchSelf();
 
         if (HitboxModule?.gameObject) Destroy(HitboxModule!.gameObject);
