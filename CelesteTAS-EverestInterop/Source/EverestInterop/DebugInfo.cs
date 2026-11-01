@@ -246,9 +246,9 @@ public static class DebugInfo {
         var sceneLabel = additiveScenes.Count > 0 ? $"{currentScene} +{string.Join(",", additiveScenes)}" : currentScene;
 
         if (Manager.Running) {
-            text += $"[{sceneLabel}] phy={lastPhy} dt={lastDt}\n";
+            text += $"[{sceneLabel}] fixed={lastFixed} sim={lastSim} dt={lastDt}\n";
         } else {
-            text += $"[{sceneLabel}] phy={lastPhy}\n";
+            text += $"[{sceneLabel}] fixed={lastFixed} sim={lastSim}\n";
         }
 
         string customInfo = InfoCustom.GetInfo();
@@ -426,11 +426,33 @@ public static class DebugInfo {
     private static string FormatTimeMaybe(float time) => time > 0 ? $"{FormatTime(time)} " : "";
 
     private static float lastDt = 0;
-    private static int lastPhy = 0;
+    private static int lastFixed = 0;
+    private static int lastSim = 0;
     private static int fixedUpdateCounter = 0;
+    private static int simulationCounter = 0;
 
     internal static void FixedUpdate() {
         fixedUpdateCounter++;
+    }
+
+    /// Physics steps the engine runs itself, after its FixedUpdate or PreUpdate physics system
+    internal static void AfterAutoSimulation(SimulationMode2D mode) {
+        if (Physics2D.simulationMode == mode) {
+            simulationCounter++;
+        }
+    }
+
+    [HarmonyPatch]
+    private static class ScriptSimulationPatch {
+        private static System.Reflection.MethodBase TargetMethod() =>
+            AccessTools.Method(typeof(Physics2D), "Simulate_Internal") ?? throw new MissingMethodException(nameof(Physics2D), "Simulate_Internal");
+
+        // Zero-dt simulates (e.g. syncing colliders after a savestate restore) don't advance anything
+        private static void Postfix(float deltaTime) {
+            if (deltaTime > 0) {
+                simulationCounter++;
+            }
+        }
     }
 
     internal static void PostLateUpdate() {
@@ -438,10 +460,12 @@ public static class DebugInfo {
         // otherwise overwrite the last advanced frame's dt/phy with zeros.
         if (!Manager.Running || Manager.CurrState != Manager.State.Paused) {
             lastDt = Time.deltaTime;
-            lastPhy = fixedUpdateCounter;
+            lastFixed = fixedUpdateCounter;
+            lastSim = simulationCounter;
         }
 
         fixedUpdateCounter = 0;
+        simulationCounter = 0;
     }
 
     [BeforeActiveTasFrame]
