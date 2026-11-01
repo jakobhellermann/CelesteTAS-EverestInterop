@@ -204,8 +204,6 @@ def run_test(name: str, body: str, mode: str, eachvars: dict) -> tuple[bool, str
     return True, "", traces
 
 
-
-
 def main() -> None:
     only = set(sys.argv[1:])  # optional filter: test_runner.py <name> [<name> ...]
     tests = sorted(glob.glob(os.path.join(TESTS_DIR, "*.tas")))
