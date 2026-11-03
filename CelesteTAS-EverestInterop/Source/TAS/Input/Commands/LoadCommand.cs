@@ -78,10 +78,8 @@ public static class LoadCommand {
 
         InputHelper.WithPrevent(() => UIManager.Instance.PausePanelUI.HideImmediately());
 
-        var gameCore = GameCore.Instance;
-        if (gameCore.gameLevel?.SceneName != scene) {
-            AbortTas("Loading scene, please restart TAS when finished");
-            // ChangeSceneImmediately.ChangeScene(new SceneConnectionPoint.ChangeSceneData {});
+        if (GameCore.Instance.gameLevel?.SceneName != scene) {
+            pendingSceneLoad = (scene, new Vector2(x, y));
             GameCore.Instance.ChangeScene(new SceneConnectionPoint.ChangeSceneData {
                 sceneName = scene,
                 playerSpawnPosition = () => new Vector3(x, y, 0),
@@ -90,6 +88,34 @@ public static class LoadCommand {
             });
             return;
         }
+
+        LoadInScene(new Vector2(x, y));
+    }
+
+    // Not a TasLoad: its time freeze would also stall the scene change, so GameInterop.IsLoading gates playback instead
+    private static (string Scene, Vector2 Position)? pendingSceneLoad;
+    internal static bool SceneLoadPending => pendingSceneLoad != null;
+
+    [BeforeTasFrame]
+    private static void FinishSceneLoad() {
+        if (pendingSceneLoad is not { } pending
+            || !GameCore.IsAvailable()
+            || GameCore.Instance.currentCoreState != GameCore.GameCoreState.Playing
+            || GameCore.Instance.gameLevel?.SceneName != pending.Scene) {
+            return;
+        }
+
+        pendingSceneLoad = null;
+        LoadInScene(pending.Position);
+    }
+
+    [DisableRun]
+    private static void CancelSceneLoad() {
+        pendingSceneLoad = null;
+    }
+
+    private static void LoadInScene(Vector2 position) {
+        var gameCore = GameCore.Instance;
 
         Tween.StopAll();
         foreach (var task in Timer.Instance.allDelayTasks) {
@@ -104,7 +130,7 @@ public static class LoadCommand {
         TimePauseManager.Instance.gamePlayTimeScaleModifier.UpdateTimeScale();
         TimePauseManager.Instance.uiTimeScaleModifier.UpdateTimeScale();
 
-        NormalizePre(new Vector2(x, y));
+        NormalizePre(position);
         gameCore.ResetLevel();
         NormalizePost();
 
