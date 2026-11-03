@@ -96,15 +96,18 @@ public class InputController {
             return path;
         }
         set {
-            if (filePath == value) {
-                return;
-            }
             if (string.IsNullOrWhiteSpace(value)) {
                 filePath = string.Empty;
                 return;
             }
 
-            filePath = Path.GetFullPath(value);
+            // Studio sends unix paths under wine, which only match the stored path once resolved
+            var fullPath = Path.GetFullPath(value);
+            if (filePath == fullPath) {
+                return;
+            }
+
+            filePath = fullPath;
             if (!File.Exists(filePath)) {
                 filePath = DefaultFilePath;
             }
