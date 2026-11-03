@@ -16,6 +16,9 @@ using UnityEngine;
 namespace TAS;
 
 [BepInDependency(NineSolsAPICore.PluginGUID)]
+#if !INSTALL_STUDIO
+[BepInDependency("io.github.jakobhellermann.devutils")]
+#endif
 [BepInPlugin("TasTools", "TasTools", "1.0.0")]
 public class TasMod : BaseUnityPlugin {
     public static TasMod Instance = null!;
