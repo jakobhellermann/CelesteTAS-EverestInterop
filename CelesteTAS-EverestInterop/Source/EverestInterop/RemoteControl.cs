@@ -312,7 +312,7 @@ public static class RemoteControl {
         while (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance or Manager.State.SlowForward
                && !Manager.DidComplete) {
             int frame = Manager.Controller.CurrentFrameInTas;
-            if (frame != lastFrame) {
+            if (frame != lastFrame || EverestInterop.GameInterop.IsLoading()) {
                 lastFrame = frame;
                 stall = 0;
             } else if (++stall > StallFrames) {
