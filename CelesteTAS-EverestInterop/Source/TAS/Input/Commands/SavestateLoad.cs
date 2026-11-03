@@ -92,7 +92,7 @@ internal static class SavestateLoad {
         // frame plays live on the restored state, symmetric with a continuous run.
         TasLoad.EndNow();
         // Lift the load-freeze here (frame end) rather than a frame later via DeterministicTimePatch's edge, so the
-        // next frame's FirstUpdate physics runs live instead of frozen. Clearing the override restores rcgTimeScale
+        // next frame's FirstUpdate physics runs live instead of frozen. Clearing the override restores the game's own time scale
         // (or a timeScale the snapshot restored), not a hardcoded value.
         DeterministicTimePatch.OverwriteTimeScale = null;
     }

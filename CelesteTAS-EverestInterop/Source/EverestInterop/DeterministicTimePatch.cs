@@ -38,10 +38,10 @@ public static class DeterministicTimePatch {
     private static void Update() {
         var loading = Input.Commands.TasLoad.IsLoading;
 
-        // Freeze world simulation during the load via the timeScale override; clearing it restores rcgTimeScale
-        // (the real value) rather than hardcoding 1. A resumed savestate lifts the freeze itself at its restore
-        // boundary (see SavestateLoad.ApplyPendingRestore) so the first live frame's physics isn't frozen; this
-        // edge only covers loads that finish without a deferred restore (e.g. the `load` command).
+        // Freeze world simulation during the load via the timeScale override; clearing it restores the game's own time
+        // scale (the real value) rather than hardcoding 1. A resumed savestate lifts the freeze itself at its restore
+        // boundary (see SavestateLoad.ApplyPendingRestore) so the first live frame's physics isn't frozen; this edge
+        // only covers loads that finish without a deferred restore (e.g. the `load` command).
         if (loading) {
             OverwriteTimeScale = 0;
         } else if (wasLoading) {
@@ -114,33 +114,14 @@ public static class DeterministicTimePatch {
 
     #region Timescale Override
 
-    private static float rcgTimeScale = Time.timeScale;
+    internal static float gameTimeScale = Time.timeScale;
     private static float? overwrittenTimeScale = null;
-
-    // TODO: patch using preloader?
-    /*[HarmonyPatch(typeof(RCGTime), nameof(RCGTime.timeScale), MethodType.Getter)]
-    [HarmonyPrefix]
-    private static bool TimeScaleGet(ref float __result) {
-        __result = overwrittenTimeScale ?? rcgTimeScale;
-        return false;
-    }
-
-    [HarmonyPatch(typeof(RCGTime), nameof(RCGTime.timeScale), MethodType.Setter)]
-    [HarmonyPrefix]
-    private static bool TimeScaleSet(ref float value) {
-        rcgTimeScale = value;
-
-        if (overwrittenTimeScale == null)
-            Time.timeScale = value;
-
-        return false;
-    }*/
 
     public static float? OverwriteTimeScale {
         get => overwrittenTimeScale;
         set {
             overwrittenTimeScale = value;
-            Time.timeScale = value ?? rcgTimeScale;
+            Time.timeScale = value ?? gameTimeScale;
         }
     }
 
