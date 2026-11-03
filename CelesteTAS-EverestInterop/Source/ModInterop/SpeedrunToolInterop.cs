@@ -20,22 +20,17 @@ internal class LoadStateAttribute(int priority = 0) : EventAttribute(priority);
 [AttributeUsage(AttributeTargets.Method), MeansImplicitUse]
 internal class ClearStateAttribute(int priority = 0) : EventAttribute(priority);
 
-/// Mod-Interop with Speedrun Tool
 internal static class SpeedrunToolInterop {
-    public static bool Installed { get; private set; }
-    public static bool MultipleSaveSlotsSupported { get; private set; }
+    public static ISavestateBackend? Backend;
 
-#pragma warning disable CS0414 // Field is assigned but its value is never used
-    private static object saveLoadHandle = null!;
-#pragma warning restore CS0414 // Field is assigned but its value is never used
+    public static bool Installed => Backend?.Installed ?? false;
+    public static bool MultipleSaveSlotsSupported => Backend?.MultipleSaveSlotsSupported ?? false;
 
     [Initialize]
     private static void Initialize() {
         AttributeUtils.CollectOwnMethods<SaveStateAttribute>(typeof(Dictionary<string, object?>));
         AttributeUtils.CollectOwnMethods<LoadStateAttribute>(typeof(Dictionary<string, object?>));
         AttributeUtils.CollectOwnMethods<ClearStateAttribute>();
-
-        Installed = false;
     }
     
     [Unload]
@@ -48,15 +43,17 @@ internal static class SpeedrunToolInterop {
 
     public const string DefaultSlot = "CelesteTAS";
 
+    private static ISavestateBackend AssertBackend => Backend ?? throw new InvalidOperationException("No savestate backend is registered");
+
     /// Saves the current state into the specified slot. Returns whether it was successful
-    public static bool SaveState(string? slot = null) => throw new NotImplementedException();
+    public static bool SaveState(string? slot = null) => AssertBackend.Save(slot ?? DefaultSlot);
 
     /// Loads the specified slot into the current state. Returns whether it was successful
-    public static bool LoadState(string? slot = null) => throw new NotImplementedException();
+    public static bool LoadState(string? slot = null) => AssertBackend.Load(slot ?? DefaultSlot);
 
     /// Clears the specified save slot
-    public static void ClearState(string? slot = null) => throw new NotImplementedException();
+    public static void ClearState(string? slot = null) => AssertBackend.Clear(slot ?? DefaultSlot);
 
     /// Checks if something is saved in the specified save slot
-    public static bool IsSaved(string? slot = null) => throw new NotImplementedException();
+    public static bool IsSaved(string? slot = null) => AssertBackend.IsSaved(slot ?? DefaultSlot);
 }
