@@ -1,0 +1,208 @@
+RecordCount: 3451
+
+load A11_S0_Boss_YiGung -2389.50 -1104.00
+   2
+Invoke, Random.InitState, 8
+
+Set, JadeData.equipped.CurrentValue, false
+#Set, JadeData[Foo Endure].equipped.CurrentValue, true
+Set, JadeData[DownDash].equipped.CurrentValue, true
+Set, JadeData[Quick Attack].equipped.CurrentValue, true
+Set, JadeData[MultiCounter].equipped.CurrentValue, true
+Set, JadeData[ThirdAttack Wave].equipped.CurrentValue, true
+Set, JadeData[Rage].equipped.CurrentValue, true
+
+
+
+Set, Player.i.mainAbilities.FooExplodeAutoStyle.AbilityData.acquired.CurrentValue, true
+Set, Player.i.mainAbilities.FooExplodeAutoStyle.AbilityData.equipped.CurrentValue, true
+Set, Player.i.mainAbilities.FooExplodeAutoStyleUpgrade.AbilityData.acquired.CurrentValue, true
+Set, Player.i.mainAbilities.FooExplodeAutoStyleUpgrade.AbilityData.equipped.CurrentValue, true
+Set, Player.i.mainAbilities.FooExplodeAllStyle.AbilityData.equipped.CurrentValue, false
+Set, Player.i.mainAbilities.FooExplodeConsecutiveStyle.AbilityData.equipped.CurrentValue, false
+
+Set, SkillNodeData[Foo Power +1].acquired.CurrentValue, true
+Set, SkillNodeData[Foo Power +1].equipped.CurrentValue, true
+Set, SkillNodeData[大反更多氣].acquired.CurrentValue, true
+Set, SkillNodeData[大反更多氣].equipped.CurrentValue, true
+
+Set, PlayerAbilityData[(Shennong) Max health].acquired.CurrentValue, true
+Set, PlayerAbilityData[(Shennong) Max health].equipped.CurrentValue, true
+Invoke, PlayerAbilityData[(Shennong) Max health LV9].UnEquipCheck
+Set, PlayerAbilityData[(Shennong) Max health LV9].acquired.CurrentValue, false
+Invoke, Player.i.health.GainFull
+
+
+   1,R,J
+   9,R
+   1,R,A
+  10
+   4,L
+   1,R,A
+  14,L
+   1,R,A
+  20
+   1,L
+   1,R,A
+
+  10
+   7,L
+  25,K
+  45
+   1,K
+  25
+  10,L,T
+  19
+   1,J
+   1,R,A
+  14,L
+   1,R,A
+  10
+  25,K
+  53
+   1,K
+  23
+   1,K
+  22
+  11,R,T
+  19,L
+   1,J
+   1,L,A
+  13
+   1,R
+   1,L,A
+  13
+   1,R
+   1,L,A
+  20,L
+   1,L,A
+  13,L
+   1,R
+   1,L,A
+  13,L
+   1,R
+   1,L,A
+  20
+  14,L,X
+   1,L,A
+  12,L
+  25,K
+  44
+  13,K
+  19
+   1,J
+   1,L,A
+  10
+   5,D,X
+  25,K
+  44
+   1,K
+  26
+   1,R,J
+   1,R,A
+  13,R
+   1,L
+   1,R,A
+  13,R
+   1,L
+   1,R,A
+  20
+   1,R,J
+  10,R,J,A
+  16,L,T
+  16
+   5,K
+  37,L
+   1
+   1,L,A
+  13
+   1,R
+   1,L,A
+  13,L
+   1,R
+   1,L,A
+  10,L
+  16,D,X
+   1,L,A
+  13,L
+   1,R
+   1,L,A
+  10,L
+   2,L,T
+  19
+
+   3,R
+
+  25,K
+   8
+   1,K
+  24
+   1,K
+  20
+   1,R,J
+   1,R,A
+  13,R
+   1,L
+   1,R,A
+  13,L
+   1,R
+   1,R,A
+  20
+  14,R,X
+   1,R,A
+  10,R
+   1,L
+   6,R,J
+  15,L,T
+  16
+   2,R
+   9,R,K
+  26,L
+  11,D,X
+  12
+   1,L,J
+  14,L,X
+   1,L,A
+  13,L
+   1,R
+   1,L,A
+  13,L
+   1,R
+   1,L,A
+  20
+   1,L,J
+  14,L,X
+  10,L
+  25,K
+  29
+   1,L
+   1,R,A
+  14,L
+   1,R,A
+  14,L
+   1,R,A
+  20
+   2,R,T
+  20
+   1,L,A
+  13,L
+   1,R
+
+   7,L
+
+   1,L,A
+  10,L
+  14,R,X
+   2,L
+   1,R,A
+  20
+   1,R,A
+  13
+   1,R
+Damage: 2891.354 in 1535f = 113.02 DPS
+
+
+  20
+Assert, Equal, 2108.646, {MonsterManager.Instance.ClosetMonster.postureSystem.PostureValue}
+Assert, Equal, 25, {Player.i.health.CurrentHealthValue}
+***
