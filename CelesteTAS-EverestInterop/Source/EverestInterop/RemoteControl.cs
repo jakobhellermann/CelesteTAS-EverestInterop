@@ -6,8 +6,10 @@ using System.IO;
 using System.Linq;
 using BepInEx.Configuration;
 using DevUtils;
+using StudioCommunication;
 using TAS.Communication;
 using TAS.InfoHUD;
+using TAS.UnityInterop;
 
 namespace TAS;
 
@@ -43,6 +45,8 @@ public static class RemoteControl {
         DevServer.MapPostAsync(owner, "/continue", (string? _, Action<object?> respond) => Continue(respond),
             "Resume a run paused at a breakpoint (***) / savestate, like the PauseResume hotkey. Blocks until the " +
             "run ends or hits the next pause; use to play through a ***S breakpoint headless.");
+        DevServer.MapPost(owner, "/hotkey", (string id) => Hotkey(id),
+            "Press a TAS hotkey by HotkeyID (e.g. FrameAdvance, Pause), exactly like Studio sending it.");
         DevServer.MapPost(owner, "/clearstates", _ => ClearStates(),
             "Clear all stored savestates (breakpoint ***S and manual). Use to get a clean first run that creates " +
             "the savestate rather than resuming from an existing one.");
@@ -85,6 +89,15 @@ public static class RemoteControl {
         } catch (Exception e) {
             return new { ok = false, query, error = e.Message };
         }
+    }
+
+    private static object Hotkey(string id) {
+        if (!Enum.TryParse<HotkeyID>(id, ignoreCase: true, out var hotkey)) {
+            return DevResponse.Json(new { error = $"unknown hotkey '{id}'", hotkeys = Enum.GetNames(typeof(HotkeyID)) }, 400);
+        }
+
+        Hotkeys.AllHotkeys[hotkey].OverrideCheck = true;
+        return new { ok = true, hotkey = hotkey.ToString() };
     }
 
     private static object ClearStates() {
