@@ -82,8 +82,29 @@ public static class SkiaSharpExtensions {
     public static SKColor ToSkiaPacked(this Color color) => new((byte) (color.R * byte.MaxValue), (byte) (color.G * byte.MaxValue), (byte) (color.B * byte.MaxValue), (byte) (color.A * byte.MaxValue));
     public static Color ToEto(this SKColorF color) => new(color.Red, color.Green, color.Blue, color.Alpha);
 
-    /// Overload to draw text from a ReadOnlySpan
-    public static unsafe void DrawText(this SKCanvas canvas, ReadOnlySpan<char> text, float x, float y, SKFont font, SKPaint paint) {
+    /// Overload to draw text from a ReadOnlySpan, using fallback fonts for characters missing from the font
+    public static void DrawMonospaceText(this SKCanvas canvas, ReadOnlySpan<char> text, float x, float y, SKFont font, SKPaint paint) {
+        int runStart = 0;
+        for (int i = 0; i < text.Length;) {
+            int length = i + 1 < text.Length && char.IsSurrogatePair(text[i], text[i + 1]) ? 2 : 1;
+            if (text[i] <= 0x7F) {
+                i += length;
+                continue;
+            }
+
+            int codePoint = length == 2 ? char.ConvertToUtf32(text[i], text[i + 1]) : text[i];
+            if (font.GetFallbackFont(codePoint) is { } fallback) {
+                canvas.DrawTextRun(text[runStart..i], x + runStart * font.CharWidth(), y, font, paint);
+                canvas.DrawTextRun(text.Slice(i, length), x + i * font.CharWidth(), y, fallback, paint);
+                runStart = i + length;
+            }
+            i += length;
+        }
+
+        canvas.DrawTextRun(text[runStart..], x + runStart * font.CharWidth(), y, font, paint);
+    }
+
+    private static unsafe void DrawTextRun(this SKCanvas canvas, ReadOnlySpan<char> text, float x, float y, SKFont font, SKPaint paint) {
         if (text.Length == 0) {
             return;
         }

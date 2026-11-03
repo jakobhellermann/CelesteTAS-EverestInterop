@@ -67,6 +67,34 @@ public static class FontManager {
         }
     }
 
+    private static readonly Dictionary<(SKFont, int), SKFont?> fallbackCache = [];
+
+    /// Font from another typeface which contains the code point, horizontally scaled to fit the monospace grid.
+    /// Returns null if the font itself contains the code point or no fallback exists.
+    public static SKFont? GetFallbackFont(this SKFont font, int codePoint) {
+        if (fallbackCache.TryGetValue((font, codePoint), out var fallback)) {
+            return fallback;
+        }
+
+        if (font.GetGlyph(codePoint) != 0) {
+            return fallbackCache[(font, codePoint)] = null;
+        }
+
+        var typeface = SKFontManager.Default.MatchCharacter(font.Typeface.FamilyName, font.Typeface.FontStyle, null, codePoint);
+        if (typeface == null) {
+            return fallbackCache[(font, codePoint)] = null;
+        }
+
+        fallback = new SKFont(typeface, font.Size) { LinearMetrics = font.LinearMetrics, Subpixel = font.Subpixel, Edging = font.Edging };
+        float glyphWidth = fallback.MeasureText([fallback.GetGlyph(codePoint)]);
+        float cellWidth = font.CharWidth() * (codePoint > char.MaxValue ? 2 : 1); // Surrogate pairs occupy 2 columns
+        if (glyphWidth > cellWidth) {
+            fallback.ScaleX = cellWidth / glyphWidth;
+        }
+
+        return fallbackCache[(font, codePoint)] = fallback;
+    }
+
     private static readonly Dictionary<SKFont, float> widthCache = [];
     public static float CharWidth(this SKFont font) {
         if (widthCache.TryGetValue(font, out float width)) {
@@ -113,6 +141,10 @@ public static class FontManager {
         skPopupFont?.Dispose();
         skPopupFontBold?.Dispose();
         widthCache.Clear();
+        foreach (var fallback in fallbackCache.Values) {
+            fallback?.Dispose();
+        }
+        fallbackCache.Clear();
 
         skEditorFontRegular = skEditorFontBold = skEditorFontItalic = skEditorFontBoldItalic = skStatusFont = skPopupFont = skPopupFontBold = null;
     }

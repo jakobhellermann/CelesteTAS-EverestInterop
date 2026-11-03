@@ -302,7 +302,7 @@ public abstract class PopupMenu : Scrollable {
                     highlightIdx++;
                     
                     var regularText = entry.DisplayText.AsSpan()[currLetter..nextLetter];
-                    canvas.DrawText(regularText,
+                    canvas.DrawMonospaceText(regularText,
                         x: textX + currLetter * font.CharWidth(),
                         y: textY,
                         font, entry.Disabled ? Settings.Instance.Theme.PopupMenuFgDisabledPaint : Settings.Instance.Theme.PopupMenuFgPaint);
@@ -314,7 +314,7 @@ public abstract class PopupMenu : Scrollable {
                     float boldX = textX + nextLetter * font.CharWidth(); 
                     
                     var boldText = entry.DisplayText.AsSpan()[nextLetter..(nextLetter + 1)];
-                    canvas.DrawText(boldText,
+                    canvas.DrawMonospaceText(boldText,
                         x: boldX,
                         y: textY,
                         boldFont, entry.Disabled ? Settings.Instance.Theme.PopupMenuFgDisabledPaint : Settings.Instance.Theme.PopupMenuFgPaint);
@@ -325,7 +325,7 @@ public abstract class PopupMenu : Scrollable {
                     currLetter = nextLetter + 1;
                 }
                 
-                canvas.DrawText(entry.ExtraText,
+                canvas.DrawMonospaceText(entry.ExtraText,
                     x: textX + (maxDisplayLen + DisplayExtraPadding) * font.CharWidth(),
                     y: textY,
                     font, Settings.Instance.Theme.PopupMenuFgExtraPaint);

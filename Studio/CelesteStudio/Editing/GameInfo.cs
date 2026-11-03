@@ -246,11 +246,11 @@ public class GameInfo : Scrollable {
             string top = subpixelTop.ToFormattedString(vDecimals);
             string bottom = subpixelBottom.ToFormattedString(vDecimals);
 
-            canvas.DrawText(left, x - rectPadding - font.MeasureWidth(left), y + (rectSize - textHeight) / 2.0f + font.Offset(), font, Settings.Instance.Theme.StatusFgPaint);
-            canvas.DrawText(right, x + rectPadding + rectSize, y + (rectSize - textHeight) / 2.0f + font.Offset(), font, Settings.Instance.Theme.StatusFgPaint);
+            canvas.DrawMonospaceText(left, x - rectPadding - font.MeasureWidth(left), y + (rectSize - textHeight) / 2.0f + font.Offset(), font, Settings.Instance.Theme.StatusFgPaint);
+            canvas.DrawMonospaceText(right, x + rectPadding + rectSize, y + (rectSize - textHeight) / 2.0f + font.Offset(), font, Settings.Instance.Theme.StatusFgPaint);
 
-            canvas.DrawText(top, MathF.Round(x + (rectSize - font.MeasureWidth(top)) / 2.0f), MathF.Round(y - rectPadding - textHeight + font.Offset()), font, Settings.Instance.Theme.StatusFgPaint);
-            canvas.DrawText(bottom, x + (rectSize - font.MeasureWidth(bottom)) / 2.0f, y + rectPadding + rectSize + font.Offset(), font, Settings.Instance.Theme.StatusFgPaint);
+            canvas.DrawMonospaceText(top, MathF.Round(x + (rectSize - font.MeasureWidth(top)) / 2.0f), MathF.Round(y - rectPadding - textHeight + font.Offset()), font, Settings.Instance.Theme.StatusFgPaint);
+            canvas.DrawMonospaceText(bottom, x + (rectSize - font.MeasureWidth(bottom)) / 2.0f, y + rectPadding + rectSize + font.Offset(), font, Settings.Instance.Theme.StatusFgPaint);
 
             int boxThickness = Math.Max(1, (int)Math.Round(rectSize / 20.0f));
             float dotThickness = boxThickness * 1.25f;

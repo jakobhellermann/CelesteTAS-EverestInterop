@@ -249,7 +249,7 @@ public class Markdown : SkiaDrawable {
             style.ModifyDrawText?.Invoke(text, ref x, ref y);
 
             y += style.Font.Offset();
-            Canvas.DrawText(text, x, y, style.Font, style.Paint);
+            Canvas.DrawMonospaceText(text, x, y, style.Font, style.Paint);
 
             if (style.FontDecoration == FontDecoration.None) {
                 return;

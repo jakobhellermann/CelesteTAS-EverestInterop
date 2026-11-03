@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Eto.Drawing;
+using CelesteStudio.Util;
 using SkiaSharp;
 using StudioCommunication;
 
@@ -81,7 +82,7 @@ public class SyntaxHighlighter {
                 canvas.DrawRect(x + xOff, y, width, font.LineHeight(), bgColor);
             }
 
-            canvas.DrawText(str, x + xOff, y + font.Offset(), font, style.ForegroundColor);
+            canvas.DrawMonospaceText(str, x + xOff, y + font.Offset(), font, style.ForegroundColor);
 
             xOff += width;
         }

@@ -1237,7 +1237,7 @@ public class TextViewer : SkiaDrawable {
     }
 
     protected virtual void DrawLine(SKCanvas canvas, string line, float x, float y) {
-        canvas.DrawText(line, x, y + Font.Offset(), Font, Settings.Instance.Theme.StatusFgPaint);
+        canvas.DrawMonospaceText(line, x, y + Font.Offset(), Font, Settings.Instance.Theme.StatusFgPaint);
     }
     protected virtual void DrawCurrentLineHighlight(SKCanvas canvas, float carY, SKPaint fillPaint) {
         fillPaint.ColorF = Settings.Instance.Theme.CurrentLine.ToSkia();
@@ -1249,7 +1249,7 @@ public class TextViewer : SkiaDrawable {
             fillPaint);
     }
     protected virtual void DrawWrappedLine(SKCanvas canvas, string subLine, float x, float y) {
-        canvas.DrawText(subLine, x, y + Font.Offset(), Font, Settings.Instance.Theme.CommentPaint.ForegroundColor);
+        canvas.DrawMonospaceText(subLine, x, y + Font.Offset(), Font, Settings.Instance.Theme.CommentPaint.ForegroundColor);
     }
     protected virtual void DrawCollapseBox(SKCanvas canvas, float x, float y, float w, float h) {
         const float foldingPadding = 1.0f;
@@ -1410,10 +1410,10 @@ public class TextViewer : SkiaDrawable {
                 fillPaint.ColorF = GetLineNumberBackground(row).ToSkia();
 
                 if (Settings.Instance.LineNumberAlignment == LineNumberAlignment.Left) {
-                    canvas.DrawText(numberString, scrollablePosition.X + LineNumberPadding, yPos + Font.Offset(), Font, fillPaint);
+                    canvas.DrawMonospaceText(numberString, scrollablePosition.X + LineNumberPadding, yPos + Font.Offset(), Font, fillPaint);
                 } else if (Settings.Instance.LineNumberAlignment == LineNumberAlignment.Right) {
                     float ident = Font.CharWidth() * (bottomRow.Digits() - (row + 1).Digits());
-                    canvas.DrawText(numberString, scrollablePosition.X + LineNumberPadding + ident, yPos + Font.Offset(), Font, fillPaint);
+                    canvas.DrawMonospaceText(numberString, scrollablePosition.X + LineNumberPadding + ident, yPos + Font.Offset(), Font, fillPaint);
                 }
 
                 bool collapsed = false;

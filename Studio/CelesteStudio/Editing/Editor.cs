@@ -2086,7 +2086,7 @@ public sealed class Editor : TextEditor {
             float suffixWidth = font.MeasureWidth(CommunicationWrapper.CurrentLineSuffix);
 
             fillPaint.ColorF = Settings.Instance.Theme.PlayingFrame.ToSkia();
-            canvas.DrawText(CommunicationWrapper.CurrentLineSuffix,
+            canvas.DrawMonospaceText(CommunicationWrapper.CurrentLineSuffix,
                 x: scrollablePosition.X + scrollableSize.Width - suffixWidth - padding,
                 y: actualToVisualRows[CommunicationWrapper.CurrentLine] * Font.LineHeight() + Font.Offset(),
                 font, fillPaint);
@@ -2105,7 +2105,7 @@ public sealed class Editor : TextEditor {
             fillPaint.ColorF = Settings.Instance.Theme.CalculateBg.ToSkia();
             canvas.DrawRoundRect(x, y, w, h, 4.0f, 4.0f, fillPaint);
             fillPaint.ColorF = Settings.Instance.Theme.CalculateFg.ToSkia();
-            canvas.DrawText(calculateLine, x + padding, y + Font.Offset(), Font, fillPaint);
+            canvas.DrawMonospaceText(calculateLine, x + padding, y + Font.Offset(), Font, fillPaint);
         }
 
         // Draw toast message box
@@ -2127,7 +2127,7 @@ public sealed class Editor : TextEditor {
                 Settings.Instance.Theme.PopupMenuBgPaint);
 
             foreach (string line in lines) {
-                canvas.DrawText(line, x, y + Font.Offset(), font, Settings.Instance.Theme.PopupMenuFgPaint);
+                canvas.DrawMonospaceText(line, x, y + Font.Offset(), font, Settings.Instance.Theme.PopupMenuFgPaint);
                 y += Font.LineHeight();
             }
         }

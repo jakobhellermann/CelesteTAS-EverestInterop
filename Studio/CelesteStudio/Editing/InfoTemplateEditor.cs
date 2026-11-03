@@ -165,7 +165,7 @@ public class InfoTemplateEditor : TextEditor {
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
-                canvas.DrawText(subSpan, x + modeStart * Font.CharWidth(), y + Font.Offset(), Font, paint);
+                canvas.DrawMonospaceText(subSpan, x + modeStart * Font.CharWidth(), y + Font.Offset(), Font, paint);
                 mode = nextMode;
                 modeStart = i;
             }
@@ -179,6 +179,6 @@ public class InfoTemplateEditor : TextEditor {
             LineMode.Table => Settings.Instance.Theme.FramePaint.ForegroundColor,
             _ => throw new ArgumentOutOfRangeException()
         };
-        canvas.DrawText(lastSpan, x + modeStart * Font.CharWidth(), y + Font.Offset(), Font, lastPaint);
+        canvas.DrawMonospaceText(lastSpan, x + modeStart * Font.CharWidth(), y + Font.Offset(), Font, lastPaint);
     }
 }
