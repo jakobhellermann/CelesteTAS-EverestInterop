@@ -12,6 +12,7 @@ public static class GameInterop {
     /// TAS-execution is paused during loading screens
     public static bool IsLoading() {
         if (TasLoad.IsLoading) return true;
+        if (LoadCommand.SceneLoadPending) return true;
         if (!GameCore.IsAvailable()) return true;
         // An interrupted cutscene never clears `currentCutScene`, so only count ones still playing
         return GameCore.Instance.currentCoreState is GameCore.GameCoreState.ChangingScene ||
