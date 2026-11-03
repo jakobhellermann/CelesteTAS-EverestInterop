@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Logging;
@@ -126,7 +127,22 @@ public static class CommunicationWrapper {
             return;
         }
 
-        comm!.WriteCurrentFile(path);
+        if (StudioPath(path) is { } studioPath) {
+            comm!.WriteCurrentFile(studioPath);
+        }
+    }
+
+    /// The path as Studio sees it: under wine, Studio runs natively and needs the unix path behind the default `Z:` drive
+    private static string? StudioPath(string path) {
+        if (Environment.GetEnvironmentVariable("WINEPREFIX") == null) {
+            return path;
+        }
+        if (!path.StartsWith(@"Z:\", StringComparison.OrdinalIgnoreCase)) {
+            Log.Error($"Cannot send '{path}' to Studio: only paths on wine's Z: drive map to a unix path");
+            return null;
+        }
+
+        return path[2..].Replace('\\', '/');
     }
 
     #endregion
