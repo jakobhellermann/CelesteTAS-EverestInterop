@@ -50,6 +50,30 @@ internal static class PopupToast {
 
     public static void Show(Entry entry) {
         Log.Error(entry.Text);
+        Log.Toast(entry.Text);
+        if (Manager.Running) {
+            shownDuringRun.Add((entry.Text, Time.time));
+        }
         entries.Add(entry);
+    }
+
+    /// NineSolsAPI's toast lifetime, which it measures in `Time.time`
+    private const float ToastLifetime = 5.0f;
+
+    /// Toasts age by `Time.time`, which follows the TAS clock during a run and jumps back to the
+    /// game clock afterwards, so toasts from the run would vanish as soon as it ends.
+    private static readonly List<(string Text, float Time)> shownDuringRun = [];
+
+    [UpdateMeta]
+    private static void ReshowRunToasts() {
+        if (Manager.Running) {
+            shownDuringRun.RemoveAll(toast => Time.time - toast.Time > ToastLifetime);
+            return;
+        }
+
+        foreach (var (text, _) in shownDuringRun) {
+            Log.Toast(text);
+        }
+        shownDuringRun.Clear();
     }
 }
