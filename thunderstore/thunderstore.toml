@@ -4,7 +4,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "jakobhellermann"
 name = "TAS"
-versionNumber = "0.1.0"
+versionNumber = "1.0.0"
 description = ""
 websiteUrl = ""
 containsNsfwContent = false
