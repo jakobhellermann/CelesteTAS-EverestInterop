@@ -88,7 +88,7 @@ mod-release:
 
     deploy_dir="$(dotnet msbuild CelesteTAS-EverestInterop/CelesteTAS-EverestInterop.csproj -getProperty:CopyDir -p:Configuration=Debug)"
     mod_version="$(grep -oP 'versionNumber = "\K[^"]*' thunderstore/thunderstore.toml)"
-    zip="thunderstore/build/jakobhellermann-TAS-$mod_version.zip"
+    zip="thunderstore/build/jakobhellermann-TasStudio-$mod_version.zip"
     if [ ! -f "$zip" ]; then
         echo "error: expected package $zip was not built" >&2
         exit 1
