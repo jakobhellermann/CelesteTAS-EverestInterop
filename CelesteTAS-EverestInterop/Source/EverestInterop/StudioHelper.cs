@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using StudioCommunication;
 using StudioCommunication.Util;
 using TAS.Tools;
 using TAS.Utils;
@@ -57,16 +58,20 @@ public static class StudioHelper {
     private static string DownloadPath => Path.Combine(StudioDirectory, FileName);
     private static string InnerArchivePath => Path.Combine(StudioDirectory, ".InnerArchive.zip");
 
-    private static bool IsWine() => Environment.GetEnvironmentVariable("WINEPREFIX") != null;
-
-    private static string ToUnixPath(string path) => path[2..].Replace('\\', '/');
+    private static bool IsWine() => WineInterop.IsWine();
 
     private static string UnixPathExpr(string windowsPath) {
         string prefix = Environment.GetEnvironmentVariable("WINEPREFIX") ?? "";
-        string unixPrefix = prefix.Length > 2 && prefix[1] == ':' ? ToUnixPath(prefix) : prefix.Replace('\\', '/');
+        string unixPrefix = prefix.Length > 2 && prefix[1] == ':' ? WineInterop.WindowsToUnix(prefix) : prefix.Replace('\\', '/');
         char drive = char.ToLowerInvariant(windowsPath[0]);
-        string rel = ToUnixPath(windowsPath).TrimStart('/');
+        string rel = windowsPath[3..].Replace('\\', '/');
         return $"$(readlink -f \"{unixPrefix}/dosdevices/{drive}:\")/{rel}";
+    }
+
+    private static void RunUnixScript(string name, string script) {
+        string scriptPath = $"/tmp/{name}";
+        File.WriteAllText(WineInterop.UnixToWindows(scriptPath), script);
+        Process.Start("start", $"/unix /bin/sh {scriptPath}");
     }
 
     private static string DownloadURL {
@@ -298,14 +303,12 @@ public static class StudioHelper {
             } else {
                 string marker = $"{studioBinary}.ok";
                 string errorFile = $"{studioBinary}.err";
-                string scriptPath = "/tmp/ninesols-tas-chmod.sh";
                 string script =
                     $"bin=\"{UnixPathExpr(studioBinary)}\"; " +
                     "err=\"$bin.err\"; ok=\"$bin.ok\"; " +
                     "chmod +x \"$bin\" 2> \"$err\" && rm -f \"$err\" && touch \"$ok\" || echo \"chmod exited with $?\" >> \"$err\"";
-                File.WriteAllText($"Z:\\{scriptPath.Replace('/', '\\')}", script);
                 try {
-                    Process.Start("start", $"/unix /bin/sh {scriptPath}");
+                    RunUnixScript("ninesols-tas-chmod.sh", script);
                 } catch (Exception ex) {
                     ex.LogException("Couldn't make Studio executable");
                 }
@@ -332,7 +335,7 @@ public static class StudioHelper {
                         ? File.ReadAllText(errorFile)
                         : "the script did not finish in time";
                     string shortReason = reason.Split('\n')[0];
-                    ReportError($"Install failed! Couldn't make Studio executable: {shortReason}", $"Command: start /unix /bin/sh {scriptPath}\n{script}\n{reason}");
+                    ReportError($"Install failed! Couldn't make Studio executable: {shortReason}", $"Command: start /unix /bin/sh /tmp/ninesols-tas-chmod.sh\n{script}\n{reason}");
                 }
             }
 
@@ -462,10 +465,8 @@ public static class StudioHelper {
                     }
 
                     var studioWinPath = Path.Combine(StudioDirectory, "CelesteStudio");
-                    string launchScriptPath = "/tmp/ninesols-tas-launch.sh";
-                    File.WriteAllText($"Z:\\{launchScriptPath.Replace('/', '\\')}", $"exec \"{UnixPathExpr(studioWinPath)}\"");
                     $"Starting process '{studioWinPath}'...".Log(LogLevel.Debug);
-                    Process.Start("start", $"/unix /bin/sh {launchScriptPath}");
+                    RunUnixScript("ninesols-tas-launch.sh", $"exec \"{UnixPathExpr(studioWinPath)}\"");
                 } else {
                     var studioPath = Path.Combine(StudioDirectory, "CelesteStudio.exe");
                     $"Starting process '{studioPath}'...".Log(LogLevel.Debug);

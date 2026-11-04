@@ -134,7 +134,7 @@ public static class CommunicationWrapper {
 
     /// The path as Studio sees it: under wine, Studio runs natively and needs the unix path behind the default `Z:` drive
     private static string? StudioPath(string path) {
-        if (Environment.GetEnvironmentVariable("WINEPREFIX") == null) {
+        if (!WineInterop.IsWine()) {
             return path;
         }
         if (!path.StartsWith(@"Z:\", StringComparison.OrdinalIgnoreCase)) {
@@ -142,7 +142,7 @@ public static class CommunicationWrapper {
             return null;
         }
 
-        return path[2..].Replace('\\', '/');
+        return WineInterop.WindowsToUnix(path);
     }
 
     #endregion

@@ -68,7 +68,7 @@ public abstract class CommunicationAdapterBase : IDisposable {
     private const int MaxOffset = BufferCapacity - 4096;
     private const byte MaxMessageCount = 100;
 
-    private static bool IsWine() => Environment.GetEnvironmentVariable("WINEPREFIX") != null;
+    private static bool IsWine() => WineInterop.IsWine();
 
     private const string MutexName = "Global\\NineSolsTAS_StudioCom";
 

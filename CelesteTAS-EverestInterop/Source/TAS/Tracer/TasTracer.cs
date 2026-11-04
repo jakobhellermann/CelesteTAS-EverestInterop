@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Snapshots;
 using System.Collections;
+using StudioCommunication;
 using TAS.Input;
 using TAS.Utils;
 using UnityEngine;
@@ -91,7 +92,7 @@ public enum TasTracerFilter {
 }
 
 internal static class TasTracer {
-    private static bool IsWine() => Environment.GetEnvironmentVariable("WINEPREFIX") != null;
+    private static bool IsWine() => WineInterop.IsWine();
 
     private static string TempPath() => IsWine() ? "/tmp" : Path.GetTempPath();
 

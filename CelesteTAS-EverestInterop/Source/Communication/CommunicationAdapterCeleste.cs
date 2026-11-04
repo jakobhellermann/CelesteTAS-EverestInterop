@@ -38,8 +38,8 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
                 string path = reader.ReadString();
                 // the studio is a unix process, so it sends unix paths; wine resolves them against the current drive,
                 // so remap them onto Z: (wine's unix root) to make them absolute
-                if (Environment.GetEnvironmentVariable("WINEPREFIX") != null && path.StartsWith('/')) {
-                    path = $"Z:{path.Replace('/', '\\')}";
+                if (WineInterop.IsWine() && path.StartsWith('/')) {
+                    path = WineInterop.UnixToWindows(path);
                 }
                 LogVerbose($"Received message FilePath: '{path}'");
 
