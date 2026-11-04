@@ -99,7 +99,11 @@ public abstract class CommunicationAdapterBase : IDisposable {
             writeFile = MemoryMappedFile.CreateOrOpen(writeName, BufferCapacity);
             readFile = MemoryMappedFile.CreateOrOpen(readName, BufferCapacity);
         } else {
-            var tempPath = isWine ? @"Z:\tmp" : Path.GetTempPath();
+            // Windows-under-wine needs the windows-style absolute path (Z: is wine's unix root),
+            // unix processes (including wine-launched Studios inheriting WINEPREFIX) need the real unix path
+            var tempPath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? @"Z:\tmp"
+                : "/tmp";
             var writePath = Path.Combine(tempPath, $"{writeName}.share");
             var readPath = Path.Combine(tempPath, $"{readName}.share");
 
