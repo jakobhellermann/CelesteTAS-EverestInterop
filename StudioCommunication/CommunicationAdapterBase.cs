@@ -70,7 +70,7 @@ public abstract class CommunicationAdapterBase : IDisposable {
 
     private static bool IsWine() => Environment.GetEnvironmentVariable("WINEPREFIX") != null;
 
-    private const string MutexName = "Global\\CelesteTAS_StudioCom";
+    private const string MutexName = "Global\\NineSolsTAS_StudioCom";
 
     protected CommunicationAdapterBase(Location location) {
         LogInfo("Starting communication...");
@@ -82,8 +82,8 @@ public abstract class CommunicationAdapterBase : IDisposable {
         }
 
         // Set up the memory mapped files
-        string writeName = $"CelesteTAS_{(location == Location.Celeste ? "C2S" : "S2C")}";
-        string readName  = $"CelesteTAS_{(location == Location.Celeste ? "S2C" : "C2S")}";
+        string writeName = $"NineSolsTAS_{(location == Location.Celeste ? "C2S" : "S2C")}";
+        string readName  = $"NineSolsTAS_{(location == Location.Celeste ? "S2C" : "C2S")}";
 
         // Ensure the other adapter isn't using the stream while setting up
         try {

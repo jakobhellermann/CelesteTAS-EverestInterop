@@ -3,7 +3,7 @@ schemaVersion = "0.0.1"
 
 [package]
 namespace = "jakobhellermann"
-name = "TAS"
+name = "TasStudio"
 versionNumber = "1.0.0"
 description = ""
 websiteUrl = ""
