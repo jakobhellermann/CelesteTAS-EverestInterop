@@ -18,8 +18,8 @@ public class DesktopShortcutDialog : Dialog<bool?> {
             Items = {
                 new Label {
                     Text = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-                        ? "Would you like to create a desktop shortcut for Celeste Studio?\nThis is required to properly show a desktop icon on Wayland."
-                        : "Would you like to create a desktop shortcut for Celeste Studio?"
+                        ? "Would you like to create a desktop shortcut for NineSols TAS Studio?\nThis is required to properly show a desktop icon on Wayland."
+                        : "Would you like to create a desktop shortcut for NineSols TAS Studio?"
                 },
                 new StackLayout {
                     Spacing = 10,
@@ -59,15 +59,15 @@ public class DesktopShortcutDialog : Dialog<bool?> {
                  [Desktop Entry]
                  Type=Application
                  Exec={path}
-                 Name=Celeste Studio
-                 GenericName=Celeste TAS Editor
-                 Keywords=Celeste;Studio
+                 Name=NineSols TAS Studio
+                 GenericName=NineSols TAS Editor
+                 Keywords=NineSols;Studio;TAS
                  Categories=Utility;
                  Icon=CelesteStudio
-                 Comment=A feature-rich TAS editor for Celeste.
+                 Comment=A feature-rich TAS editor for NineSols.
                  """;
 
-            const string desktopName = "CelesteStudio.desktop";
+            const string desktopName = "NineSolsTASStudio.desktop";
             string desktopPath;
             const string iconName = "CelesteStudio";
             string iconBasePath;
@@ -125,17 +125,17 @@ public class DesktopShortcutDialog : Dialog<bool?> {
             }
         #elif WINDOWS
             // Start Menu / Desktop .lnk
-            CreateWindowsShortcut(path, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Celeste Studio.lnk"));
-            CreateWindowsShortcut(path, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Celeste Studio.lnk"));
+            CreateWindowsShortcut(path, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "NineSols TAS Studio.lnk"));
+            CreateWindowsShortcut(path, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "NineSols TAS Studio.lnk"));
         #endif
 
-        MessageBox.Show("Successfully created desktop shortcut for Celeste Studio!");
+        MessageBox.Show("Successfully created desktop shortcut for NineSols TAS Studio!");
     }
     
     private static void CreateWindowsShortcut(string exePath, string lnkPath) {
         // ReSharper disable once SuspiciousTypeConversion.Global
         var link = (IShellLink) new ShellLink();
-        link.SetDescription("Launch Celeste Studio");
+        link.SetDescription("Launch NineSols TAS Studio");
         link.SetPath(exePath);
         link.SetWorkingDirectory(Directory.GetParent(exePath)!.FullName);
         // ReSharper disable once SuspiciousTypeConversion.Global

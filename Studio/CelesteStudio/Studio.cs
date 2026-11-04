@@ -521,10 +521,10 @@ public sealed class Studio : Form {
     private static readonly ActionBinding RecordTAS = new("File_RecordTAS", "&Record TAS...", Binding.Category.File, Hotkey.None, () => Instance.OnRecordTAS());
     private static readonly ActionBinding Quit = new("File_Quit", "Quit", Binding.Category.File, Hotkey.None, () => Application.Instance.Quit());
 
-    private static readonly BoolBinding SendInputs = new("Settings_SendInputs", "&Send Inputs to Celeste", Binding.Category.Settings, Hotkey.KeyCtrl(Keys.D),
+    private static readonly BoolBinding SendInputs = new("Settings_SendInputs", "&Send Inputs to Nine Sols", Binding.Category.Settings, Hotkey.KeyCtrl(Keys.D),
         () => Settings.Instance.SendInputsToCeleste,
         value => {
-            Instance.Editor.ShowToastMessage($"{(value ? "Enabled" : "Disabled")} Sending Inputs to Celeste", Editor.DefaultToastTime);
+            Instance.Editor.ShowToastMessage($"{(value ? "Enabled" : "Disabled")} Sending Inputs to Nine Sols", Editor.DefaultToastTime);
 
             Settings.Instance.SendInputsToCeleste = value;
             Settings.OnChanged();
@@ -887,8 +887,8 @@ public sealed class Studio : Form {
         whatsNewItem.Enabled = File.Exists(Path.Combine(InstallDirectory, "Assets", "version_history.json"));
         var aboutItem = MenuUtils.CreateAction("About...", Keys.None, () => {
             ShowAboutDialog(new AboutDialog {
-                ProgramName = "Celeste Studio",
-                ProgramDescription = "Editor for editing Celeste TASes with various useful features.",
+                ProgramName = "NineSols TAS Studio",
+                ProgramDescription = "Editor for editing Nine Sols TASes with various useful features.",
                 Version = Version,
                 Website = new Uri("https://github.com/EverestAPI/CelesteTAS-EverestInterop"),
 
