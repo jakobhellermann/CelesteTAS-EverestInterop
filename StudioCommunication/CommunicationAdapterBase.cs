@@ -99,7 +99,7 @@ public abstract class CommunicationAdapterBase : IDisposable {
             writeFile = MemoryMappedFile.CreateOrOpen(writeName, BufferCapacity);
             readFile = MemoryMappedFile.CreateOrOpen(readName, BufferCapacity);
         } else {
-            var tempPath = isWine ? "/tmp" : Path.GetTempPath();
+            var tempPath = isWine ? @"Z:\tmp" : Path.GetTempPath();
             var writePath = Path.Combine(tempPath, $"{writeName}.share");
             var readPath = Path.Combine(tempPath, $"{readName}.share");
 
