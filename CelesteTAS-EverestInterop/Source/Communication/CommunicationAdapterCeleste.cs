@@ -36,6 +36,11 @@ public sealed class CommunicationAdapterCeleste() : CommunicationAdapterBase(Loc
         switch (messageId) {
             case MessageID.FilePath:
                 string path = reader.ReadString();
+                // the studio is a unix process, so it sends unix paths; wine resolves them against the current drive,
+                // so remap them onto Z: (wine's unix root) to make them absolute
+                if (Environment.GetEnvironmentVariable("WINEPREFIX") != null && path.StartsWith('/')) {
+                    path = $"Z:{path.Replace('/', '\\')}";
+                }
                 LogVerbose($"Received message FilePath: '{path}'");
 
                 Manager.AddMainThreadAction(() => Manager.Controller.FilePath = path);
