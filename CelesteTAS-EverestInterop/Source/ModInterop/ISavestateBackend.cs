@@ -21,4 +21,7 @@ internal interface ISavestateBackend {
     void ApplyPendingSnapshot();
 
     (float Time, int FrameCount)? LastLoadedClock { get; }
+
+    /// Shifts all live game state holding absolute timestamps by delta seconds
+    void RebaseAbsoluteTimes(double delta);
 }
