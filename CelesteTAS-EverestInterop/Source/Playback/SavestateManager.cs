@@ -237,7 +237,7 @@ internal static class SavestateManager {
                     staleSavestates.Add(state);
                     continue;
                 }
-                if (state.Frame == Manager.FrameStepBackTargetFrame) {
+                if (pendingResume == null && state.Frame == Manager.FrameStepBackTargetFrame) {
                     Manager.Pause();
                 }
                 goto CleanupStates;
@@ -259,8 +259,8 @@ internal static class SavestateManager {
                 continue;
             }
 
-            // Pause TAS if latest breakpoint
-            if (Manager.Controller.FastForwards.LastOrDefault().Value?.Frame <= state.Frame) {
+            // Pause TAS if latest breakpoint. An async load must keep running; its completion in Update pauses instead.
+            if (pendingResume == null && Manager.Controller.FastForwards.LastOrDefault().Value?.Frame <= state.Frame) {
                 Manager.Pause();
             } else {
                 Manager.CurrState = Manager.NextState = Manager.State.Running;
