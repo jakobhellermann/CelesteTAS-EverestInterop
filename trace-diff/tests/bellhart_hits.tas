@@ -1,0 +1,20 @@
+# Bellhart (Belltown_Shrine) opener must reproducibly deal its hits: dash, jump, downspike and attacks from a fixed
+# savestate leave the boss at a fixed hp. Observed bimodal (sometimes the hits don't land).
+Framerate, 100
+LoadSavestate, {tests}/savestates/belltown_shrine_bellhart.json
+   1
+
+   1,V
+ 528
+   1,X
+  13
+  10,R,J
+   1,R,D,A
+  16,R
+   1,X
+  11,R
+   4,L,A
+
+Assert, Equal, 350, {HealthManager.hp}
+   1
+***
