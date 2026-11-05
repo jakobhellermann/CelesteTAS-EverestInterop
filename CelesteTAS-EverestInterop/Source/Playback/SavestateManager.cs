@@ -15,7 +15,7 @@ namespace TAS.Playback;
 
 /// Handles saving / loading game state with SpeedrunTool
 internal static class SavestateManager {
-    public readonly record struct Savestate(InputController Controller, int Checksum, bool SavedByBreakpoint) {
+    public readonly record struct Savestate(InputController Controller, int Checksum, bool SavedByBreakpoint, int TasFramerate) {
         /// SpeedrunTool slot, which is used for this save-state
         public readonly string Slot = $"{SpeedrunToolInterop.DefaultSlot}_{Checksum}";
 
@@ -86,6 +86,8 @@ internal static class SavestateManager {
             }
 
             controller.CopyProgressFrom(resume.Controller);
+            // The Framerate command that set this ran before the saved frame, so it is skipped on resume
+            InputHelper.SetTasFramerate(resume.TasFramerate);
             UpdateStudio();
             if (controller.HasFastForward || Manager.FrameStepBackTargetFrame > controller.CurrentFrameInTas) {
                 Manager.NextState = Manager.State.Running;
@@ -288,7 +290,7 @@ internal static class SavestateManager {
             return false;
         }
 
-        savestate = new Savestate(Manager.Controller.Clone(), Manager.Controller.CalcChecksum(Manager.Controller.CurrentFrameInTas), byBreakpoint);
+        savestate = new Savestate(Manager.Controller.Clone(), Manager.Controller.CalcChecksum(Manager.Controller.CurrentFrameInTas), byBreakpoint, InputHelper.CurrentTasFramerate);
         if (!SpeedrunToolInterop.SaveState(savestate.Slot)) {
             return false;
         }
