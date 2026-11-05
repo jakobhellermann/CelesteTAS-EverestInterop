@@ -20,6 +20,11 @@ public static class DeterministicTimePatch {
 
     [DisableRun]
     private static void DisableRun() {
+        // Timestamps taken on the TAS clock would otherwise be off by the jump back to the engine clock
+        if (timeInTas is { } tasTime && ModInterop.SpeedrunToolInterop.Backend is { Installed: true } backend) {
+            backend.RebaseAbsoluteTimes(EngineTime - tasTime);
+        }
+
         overrideFrameCount = null;
         timeInTas = null;
     }

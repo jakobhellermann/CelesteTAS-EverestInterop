@@ -44,6 +44,8 @@ internal class PreciseSavestatesBackend : ISavestateBackend {
 
     public void ApplyPendingSnapshot() => Plugin.ApplyPendingSnapshot();
 
+    public void RebaseAbsoluteTimes(double delta) => Plugin.RebaseAbsoluteTimes(delta);
+
     public (float Time, int FrameCount)? LastLoadedClock =>
         Plugin.LastLoadedGameTime is { } time ? (time, Plugin.LastLoadedFrameCount ?? 0) : null;
 }
