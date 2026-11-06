@@ -99,6 +99,8 @@ Did you forget to adjust your GamePath '$(ManagedDir)'?" />
         <Copy SourceFiles="$(TargetDir)publish/MemoryPack.Core.dll" DestinationFolder="../thunderstore/build/dll" SkipUnchangedFiles="true" />
         <Copy SourceFiles="$(TargetDir)publish/StudioCommunication.dll" DestinationFolder="../thunderstore/build/dll" SkipUnchangedFiles="true" />
         <Copy SourceFiles="$(TargetDir)publish/System.Collections.Immutable.dll" DestinationFolder="../thunderstore/build/dll" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="$(TargetDir)publish/System.Runtime.CompilerServices.Unsafe.dll" DestinationFolder="../thunderstore/build/dll" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="$(TargetDir)publish/System.Memory.dll" DestinationFolder="../thunderstore/build/dll" SkipUnchangedFiles="true" />
         <!-- <Exec Command="tcli build - -config-path ../thunderstore/thunderstore.toml" /> TODO--> 
     </Target>
 </Project>
