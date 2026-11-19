@@ -126,6 +126,8 @@ public static class TargetQuery {
 
     internal static readonly Handler[] Handlers = [
         new MonobehaviourQueryHandler(),
+        // Before CollectionQueryHandler, which rejects indices on types it can't index
+        new FsmVariableQueryHandler(),
         new CollectionQueryHandler(),
     ];
 
