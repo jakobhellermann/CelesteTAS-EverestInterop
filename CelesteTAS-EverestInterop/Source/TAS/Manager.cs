@@ -63,7 +63,10 @@ public static class Manager {
             if (value == playbackSpeed) return;
 
             playbackSpeed = value;
-            InputHelper.WriteFramerate();
+            // Outside a run the framerate belongs to the game (restored by InputHelper's DisableRun)
+            if (Running) {
+                InputHelper.WriteFramerate();
+            }
         }
     }
 
@@ -98,8 +101,9 @@ public static class Manager {
 
         DidComplete = false;
         LastAbortMessage = null;
-        CurrState = NextState = State.Running;
+        // Before Running, so it doesn't write the framerate ahead of InputHelper's EnableRun saving the game's config
         PlaybackSpeed = 1.0f;
+        CurrState = NextState = State.Running;
 
         FrameStepBackTargetFrame = -1;
 
