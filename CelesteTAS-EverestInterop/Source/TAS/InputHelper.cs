@@ -27,7 +27,11 @@ public static class InputHelper {
     private const int DefaultTasFramerate = 100;
     public static int CurrentTasFramerate = DefaultTasFramerate;
     
-    private const int DefaultFixedFramerate = 50;
+    /// The game's fixed timestep at load, before the game rescales it (PlayMaker ScaleTime writes 0.02 * timeScale)
+    private static float gameFixedDeltaTime;
+
+    [Initialize]
+    private static void CaptureGameFixedDeltaTime() => gameFixedDeltaTime = Time.fixedDeltaTime;
 
     /// Apply the `CurrentTasFramerate` (and Playback speed to unity)
     public static void WriteFramerate() {
@@ -53,14 +57,10 @@ public static class InputHelper {
         savedFramerateTimeConfig ??= FramerateTimeConfig.Save();
 
         SetTasFramerate(DefaultTasFramerate);
-        Time.fixedDeltaTime = 1.0f / DefaultFixedFramerate; // TODO: think about how to expose fixed timestamp
+        Time.fixedDeltaTime = gameFixedDeltaTime;
         QualitySettings.vSyncCount = 0;
-        
-        Time.timeScale = 1; 
 
-        // Physics simulation in FixedUpdate can't easily be synced to TAS playback,
-        // so it is simulated in TasMod.FirstUpdate
-        Physics2D.simulationMode = SimulationMode2D.Script;
+        Time.timeScale = 1;
 
         RequestFixedStepAlignment();
     }
@@ -72,9 +72,6 @@ public static class InputHelper {
         }
         savedFramerateTimeConfig.Restore();
         savedFramerateTimeConfig = null;
-
-        Time.fixedDeltaTime = 0.02f;
-        Physics2D.simulationMode = SimulationMode2D.Update;
 
         alignFixedStep = false;
         restoreCaptureFramerate = false;
