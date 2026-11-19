@@ -45,11 +45,12 @@ public static class InputHelper {
 
 
     /// Framerate/Time config before the TAS was started
-    private static FramerateTimeConfig savedFramerateTimeConfig = FramerateTimeConfig.Save();
+    private static FramerateTimeConfig? savedFramerateTimeConfig;
 
     [EnableRun]
     private static void EnableRun() {
-        savedFramerateTimeConfig = FramerateTimeConfig.Save();
+        // EnableRun is re-invoked mid-run by frame step back, when the TAS config is already applied
+        savedFramerateTimeConfig ??= FramerateTimeConfig.Save();
 
         SetTasFramerate(DefaultTasFramerate);
         Time.fixedDeltaTime = 1.0f / DefaultFixedFramerate; // TODO: think about how to expose fixed timestamp
@@ -66,7 +67,11 @@ public static class InputHelper {
 
     [DisableRun]
     private static void DisableRun() {
+        if (savedFramerateTimeConfig is null) {
+            throw new InvalidOperationException("DisableRun without a saved framerate config");
+        }
         savedFramerateTimeConfig.Restore();
+        savedFramerateTimeConfig = null;
 
         Time.fixedDeltaTime = 0.02f;
         Physics2D.simulationMode = SimulationMode2D.Update;
