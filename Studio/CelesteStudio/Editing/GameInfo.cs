@@ -200,6 +200,22 @@ public class GameInfo : Scrollable {
     private sealed class InfoText(Document document, Scrollable scrollable) : TextViewer(document, scrollable) {
         protected override SKFont Font => FontManager.SKStatusFont;
 
+        private bool popout;
+        public bool Popout {
+            set {
+                popout = value;
+                ContextMenu = CreateContextMenu();
+            }
+        }
+
+        // TextViewer rebuilds its menu on theme / key-binding changes, so the game-info items must be part of it
+        public override ContextMenu CreateContextMenu() {
+            var menu = base.CreateContextMenu();
+            menu.Items.AddRange(CreateMenuItems(popout).Apply(item => item.Order = -1));
+            menu.Items.AddSeparator(order: -1);
+            return menu;
+        }
+
         protected override void SetupBackgroundColor() {
             BackgroundColor = Settings.Instance.Theme.StatusBg;
             Settings.ThemeChanged += () => BackgroundColor = Settings.Instance.Theme.StatusBg;
@@ -278,7 +294,7 @@ public class GameInfo : Scrollable {
     });
     private static readonly ActionBinding ReconnectStudioAndCeleste = new("Status_ReconnectStudioCeleste", "Force-reconnect Celeste and Studio", Binding.Category.Status, Hotkey.KeyCtrl(Keys.D | Keys.Shift), CommunicationWrapper.ForceReconnect);
 
-    private static readonly ActionBinding EditCustomInfoTemplate = new("Status_EditCustomInfoTemplate", "Edit Custom Info Template", Binding.Category.Status, Hotkey.None, () => new InfoTemplateForm().Show());
+    private static readonly ActionBinding EditCustomInfoTemplate = new("Status_EditCustomInfoTemplate", "Edit Custom Info Template", Binding.Category.Status, Hotkey.KeyCtrl(Keys.I | Keys.Shift), () => new InfoTemplateForm().Show());
     private static readonly ActionBinding ClearWatchEntityInfo = new("Status_ClearWatchEntityInfo", "Clear Watch-Entity Info", Binding.Category.Status, Hotkey.None, CommunicationWrapper.ClearWatchEntityInfo);
 
     private static readonly BoolBinding PopoutAlwaysOnTop = new("StatusPopout_AlwaysOnTop", "Always on Top", Binding.Category.StatusPopout, Hotkey.None,
@@ -295,30 +311,27 @@ public class GameInfo : Scrollable {
 
     public static ContextMenu CreateContextMenu(GameInfo info, bool popout) {
         var menu = new ContextMenu();
-        menu.Items.AddRange(CreateItems(popout));
+        menu.Items.AddRange(CreateMenuItems(popout));
 
-        // Also insert into text menu
-        info.infoText.ContextMenu = info.infoText.CreateContextMenu();
-        info.infoText.ContextMenu.Items.AddRange(CreateItems(popout).Apply(item => item.Order = -1));
-        info.infoText.ContextMenu.Items.AddSeparator(order: -1);
+        info.infoText.Popout = popout;
 
         return menu;
+    }
 
-        static IEnumerable<MenuItem> CreateItems(bool popout) {
-            var editCustomInfoItem = EditCustomInfoTemplate.CreateItem();
-            editCustomInfoItem.Enabled = CommunicationWrapper.Connected;
-            CommunicationWrapper.ConnectionChanged += () => editCustomInfoItem.Enabled = CommunicationWrapper.Connected;
+    private static IEnumerable<MenuItem> CreateMenuItems(bool popout) {
+        var editCustomInfoItem = EditCustomInfoTemplate.CreateItem();
+        editCustomInfoItem.Enabled = CommunicationWrapper.Connected;
+        CommunicationWrapper.ConnectionChanged += () => editCustomInfoItem.Enabled = CommunicationWrapper.Connected;
 
-            yield return CopyGameInfoToClipboard;
-            yield return ReconnectStudioAndCeleste;
+        yield return CopyGameInfoToClipboard;
+        yield return ReconnectStudioAndCeleste;
+        yield return new SeparatorMenuItem();
+        yield return editCustomInfoItem;
+        yield return ClearWatchEntityInfo;
+
+        if (popout) {
             yield return new SeparatorMenuItem();
-            yield return editCustomInfoItem;
-            yield return ClearWatchEntityInfo;
-
-            if (popout) {
-                yield return new SeparatorMenuItem();
-                yield return PopoutAlwaysOnTop;
-            }
+            yield return PopoutAlwaysOnTop;
         }
     }
 
