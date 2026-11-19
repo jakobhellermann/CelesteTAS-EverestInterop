@@ -24,7 +24,7 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
     private static readonly Regex IndexRegex = new(@"^(.+)(?:\[(.+)\])$", RegexOptions.Compiled);
 
     private const string SpreadKey = "___SpreadCollection___";
-    private const string IndexKey = "___Index___";
+    internal const string IndexKey = "___Index___";
 
     public override IEnumerable<string> ProcessQueryArguments(IEnumerable<string> queryArgs, bool isAutoComplete) {
         foreach (string arg in queryArgs) {
