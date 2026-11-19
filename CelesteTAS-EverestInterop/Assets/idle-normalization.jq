@@ -12,15 +12,15 @@
 # Keeps only Hero_Hornet(Clone) component/FSM snapshots: a capture taken anywhere but a bare spot also grabs nearby
 # scene objects (enemies, chests, camera, vines, silkflies, reminders, …), which are scene-specific — same class as
 # SceneData and must be dropped so the normalization is hero-only and prior-independent.
-# Also strips position from the hero pose (Transform.localPosition / Rigidbody2D.position): the `load` command sets
+# Also strips position from the hero root pose (Transform.localPosition / Rigidbody2D.position): the `load` command sets
 # the final position itself, so leaving the capture's position in would teleport the hero to that stale spot first.
 # Regenerate:  jq -f idle-normalization.jq idle-normalization.base.json > idle-normalization.json
 {
   ComponentSnapshots: (.ComponentSnapshots
     | map(select(.Path | startswith("Hero_Hornet(Clone)")))
     | map(
-        if (.Path | test("@Transform")) then .Data |= del(.localPosition)
-        elif (.Path | test("@Rigidbody2D")) then .Data |= del(.position)
+        if .Path == "Hero_Hornet(Clone)@Transform" then .Data |= del(.localPosition)
+        elif .Path == "Hero_Hornet(Clone)@Rigidbody2D" then .Data |= del(.position)
         else . end
       )),
   FsmSnapshots: (.FsmSnapshots | map(select(.Path | startswith("Hero_Hornet(Clone)")))),
