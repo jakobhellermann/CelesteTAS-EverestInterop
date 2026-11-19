@@ -553,6 +553,7 @@ public static class Manager {
             CurrentLine = previous?.StudioLine ?? -1,
             CurrentLineSuffix = $"{Controller.CurrentFrameInInput + (previous?.FrameOffset ?? 0)}{previous?.RepeatString ?? ""}",
             CurrentFrameInTas = Controller.CurrentFrameInTas,
+            CurrentFrameInInput = Controller.CurrentFrameInInput + (previous?.FrameOffset ?? 0),
             SaveStateLines = SavestateManager.AllSavestates.Select(state => state.StudioLine).ToArray(),
             PlaybackRunning = CurrState == State.Running,
 
