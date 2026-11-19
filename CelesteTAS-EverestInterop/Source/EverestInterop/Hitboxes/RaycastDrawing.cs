@@ -20,17 +20,28 @@ public static class RaycastDrawing {
     private static bool ShowRaycasts => TasSettings.ShowRaycasts.Value;
     
     private const RaycastFilter Filter = RaycastFilter.All;
-    private const bool KeepOnlyLast = true;
     private static readonly Color ColorRaycast = Color.yellow;
     private static readonly Color ColorLinecast = Color.cyan;
     private static readonly Color ColorBoxcast = Color.magenta;
 
-    private static List<(Vector2 origin, Vector2 direction, float distance, int frame, float time)> raycasts = [];
-    private static List<(Vector2 origin, Vector2 direction, int frame, float time)> linecasts = [];
+    private static readonly List<(Vector2 origin, Vector2 direction, float distance)> raycasts = [];
+    private static readonly List<(Vector2 start, Vector2 end)> linecasts = [];
+    private static readonly List<(Vector2 origin, Vector2 size, float angle, Vector2 direction, float distance)> boxcasts = [];
 
-    private static
-        List<(Vector2 origin, Vector2 size, float angle, Vector2 direction, float distance, int frame, float time)>
-        boxcasts = [];
+    /// Casts are kept until the next frame that actually plays, so a paused TAS keeps showing its last frame's casts
+    private static int recordedFrame = -1;
+
+    private static bool BeginRecord() {
+        if (Manager.Running && Manager.CurrState == Manager.State.Paused) return false;
+
+        if (Time.frameCount != recordedFrame) {
+            recordedFrame = Time.frameCount;
+            raycasts.Clear();
+            linecasts.Clear();
+            boxcasts.Clear();
+        }
+        return true;
+    }
 
     [HarmonyPatch(typeof(PhysicsScene2D), nameof(PhysicsScene2D.CapsuleCast_Internal))]
     [HarmonyPatch(typeof(PhysicsScene2D), nameof(PhysicsScene2D.CapsuleCastArray_Internal))]
@@ -61,9 +72,9 @@ public static class RaycastDrawing {
         float distance,
         ContactFilter2D contactFilter
     ) {
-        if (!Filter.HasFlag(RaycastFilter.Raycast)) return;
+        if (!Filter.HasFlag(RaycastFilter.Raycast) || !ShowRaycasts || !BeginRecord()) return;
 
-        raycasts.Add((origin, direction, distance, Time.frameCount, Time.time));
+        raycasts.Add((origin, direction, distance));
     }
 
     [HarmonyPatch(typeof(PhysicsScene2D), nameof(PhysicsScene2D.Linecast_Internal))]
@@ -75,9 +86,9 @@ public static class RaycastDrawing {
         Vector2 end,
         ContactFilter2D contactFilter
     ) {
-        if (!Filter.HasFlag(RaycastFilter.Linecast)) return;
+        if (!Filter.HasFlag(RaycastFilter.Linecast) || !ShowRaycasts || !BeginRecord()) return;
 
-        linecasts.Add((start, end, Time.frameCount, Time.time));
+        linecasts.Add((start, end));
     }
 
     [HarmonyPatch(typeof(PhysicsScene2D), nameof(PhysicsScene2D.BoxCast_Internal))]
@@ -92,9 +103,9 @@ public static class RaycastDrawing {
         float distance,
         ContactFilter2D contactFilter
     ) {
-        if (!Filter.HasFlag(RaycastFilter.Boxcast)) return;
+        if (!Filter.HasFlag(RaycastFilter.Boxcast) || !ShowRaycasts || !BeginRecord()) return;
 
-        boxcasts.Add((origin, size, angle, direction, distance, Time.frameCount, Time.time));
+        boxcasts.Add((origin, size, angle, direction, distance));
     }
 
     public static void OnGUI() {
@@ -109,15 +120,18 @@ public static class RaycastDrawing {
         if (Event.current?.type != EventType.Repaint) return;
         if (GameInterop.MainCamera is not { } camera) return;
 
-        foreach (var (origin, direction, distance, _, _) in raycasts) {
+        // Drops the previous frame's casts when this played frame made none
+        BeginRecord();
+
+        foreach (var (origin, direction, distance) in raycasts) {
             DrawLineWorld(camera, origin, origin + (direction * distance), ColorRaycast);
         }
 
-        foreach (var (from, to, _, _) in linecasts) {
+        foreach (var (from, to) in linecasts) {
             DrawLineWorld(camera, from, to, ColorLinecast);
         }
 
-        foreach (var (origin, size, angle, direction, distance, _, _) in boxcasts) {
+        foreach (var (origin, size, angle, direction, distance) in boxcasts) {
             if (angle != 0) {
                 Log.Info($"Unhandled: Box Raycast with angle {angle}");
             }
@@ -126,24 +140,6 @@ public static class RaycastDrawing {
             var half = origin + ((target - origin) / 2);
             DrawBoxWorld(camera, half, new Vector2(distance + size.x, size.y), ColorBoxcast);
         }
-
-        if (Manager.Running && Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
-            raycasts.Clear();
-            boxcasts.Clear();
-        }
-
-        const float threshold = 1;
-        if (KeepOnlyLast) {
-            if (boxcasts.Count > 0) boxcasts.RemoveAll(tuple => !Mathf.Approximately(tuple.time, boxcasts.Last().time));
-            if (raycasts.Count > 0) raycasts.RemoveAll(tuple => !Mathf.Approximately(tuple.time, raycasts.Last().time));
-            if (linecasts.Count > 0)
-                linecasts.RemoveAll(tuple => !Mathf.Approximately(tuple.time, linecasts.Last().time));
-        }
-
-        var removeOlderThan = Time.time - threshold;
-        boxcasts.RemoveAll(tuple => tuple.time < removeOlderThan);
-        raycasts.RemoveAll(tuple => tuple.time < removeOlderThan);
-        linecasts.RemoveAll(tuple => tuple.time < removeOlderThan);
     }
 
     private const float LineWidth = 1f;
