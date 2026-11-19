@@ -96,8 +96,8 @@ internal static class GameTrace {
         // Full-precision hero physics probe for determinism debugging — uncomment to enable. Floats are formatted
         // "R" to bypass the 4-decimal Vector converter, so the differ sees sub-ULP divergence; worldCom exposes
         // Box2D's internal center of mass (its sweep.c is what integrates, not rb.position — see the Rigidbody2D
-        // round-trip in PreciseSavestates). For the pre-Simulate value, capture the same in TasMod.FirstUpdate
-        // right before Physics2D.Simulate.
+        // round-trip in PreciseSavestates). For the pre-Simulate value, capture the same in a PlayerLoop system
+        // right before FixedUpdate.Physics2DFixedUpdate.
         // if (HeroController.UnsafeInstance?.GetFieldValue<Rigidbody2D>("rb2d") is { } rb) {
         //     string R(float f) => f.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
         //     data.Add("HeroPhys", new Dictionary<string, object?> {

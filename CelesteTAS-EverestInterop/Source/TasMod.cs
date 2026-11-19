@@ -177,13 +177,6 @@ public class TasMod : BaseUnityPlugin {
     
     private static void FirstUpdate() {
         TasTracer.BeginStage("FirstUpdate");
-        
-        if (Physics2D.simulationMode != SimulationMode2D.Script) return;
-
-        // TODO: do better
-        if (Manager.CurrState != Manager.State.Paused) {
-            Physics2D.Simulate(Time.deltaTime);
-        }
     }
 
     private static void LastUpdate() => TasTracer.BeginStage("LastUpdate");
