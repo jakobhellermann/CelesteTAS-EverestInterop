@@ -13,8 +13,15 @@ public static class DeterministicTimePatch {
 
     [EnableRun]
     private static void EnableRun() {
+        // Symmetric to DisableRun: live timestamps move onto the TAS clock. Frame step back re-enters mid-run, from the TAS clock.
+        const float tasStartTime = 0;
+        double currentTime = timeInTas ?? EngineTime;
+        if (ModInterop.SpeedrunToolInterop.Backend is { Installed: true } backend) {
+            backend.RebaseAbsoluteTimes(tasStartTime - currentTime);
+        }
+
         overrideFrameCount = 1000;
-        timeInTas = 0;
+        timeInTas = tasStartTime;
         wasLoading = false;
     }
 
