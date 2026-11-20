@@ -21,6 +21,7 @@ public class TasMod : BaseUnityPlugin {
     public CelesteTasSettings TasSettings = null!;
 
     private Harmony harmony = null!;
+    private static bool applicationQuitting;
 
     internal ConfigEntry<TasTracerFilter> ConfigTasTraceFilter = null!;
     internal ConfigEntry<bool> ConfigTasTraceFrameHistory = null!;
@@ -53,6 +54,7 @@ public class TasMod : BaseUnityPlugin {
     private void Awake() {
         Log.Init(Logger);
         Instance = this;
+        Application.quitting += OnApplicationQuitting;
 
         try {
             ConfigTasTraceFrameHistory = Config.Bind("Tracer", "Frame History", false);
@@ -216,7 +218,11 @@ public class TasMod : BaseUnityPlugin {
         }
     }
 
+    private static void OnApplicationQuitting() => applicationQuitting = true;
+
     private void OnDestroy() {
+        Application.quitting -= OnApplicationQuitting;
+
         // Unpausing restores the pre-pause PlayerLoop snapshot, which still contains our systems
         if (Manager.Running) Manager.DisableRun();
 
@@ -239,6 +245,9 @@ public class TasMod : BaseUnityPlugin {
 
     // UnpatchSelf skips prefixes/postfixes of bodyless methods (engine icalls like Time.time)
     internal static void UnpatchSelf(Harmony harmony) {
+        // Unpatching takes time and is only needed to hot-reload
+        if (applicationQuitting) return;
+
         foreach (var method in Harmony.GetAllPatchedMethods().ToList()) {
             if (Harmony.GetPatchInfo(method).Owners.Contains(harmony.Id)) {
                 harmony.Unpatch(method, HarmonyPatchType.All, harmony.Id);
