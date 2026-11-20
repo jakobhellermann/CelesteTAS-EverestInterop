@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -79,7 +80,11 @@ public class TasMod : BaseUnityPlugin {
 
             AttributeUtils.Invoke<InitializeAttribute>();
 
-            harmony = Harmony.CreateAndPatchAll(typeof(TasMod).Assembly);
+            harmony = new Harmony("TasTools");
+            foreach (var type in AccessTools.GetTypesFromAssembly(typeof(TasMod).Assembly).Where(type => !TracerPatches.IsTracerPatch(type))) {
+                harmony.CreateClassProcessor(type).Patch();
+            }
+            TracerPatches.Initialize();
 
             HitboxModule = new GameObject().AddComponent<HitboxModule>();
             DontDestroyOnLoad(HitboxModule.gameObject);
