@@ -597,7 +597,7 @@ internal static class TasTracer {
         var name = Path.GetFileNameWithoutExtension(newTrace.FilePath)!;
         var traceDir = Path.Combine(traceDirRoot, name);
         Directory.CreateDirectory(traceDir);
-        var datetime = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+        var datetime = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-fff");
         var tracePath = Path.Combine(traceDir, $"{datetime}.json");
         File.WriteAllText(tracePath, json);
         LastSavedTracePath = tracePath;
