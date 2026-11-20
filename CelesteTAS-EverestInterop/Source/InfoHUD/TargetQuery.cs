@@ -120,7 +120,8 @@ public static class TargetQuery {
     /// Prevents invocations of methods / execution of Lua code in the Custom Info
     public static bool PreventCodeExecution => false;
 
-    internal static readonly Dictionary<string, HashSet<Type>> AllTypes = new();
+    private static Dictionary<string, HashSet<Type>>? allTypes;
+    internal static Dictionary<string, HashSet<Type>> AllTypes => allTypes ??= CollectAllTypes();
     internal static readonly Dictionary<string, (HashSet<Type> Types, string[] MemberArgs)> BaseTypeCache = new();
 
     internal static readonly Handler[] Handlers = [
@@ -128,10 +129,8 @@ public static class TargetQuery {
         new CollectionQueryHandler(),
     ];
 
-    [Initialize(ConsoleEnhancements.InitializePriority + 1)]
-    private static void CollectAllTypes() {
-        AllTypes.Clear();
-        BaseTypeCache.Clear();
+    private static Dictionary<string, HashSet<Type>> CollectAllTypes() {
+        var types = new Dictionary<string, HashSet<Type>>();
 
         foreach (var type in ModUtils.GetTypes()) {
             if (type.FullName is not { } fullName) {
@@ -144,9 +143,9 @@ public static class TargetQuery {
             // Use '.' instead of '+' for nested types
             fullName = fullName.Replace('+', '.');
 
-            AllTypes.AddToKey(fullName, type);
-            AllTypes.AddToKey($"{fullName}@{assemblyName}", type);
-            AllTypes.AddToKey($"{fullName}@{modName}", type);
+            types.AddToKey(fullName, type);
+            types.AddToKey($"{fullName}@{assemblyName}", type);
+            types.AddToKey($"{fullName}@{modName}", type);
 
             // Strip namespace
             if (type.Namespace != null) {
@@ -154,11 +153,13 @@ public static class TargetQuery {
                     ? type.Namespace.Length + 1
                     : 0;
                 string shortName = fullName[namespaceLen..];
-                AllTypes.AddToKey(shortName, type);
-                AllTypes.AddToKey($"{shortName}@{assemblyName}", type);
-                AllTypes.AddToKey($"{shortName}@{modName}", type);
+                types.AddToKey(shortName, type);
+                types.AddToKey($"{shortName}@{assemblyName}", type);
+                types.AddToKey($"{shortName}@{modName}", type);
             }
         }
+
+        return types;
     }
 
     /*[MonocleCommand("get", "'get Type.fieldOrProperty' -> value | Example: 'get Player.Position', 'get Level.Wind' (CelesteTAS)"), UsedImplicitly]
