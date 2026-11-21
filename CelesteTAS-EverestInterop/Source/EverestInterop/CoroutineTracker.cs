@@ -467,6 +467,11 @@ internal static class CoroutineTrackerPatch {
             return true;
         }
 
+        // The hero's light glow: color fades between SceneAppearanceRegions and the Reattach lerp, visual only, no RNG
+        if (mb is HeroLight) {
+            return true;
+        }
+
         // Enemies: attack windups / death timing can be gameplay-relevant; skipped for now.
         if (mb.GetComponentInParent<HealthManager>()) {
             return true;
