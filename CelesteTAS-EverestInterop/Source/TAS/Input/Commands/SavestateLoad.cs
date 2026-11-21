@@ -71,6 +71,10 @@ internal static class SavestateLoad {
         if (!Manager.Running || SpeedrunToolInterop.Backend is not { SnapshotPending: true } backend) {
             return;
         }
+        // The alignment frame simulates a variable dt, which must be discarded by the restore instead of played
+        if (InputHelper.FixedStepAlignmentPending) {
+            return;
+        }
 
         try {
             backend.ApplyPendingSnapshot();

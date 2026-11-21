@@ -84,6 +84,8 @@ public static class InputHelper {
     /// Spend the next frame on <see cref="AlignFixedStep"/>
     public static void RequestFixedStepAlignment() => alignFixedStep = true;
 
+    public static bool FixedStepAlignmentPending => alignFixedStep || restoreCaptureFramerate;
+
     /// The FixedUpdate phase is left over from what ran before, so one frame gets the length that leaves the next
     /// step boundary an irrational fraction of a TAS frame ahead: the frame after steps physics, and no integer
     /// framerate lands exactly on a boundary, where float rounding of this frame would decide (Unity compares
