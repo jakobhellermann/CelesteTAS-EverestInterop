@@ -1,0 +1,18 @@
+# An attack pressed on the first frame after the load ends where the continuous run does
+# resume after frame 139 of d.tas, 16 frames
+LoadSavestate, {tests}/d_frame1.json
+   8
+   1,J
+  38
+   1,L,D,A
+  39
+Framerate, 99
+   1
+Framerate, 100
+  51
+SaveSavestate, {scratch}.resume.json
+LoadSavestate, {scratch}.resume.json
+   1,A
+  15
+Assert, Equal, 5.772001\, 110.9365, {HeroController.rb2d.position}
+***

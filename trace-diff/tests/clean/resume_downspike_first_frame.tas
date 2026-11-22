@@ -1,0 +1,12 @@
+# Left+down+attack on the first frame after the load downspikes, as in the continuous run
+# resume after frame 47 of d.tas, 30 frames
+LoadSavestate, {tests}/d_frame1.json
+   8
+   1,J
+  38
+SaveSavestate, {scratch}.resume.json
+LoadSavestate, {scratch}.resume.json
+   1,L,D,A
+  29
+Assert, Equal, 5.397002\, 114.5845, {HeroController.rb2d.position}
+***

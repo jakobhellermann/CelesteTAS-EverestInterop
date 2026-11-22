@@ -1,0 +1,21 @@
+# A load from a later state of the same run doesn't keep that state's slash, which hit a wall (vx 3.75)
+# resume after frame 111 of d.tas, 30 frames, from the state at frame 140
+LoadSavestate, {tests}/d_frame1.json
+   8
+   1,J
+  38
+   1,L,D,A
+  39
+Framerate, 99
+   1
+Framerate, 100
+  23
+SaveSavestate, {scratch}.resume.json
+  28
+   1,A
+LoadSavestate, {scratch}.resume.json
+  28
+   1,A
+   1
+Assert, Equal, 5.397002\, 113.8165, {HeroController.rb2d.position}
+***

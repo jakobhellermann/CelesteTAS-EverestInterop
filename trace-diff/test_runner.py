@@ -27,7 +27,8 @@ Modes (`#! Mode=...`; the default `assert` is omitted):
                         5,R
                      EndTrace
 
-Usage: python3 test_runner.py [<name> ...]   (game running with the DevServer; tracer enabled)
+Usage: python3 test_runner.py [<dir> | <file.tas> | <name>] ...   (game running with the DevServer; tracer enabled)
+A directory replaces tests/, a .tas file runs that test from its directory, a bare name filters.
 """
 import glob
 import importlib
@@ -205,7 +206,18 @@ def run_test(name: str, body: str, mode: str, eachvars: dict) -> tuple[bool, str
 
 
 def main() -> None:
-    only = set(sys.argv[1:])  # optional filter: test_runner.py <name> [<name> ...]
+    global TESTS_DIR
+    only = set()
+    for arg in sys.argv[1:]:
+        if os.path.isdir(arg):
+            TESTS_DIR = os.path.abspath(arg)
+        elif arg.endswith(".tas"):
+            if not os.path.isfile(arg):
+                sys.exit(f"no such test: {arg}")
+            TESTS_DIR = os.path.dirname(os.path.abspath(arg))
+            only.add(os.path.splitext(os.path.basename(arg))[0])
+        else:
+            only.add(arg)
     tests = sorted(glob.glob(os.path.join(TESTS_DIR, "*.tas")))
 
     results = {}

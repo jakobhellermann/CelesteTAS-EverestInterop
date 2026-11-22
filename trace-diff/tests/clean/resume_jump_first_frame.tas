@@ -1,0 +1,10 @@
+# A jump on the first frame after the load ejects Hornet from the harpoon ring
+# resume after frame 8 of d.tas, 30 frames
+LoadSavestate, {tests}/d_frame1.json
+   8
+SaveSavestate, {scratch}.resume.json
+LoadSavestate, {scratch}.resume.json
+   1,J
+  29
+Assert, Equal, 7.997\, 117.2768, {HeroController.rb2d.position}
+***

@@ -1,0 +1,21 @@
+# A load in the middle of a downspike, from a later state of the same run, still bounces off the spikes
+# resume after frame 59 of d.tas, 30 frames, from the state at frame 88
+LoadSavestate, {tests}/d_frame1.json
+   8
+   1,J
+  38
+   1,L,D,A
+  11
+SaveSavestate, {scratch}.resume.json
+  28
+Framerate, 99
+   1
+Framerate, 100
+LoadSavestate, {scratch}.resume.json
+  28
+Framerate, 99
+   1
+Framerate, 100
+   1
+Assert, Equal, 5.397002\, 116.3125, {HeroController.rb2d.position}
+***

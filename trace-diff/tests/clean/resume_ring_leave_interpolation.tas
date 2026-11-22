@@ -1,0 +1,12 @@
+#! xfail interpolated transform off in the frames after the load
+# The interpolated hero transform matches the continuous run after a load while Hornet hangs on the harpoon ring
+# resume after frame 22 of d.tas, 1 frames
+LoadSavestate, {tests}/d_frame1.json
+   8
+   1,J
+  13
+SaveSavestate, {scratch}.resume.json
+LoadSavestate, {scratch}.resume.json
+   1
+Assert, Equal, (8.00\, 116.80\, 0.00), {HeroController.transform.position}
+***

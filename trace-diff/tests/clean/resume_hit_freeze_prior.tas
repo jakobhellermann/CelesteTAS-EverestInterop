@@ -1,0 +1,22 @@
+# A load from a later state of the same run doesn't start a hit freeze (GameManager.FreezeMoment) on its first frame
+# resume after frame 122 of d.tas, 30 frames, from the state at frame 151
+LoadSavestate, {tests}/d_frame1.json
+   8
+   1,J
+  38
+   1,L,D,A
+  39
+Framerate, 99
+   1
+Framerate, 100
+  34
+SaveSavestate, {scratch}.resume.json
+  17
+   1,A
+  11
+LoadSavestate, {scratch}.resume.json
+  17
+   1,A
+  12
+Assert, Equal, 5.772001\, 110.9365, {HeroController.rb2d.position}
+***

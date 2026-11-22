@@ -384,7 +384,7 @@ fn diff_value(path: &str, a: &Value, b: &Value, ignore: &[String], out: &mut Vec
         // surface field-wise.
         (Value::Array(aa), Value::Array(ab)) => diff_array_lcs(path, aa, ab, ignore, out),
         (Value::String(sa), Value::String(sb)) if sa.contains('\n') || sb.contains('\n') => {
-            diff_multiline(path, sa, sb, out);
+            diff_multiline(path, sa, sb, ignore, out);
         }
         _ => out.push(Diff {
             path: path.to_string(),
@@ -479,9 +479,10 @@ fn line_key(line: &str) -> String {
 /// inserted or removed line then shows as a single entry instead of cascading every following line as a spurious
 /// positional diff (the previous naive line-by-index comparison did the latter — one enemy drifting a few units
 /// misaligned the whole block). Matched lines whose content differs surface as one labelled A/B change.
-fn diff_multiline(path: &str, sa: &str, sb: &str, out: &mut Vec<Diff>) {
-    let la: Vec<&str> = sa.split('\n').collect();
-    let lb: Vec<&str> = sb.split('\n').collect();
+fn diff_multiline(path: &str, sa: &str, sb: &str, ignore: &[String], out: &mut Vec<Diff>) {
+    let kept = |l: &&str| !ignore.iter().any(|ig| *ig == line_key(l));
+    let la: Vec<&str> = sa.split('\n').filter(kept).collect();
+    let lb: Vec<&str> = sb.split('\n').filter(kept).collect();
     let ka: Vec<String> = la.iter().map(|l| line_key(l)).collect();
     let kb: Vec<String> = lb.iter().map(|l| line_key(l)).collect();
     let (n, m) = (la.len(), lb.len());

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Drive a TAS run headless through breakpoint pauses to completion, print the trace path.
 
-Usage: tas_run.py <abs .tas path>
+Usage: tas_run.py <abs .tas path> [--eval-at-pause <file.cs>]
+--eval-at-pause runs the C# file through /devutils/eval-cs at every breakpoint pause before continuing.
 Relies on the DevServer routes /tastools/{run,continue,state,stop} (DevServer must be pumped
 from its PlayerLoop system so /continue is deliverable while a TAS is paused at a breakpoint).
 """
@@ -35,7 +36,7 @@ def frame_of(resp):
     return resp.get("currentFrame") if isinstance(s, str) else (s or {}).get("currentFrame")
 
 
-def run(path, quiet=False):
+def run(path, quiet=False, at_pause=None):
     """Drive a TAS to completion and return the outcome as a dict: {ok, trace, error, completed, state}.
 
     `ok` is True only if the run reached completion without an abort — an assert failure (or a failed savestate
@@ -56,6 +57,8 @@ def run(path, quiet=False):
     while (not resp.get("error") and not resp.get("abort") and not resp.get("completed")
            and state_of(resp) == "Paused" and guard < 60):
         guard += 1
+        if at_pause:
+            at_pause(frame_of(resp))
         resp = call("/continue", timeout=120)
         last_trace = resp.get("tracePath") or last_trace
         log(f"  continue {guard}: {state_of(resp)} frame={frame_of(resp)} complete={resp.get('completed')} err={resp.get('error','')}")
@@ -75,8 +78,27 @@ def run(path, quiet=False):
     return outcome
 
 
+def eval_cs(source):
+    """The eval-cs response; a compile error or exception comes back as its JSON body ({error, messages, ...})."""
+    req = urllib.request.Request("http://localhost:8200/devutils/eval-cs", data=source.encode(), method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        return json.loads(e.read())
+
+
 if __name__ == "__main__":
-    result = run(sys.argv[1])
+    at_pause = None
+    if "--eval-at-pause" in sys.argv:
+        source = open(sys.argv[sys.argv.index("--eval-at-pause") + 1]).read()
+
+        def at_pause(frame):
+            result = eval_cs(source)
+            if result.get("error") or result.get("referenceErrors"):
+                raise RuntimeError(f"eval-cs at frame {frame} failed: {result}")
+            print(f"  eval at frame {frame}: {result.get('result')}")
+    result = run(sys.argv[1], at_pause=at_pause)
     # Trace path on its own line (stable for callers that grep it); explicit verdict + exit code so a failed
     # run (aborted assert) is never mistaken for a pass.
     print(result["trace"] or "")
