@@ -32,9 +32,11 @@ if [ -z "$output" ]; then
     echo "build output names no dll" >&2
     exit 1
 fi
-# An up-to-date build doesn't rewrite the dll, so nothing gets deployed and no reload will come
-if [ ! "$output" -nt "$marker" ]; then
-    echo "$(basename "$output") is up to date, nothing to reload"
+# The build copies the dll into BepInEx even when its output was already up to date (e.g. after a build with another
+# SilksongPluginsFolder), so whether a reload comes depends on the deployed copy
+bepinex=$HOME/.config/gust/hollow-knight-silksong/default/BepInEx
+if [ -z "$(find "$bepinex/plugins" "$bepinex/scripts" -name "$(basename "$output")" -cnewer "$marker" 2>/dev/null)" ]; then
+    echo "$(basename "$output") wasn't deployed, nothing to reload"
     exit 0
 fi
 
