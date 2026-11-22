@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using HarmonyLib;
-using TAS.Communication;
 using TAS.Utils;
 using UnityEngine;
 
@@ -240,7 +239,7 @@ internal static class CoroutineTracker {
     /// A readable label for a coroutine's enumerator, e.g. "HeroController.EnterHeroSubFadeUp". Compiler-generated
     /// iterators are named "OwnerType+<Method>d__N"; hand-written IEnumerator classes fall back to their type name.
     internal static string LabelFor(IEnumerator inner) {
-        var type = inner.GetType();
+        var type = ResumedCoroutines.Inner(inner).GetType();
         var match = GeneratedName.Match(type.Name);
         if (match.Success && type.DeclaringType is { } declaring) {
             return $"{declaring.Name}.{match.Groups[1].Value}";
@@ -248,6 +247,36 @@ internal static class CoroutineTracker {
 
         return type.Name;
     }
+}
+
+/// A coroutine PreciseSavestates restored from a savestate runs as a ResumedCoroutine around the original iterator
+internal static class ResumedCoroutines {
+    private const string TypeName = "PreciseSavestates.Savestates.Game.ResumedCoroutine";
+
+    private record Accessors(PropertyInfo Inner, PropertyInfo StartFrame, PropertyInfo Wait, PropertyInfo InFirstYield);
+
+    // per type, since every hot reload of PreciseSavestates brings its own ResumedCoroutine
+    private static readonly Dictionary<Type, Accessors?> accessors = new();
+
+    private static Accessors? Of(IEnumerator routine) {
+        var type = routine.GetType();
+        if (!accessors.TryGetValue(type, out var found)) {
+            accessors[type] = found = type.FullName != TypeName ? null : new Accessors(
+                type.GetProperty("Inner") ?? throw new MissingMemberException(TypeName, "Inner"),
+                type.GetProperty("StartFrame") ?? throw new MissingMemberException(TypeName, "StartFrame"),
+                type.GetProperty("Wait") ?? throw new MissingMemberException(TypeName, "Wait"),
+                type.GetProperty("InFirstYield") ?? throw new MissingMemberException(TypeName, "InFirstYield"));
+        }
+        return found;
+    }
+
+    public static bool Is(IEnumerator routine) => Of(routine) != null;
+
+    public static IEnumerator Inner(IEnumerator routine) => Of(routine) is { } a ? (IEnumerator)a.Inner.GetValue(routine) : routine;
+    public static int? StartFrame(IEnumerator routine) => Of(routine) is { } a ? (int?)a.StartFrame.GetValue(routine) : null;
+    /// The original WaitForSeconds while the first yield waits the rest of it
+    public static float? FirstWait(IEnumerator routine) =>
+        Of(routine) is { } a && (bool)a.InFirstYield.GetValue(routine) ? (float)a.Wait.GetValue(routine) : null;
 }
 
 internal sealed class TrackedRoutine(IEnumerator inner, string label, string owner, MonoBehaviour? ownerBehaviour)
@@ -274,20 +303,26 @@ internal sealed class TrackedRoutine(IEnumerator inner, string label, string own
 
     private bool registered;
     private bool done;
-    private int? startFrame;
+    /// Time.frameCount, which a savestate load restores, so the age of a coroutine reads the same after a resume
+    private int startFrame;
 
     /// Label plus the current suspension point: the generated iterator's <c>&lt;&gt;1__state</c> (which yield it is
     /// parked at) and what it is waiting on (WaitForSeconds' duration etc.) — so the display shows how far along and
     /// on what a coroutine is blocked.
     internal string Describe() {
+        var shown = ResumedCoroutines.Inner(inner);
         var desc = $"{Label} [{owner}]";
-        if (CoroutineTracker.StateField(inner.GetType())?.GetValue(inner) is int state) {
+        if (CoroutineTracker.StateField(shown.GetType())?.GetValue(shown) is int state) {
             desc += $"@s{state}";
         }
-        if (startFrame is { } frame) {
-            desc += $" since f{frame}";
+        // a savestate from before PreciseSavestates stored the start frame has none
+        if ((ResumedCoroutines.Is(inner) ? ResumedCoroutines.StartFrame(inner) : startFrame) is { } start) {
+            desc += $" for {Time.frameCount - start}f";
         }
 
+        if (ResumedCoroutines.FirstWait(inner) is { } firstWait) {
+            return desc + $" wait {firstWait:0.##}s";
+        }
         switch (inner.Current) {
             case WaitForSeconds wait:
                 desc += $" wait {wait.GetFieldValue<float>("m_Seconds"):0.##}s";
@@ -307,9 +342,7 @@ internal sealed class TrackedRoutine(IEnumerator inner, string label, string own
 
         if (!registered) {
             registered = true;
-            if (Manager.Running) {
-                startFrame = Manager.Controller.CurrentFrameInTas;
-            }
+            startFrame = Time.frameCount;
             CoroutineTracker.Register(this);
         }
 
@@ -350,13 +383,10 @@ internal sealed class TrackedRoutine(IEnumerator inner, string label, string own
 
 [HarmonyPatch]
 internal static class CoroutineTrackerPatch {
-    // Wrap coroutines whenever Studio is attached, so the info panel can show them live even outside a run. Gating on
-    // the editor connection (rather than always) keeps the overhead off normal play, and keeps the tracked set — and
-    // thus the traced Info string — empty during headless runs that have no Studio.
     [HarmonyPrefix]
     [HarmonyPatch(typeof(MonoBehaviour), nameof(MonoBehaviour.StartCoroutine), typeof(IEnumerator))]
     private static void StartCoroutine(MonoBehaviour __instance, ref IEnumerator routine) {
-        if (!CommunicationWrapper.Connected || routine is TrackedRoutine) {
+        if (routine is TrackedRoutine) {
             return;
         }
 
