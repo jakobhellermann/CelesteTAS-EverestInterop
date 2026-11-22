@@ -161,6 +161,7 @@ public class TasMod : BaseUnityPlugin {
     }
 
     private void EarlyUpdate() {
+        DeterministicTimePatch.RecordFrameEngineTime();
         if (Manager.CurrState is Manager.State.Running or Manager.State.FrameAdvance) {
             AttributeUtils.Invoke<BeforeActiveTasFrame>();
         }

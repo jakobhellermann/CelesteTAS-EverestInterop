@@ -82,6 +82,7 @@ internal static class GameTrace {
         }
 
         data.Add("FrameCount", Time.frameCount);
+        data.Add("TftTicks", DeterministicTimePatch.TftTicks);
 
         // The game's own scene-transition state (distinct from the TAS load gate). Reveals how many frames the game
         // spends in a transition and on which frame it reaches PLAYING — the variable async-load window shows here.

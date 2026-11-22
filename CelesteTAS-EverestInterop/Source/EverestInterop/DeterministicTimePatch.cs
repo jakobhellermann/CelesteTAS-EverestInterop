@@ -1,3 +1,4 @@
+using System;
 using HarmonyLib;
 using TAS.Utils;
 using UnityEngine;
@@ -36,18 +37,36 @@ public static class DeterministicTimePatch {
         timeInTas = null;
     }
 
-    /// The engine's own scaled time, which the TAS clock replaces
-    public static double EngineTime {
-        get {
-            var time = timeInTas;
-            timeInTas = null;
-            try {
-                return Time.timeAsDouble;
-            } finally {
-                timeInTas = time;
-            }
+    private static bool readEngine;
+
+    private static T Engine<T>(Func<T> get) {
+        readEngine = true;
+        try {
+            return get();
+        } finally {
+            readEngine = false;
         }
     }
+
+    /// The engine's own scaled time, which the TAS clock replaces
+    public static double EngineTime => Engine(() => Time.timeAsDouble);
+
+    /// Engine time of the current frame, as read outside FixedUpdate (inside, Unity's time returns the step's fixedTime)
+    private static double frameEngineTime;
+
+    /// Unity keeps time, fixedTime and captureDeltaTime in whole ticks of this many per second
+    public const double TicksPerSecond = 141120000;
+
+    public static long ToTicks(double seconds) => (long) Math.Round(seconds * TicksPerSecond);
+
+    /// Engine time since the last FixedUpdate step (T - FT), which decides the frames that step physics and Unity's
+    /// Rigidbody2D interpolation
+    public static long TftTicks => ToTicks((Time.inFixedTimeStep ? frameEngineTime : EngineTime) - Engine(() => Time.fixedTimeAsDouble));
+
+    public static void RecordFrameEngineTime() => frameEngineTime = EngineTime;
+
+    // Each FixedUpdate step sees its own fixedTime and, as in the engine, time == fixedTime
+    private static double TasFixedTime(float tasTime) => tasTime - TftTicks / TicksPerSecond;
 
     // Re-base the clock onto a loaded savestate's capture time, else its absolute-time/-frame state is stale.
     public static void RebaseClock(float time, int frameCount) {
@@ -113,9 +132,27 @@ public static class DeterministicTimePatch {
     [HarmonyPatch(typeof(Time), nameof(Time.time), MethodType.Getter)]
     [HarmonyPrefix]
     private static bool GetTime(ref float __result) {
-        if (timeInTas is not { } time) return true;
+        if (readEngine || timeInTas is not { } time) return true;
 
-        __result = time;
+        __result = Time.inFixedTimeStep ? (float) TasFixedTime(time) : time;
+        return false;
+    }
+
+    [HarmonyPatch(typeof(Time), nameof(Time.fixedTime), MethodType.Getter)]
+    [HarmonyPrefix]
+    private static bool GetFixedTime(ref float __result) {
+        if (readEngine || timeInTas is not { } time) return true;
+
+        __result = (float) TasFixedTime(time);
+        return false;
+    }
+
+    [HarmonyPatch(typeof(Time), nameof(Time.fixedTimeAsDouble), MethodType.Getter)]
+    [HarmonyPrefix]
+    private static bool GetFixedTimeAsDouble(ref double __result) {
+        if (readEngine || timeInTas is not { } time) return true;
+
+        __result = TasFixedTime(time);
         return false;
     }
 
@@ -156,9 +193,9 @@ public static class DeterministicTimePatch {
     [HarmonyPatch(typeof(Time), nameof(Time.timeAsDouble), MethodType.Getter)]
     [HarmonyPrefix]
     private static bool GetTimeAsDouble(ref double __result) {
-        if (timeInTas is not { } time) return true;
+        if (readEngine || timeInTas is not { } time) return true;
 
-        __result = time;
+        __result = Time.inFixedTimeStep ? TasFixedTime(time) : time;
         return false;
     }
 
