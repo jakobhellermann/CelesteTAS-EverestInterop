@@ -129,6 +129,7 @@ public static class TargetQuery {
         // Before CollectionQueryHandler, which rejects indices on types it can't index
         new FsmVariableQueryHandler(),
         new CollectionQueryHandler(),
+        new UnityVectorQueryHandler(),
     ];
 
     private static Dictionary<string, HashSet<Type>> CollectAllTypes() {

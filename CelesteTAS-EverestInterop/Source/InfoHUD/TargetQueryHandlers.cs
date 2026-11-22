@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using TAS.Utils;
 using UnityEngine;
@@ -328,3 +329,26 @@ internal class CollectionQueryHandler : TargetQuery.Handler {
     }
 }
 
+
+/// Unity vectors from one argument per component, e.g. `Set, HeroController.rb2d.linearVelocity, 0, -21`
+internal class UnityVectorQueryHandler : TargetQuery.Handler {
+    public override bool CanResolveValue(Type type) => type == typeof(Vector2) || type == typeof(Vector3);
+
+    public override Result<bool, TargetQuery.QueryError> ResolveValue(Type targetType, ref int argIdx, string[] valueArgs, out object? value) {
+        value = null;
+        var count = targetType == typeof(Vector2) ? 2 : 3;
+        var components = new float[count];
+        for (int i = 0; i < count; i++) {
+            if (argIdx + i >= valueArgs.Length) {
+                return Result<bool, TargetQuery.QueryError>.Fail(new TargetQuery.QueryError.Custom($"{targetType.Name} needs {count} arguments"));
+            }
+            if (!float.TryParse(valueArgs[argIdx + i], NumberStyles.Float, CultureInfo.InvariantCulture, out components[i])) {
+                return Result<bool, TargetQuery.QueryError>.Ok(false);
+            }
+        }
+
+        value = count == 2 ? new Vector2(components[0], components[1]) : new Vector3(components[0], components[1], components[2]);
+        argIdx += count - 1;
+        return Result<bool, TargetQuery.QueryError>.Ok(true);
+    }
+}
