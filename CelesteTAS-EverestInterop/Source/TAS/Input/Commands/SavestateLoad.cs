@@ -100,10 +100,9 @@ internal static class SavestateLoad {
         // Restore is applied at this frame boundary, so drop the gate now (no deferred loading frame) — the next
         // frame plays live on the restored state, symmetric with a continuous run.
         TasLoad.EndNow();
-        // Lift the load-freeze here (frame end) rather than a frame later via DeterministicTimePatch's edge, so the
-        // next frame's FirstUpdate physics runs live instead of frozen. Clearing the override restores the game's timeScale,
-        // not a hardcoded value.
-        DeterministicTimePatch.OverwriteTimeScale = null;
+        // Lift the load-freeze here (frame end) rather than a frame later, so the next frame's FirstUpdate physics runs
+        // live instead of frozen
+        DeterministicTimePatch.EndLoadFreeze();
     }
 
     /// Manual (non-TAS) loads must restore synchronously — nothing drives the deferred apply outside a run.

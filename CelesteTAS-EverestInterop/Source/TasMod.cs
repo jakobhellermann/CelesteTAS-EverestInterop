@@ -210,6 +210,7 @@ public class TasMod : BaseUnityPlugin {
             Manager.Update();
             InputHelper.AlignFixedStep();
             Input.Commands.SavestateLoad.ApplyPendingRestore();
+            Playback.SavestateManager.FinishPendingResume();
             Manager.TryDeferredBreakpointPause();
 
             // TODO: ensure consistent fixedupdate

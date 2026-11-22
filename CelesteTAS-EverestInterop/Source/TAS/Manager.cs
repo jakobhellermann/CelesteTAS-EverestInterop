@@ -248,6 +248,12 @@ public static class Manager {
             return;
         }
 
+        AdvanceTasFrame();
+    }
+
+    /// Advances the TAS by one frame: feeds its inputs and runs its commands, then completes the run or pauses on a
+    /// breakpoint. The game plays that frame next.
+    internal static void AdvanceTasFrame() {
         if (FrameStepBackTargetFrame > 0) {
             NextState = State.Running;
             PlaybackSpeed = FastForward.DefaultSpeed;

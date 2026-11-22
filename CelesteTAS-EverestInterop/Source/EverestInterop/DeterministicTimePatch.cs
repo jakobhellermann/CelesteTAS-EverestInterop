@@ -79,6 +79,12 @@ public static class DeterministicTimePatch {
         }
     }
 
+    /// Ends the load's timeScale freeze now instead of on the next frame, so a pause set right after keeps its own
+    public static void EndLoadFreeze() {
+        OverwriteTimeScale = null;
+        wasLoading = false;
+    }
+
     [BeforeTasFrame]
     private static void Update() {
         var loading = Input.Commands.TasLoad.IsLoading;

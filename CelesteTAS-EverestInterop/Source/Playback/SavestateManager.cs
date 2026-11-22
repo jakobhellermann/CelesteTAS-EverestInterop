@@ -58,6 +58,26 @@ internal static class SavestateManager {
     /// which its controller progress is restored (CopyProgressFrom) — see Load / Update.
     private static Savestate? pendingResume;
 
+    /// Completes a resume where its load ends, at the end of the frame the restore landed in: the next frame is the one
+    /// after the savestate's, like after any frame step, instead of an extra game frame with the last run's input
+    internal static void FinishPendingResume() {
+        if (pendingResume is not { } resume || TasLoad.IsLoading) return;
+
+        pendingResume = null;
+        var controller = Manager.Controller;
+        controller.CopyProgressFrom(resume.Controller);
+        // The Framerate command that set this ran before the saved frame, so it is skipped on resume
+        InputHelper.SetTasFramerate(resume.TasFramerate);
+        UpdateStudio();
+
+        if (controller.HasFastForward || Manager.FrameStepBackTargetFrame > controller.CurrentFrameInTas) {
+            Manager.NextState = Manager.State.Running;
+            Manager.AdvanceTasFrame();
+        } else {
+            Manager.Pause();
+        }
+    }
+
     [DisableRun]
     private static void OnDisableRun() {
         pendingResume = null;
@@ -78,24 +98,10 @@ internal static class SavestateManager {
     public static void Update() {
         var controller = Manager.Controller;
 
-        // Finish a pending async resume-load once PreciseSavestates is done (the restore lands while IsLoading is
-        // still set; CopyProgressFrom then puts the TAS controller at the saved frame, so playback resumes there).
-        if (pendingResume is { } resume) {
-            if (TasLoad.IsLoading) {
-                return; // still loading
+        if (pendingResume != null) {
+            if (!TasLoad.IsLoading) {
+                throw new InvalidOperationException("A savestate resume's load ended outside SavestateLoad.ApplyPendingRestore");
             }
-
-            controller.CopyProgressFrom(resume.Controller);
-            // The Framerate command that set this ran before the saved frame, so it is skipped on resume
-            InputHelper.SetTasFramerate(resume.TasFramerate);
-            UpdateStudio();
-            if (controller.HasFastForward || Manager.FrameStepBackTargetFrame > controller.CurrentFrameInTas) {
-                Manager.NextState = Manager.State.Running;
-            } else {
-                Manager.Pause();
-            }
-
-            pendingResume = null;
             return;
         }
 
