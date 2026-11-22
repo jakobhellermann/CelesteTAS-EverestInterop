@@ -244,13 +244,7 @@ public static class Manager {
             return;
         }
 
-        // A breakpoint that coincided with a load deferred its pause (see below) so we wouldn't strand on a
-        // still-loading frame. Loading is done now — pause on this clean frame, before AdvanceFrame moves us past
-        // the breakpoint.
-        if (pendingBreakpointPause) {
-            pendingBreakpointPause = false;
-            CompleteAtEndOfFile();
-            NextState = State.Paused;
+        if (TryDeferredBreakpointPause()) {
             return;
         }
 
@@ -329,6 +323,18 @@ public static class Manager {
                 DisableRun();
             }
         }
+    }
+
+    /// A breakpoint that coincided with a load deferred its pause (see Update) so we wouldn't strand on a still-loading
+    /// frame. Once the load is done, pause before the next frame plays, like a breakpoint without a load. A savestate
+    /// resume ends its load after Update (SavestateLoad.ApplyPendingRestore), so it checks again then.
+    public static bool TryDeferredBreakpointPause() {
+        if (!pendingBreakpointPause || GameInterop.IsLoading()) return false;
+
+        pendingBreakpointPause = false;
+        CompleteAtEndOfFile();
+        NextState = State.Paused;
+        return true;
     }
 
     /// A pause landing on end-of-file (e.g. a trailing *** breakpoint) has consumed all its inputs — the run is
