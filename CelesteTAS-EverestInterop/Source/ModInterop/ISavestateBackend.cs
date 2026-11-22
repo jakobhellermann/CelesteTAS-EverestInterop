@@ -10,7 +10,7 @@ internal interface ISavestateBackend {
     bool Save(string slot);
     bool SaveToFile(string path);
     Task<bool> Load(string slot);
-    Task<bool> LoadFromFile(string path);
+    Task<bool> LoadFromFile(string path, bool reloadScene);
     void Clear(string slot);
     bool IsSaved(string slot);
     string[] ListSlots();

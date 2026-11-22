@@ -34,7 +34,7 @@ internal class PreciseSavestatesBackend : ISavestateBackend {
 
     public Task<bool> Load(string slot) => Plugin.LoadSavestate(SlotFile(slot), Layer);
 
-    public Task<bool> LoadFromFile(string path) => Plugin.LoadSavestateFromFile(path);
+    public Task<bool> LoadFromFile(string path, bool reloadScene) => Plugin.LoadSavestateFromFile(path, reloadScene);
 
     public void Clear(string slot) => Plugin.DeleteSavestate(SlotFile(slot), Layer);
 

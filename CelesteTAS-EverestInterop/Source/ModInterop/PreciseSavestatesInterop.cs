@@ -65,7 +65,7 @@ public class PreciseSavestatesInterop {
         createSavestate = Resolve(type, "CreateSavestate", typeof(string), typeof(string), typeof(string), typeof(int));
         createSavestateToFile = Resolve(type, "CreateSavestateToFile", typeof(string), typeof(int));
         loadSavestate = Resolve(type, "LoadSavestate", typeof(string), typeof(string));
-        loadSavestateFromFile = Resolve(type, "LoadSavestateFromFile", typeof(string));
+        loadSavestateFromFile = Resolve(type, "LoadSavestateFromFile", typeof(string), typeof(bool));
         deleteSavestate = Resolve(type, "DeleteSavestate", typeof(string), typeof(string));
         hasSavestate = Resolve(type, "HasSavestate", typeof(string), typeof(string));
         listSlots = Resolve(type, "ListSlots", typeof(string));
@@ -99,8 +99,8 @@ public class PreciseSavestatesInterop {
     public Task<bool> LoadSavestate(string? slot = null, string? layer = null) =>
         (Task<bool>) loadSavestate.Invoke(interop, [slot, layer])!;
 
-    public Task<bool> LoadSavestateFromFile(string path) =>
-        (Task<bool>) loadSavestateFromFile.Invoke(interop, [path])!;
+    public Task<bool> LoadSavestateFromFile(string path, bool reloadScene) =>
+        (Task<bool>) loadSavestateFromFile.Invoke(interop, [path, reloadScene])!;
 
     public void DeleteSavestate(string? slot = null, string? layer = null) =>
         deleteSavestate.Invoke(interop, [slot, layer]);

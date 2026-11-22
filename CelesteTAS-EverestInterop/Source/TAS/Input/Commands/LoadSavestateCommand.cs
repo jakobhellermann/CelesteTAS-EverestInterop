@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using StudioCommunication;
 using TAS.ModInterop;
@@ -21,7 +22,8 @@ namespace TAS.Input.Commands;
 ///   10,R
 /// </code>
 ///
-/// Usage in a TAS file: <c>LoadSavestate, &lt;slot&gt;</c>
+/// Usage in a TAS file: <c>LoadSavestate, &lt;slot&gt;</c>, or <c>LoadSavestate, &lt;path&gt;, ReloadScene</c> to reload the
+/// scene even where the savestate could apply in place
 internal static class LoadSavestateCommand {
     private const string CommandName = "LoadSavestate";
 
@@ -49,8 +51,19 @@ internal static class LoadSavestateCommand {
         }
 
         var arg = commandLine.Arguments[0];
+        var reloadScene = false;
+        if (commandLine.Arguments.Length > 1) {
+            if (!commandLine.Arguments[1].Equals("ReloadScene", StringComparison.OrdinalIgnoreCase)) {
+                AbortTas($"{CommandName}: unknown load mode '{commandLine.Arguments[1]}', expected ReloadScene");
+                return;
+            }
+            reloadScene = true;
+        }
+
         if (SavestateLoad.IsPathArg(arg)) {
-            SavestateLoad.LoadFile(SavestateLoad.ResolvePath(arg, filePath), CommandName);
+            SavestateLoad.LoadFile(SavestateLoad.ResolvePath(arg, filePath), reloadScene, CommandName);
+        } else if (reloadScene) {
+            AbortTas($"{CommandName}: ReloadScene is only supported for savestate files");
         } else {
             SavestateLoad.Load(arg, CommandName);
         }

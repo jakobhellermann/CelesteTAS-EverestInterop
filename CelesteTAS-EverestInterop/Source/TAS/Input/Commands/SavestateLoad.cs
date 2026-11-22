@@ -27,8 +27,8 @@ internal static class SavestateLoad {
         LoadInternal(backend => backend.Load(slot), $"slot '{slot}'", commandName);
 
     /// Load from a file path (absolute, or relative to the TAS file), bypassing the slot store.
-    public static void LoadFile(string path, string commandName) =>
-        LoadInternal(backend => backend.LoadFromFile(path), $"file '{path}'", commandName);
+    public static void LoadFile(string path, bool reloadScene, string commandName) =>
+        LoadInternal(backend => backend.LoadFromFile(path, reloadScene), $"file '{path}'", commandName);
 
     /// Kick off the async savestate load. Opens the <see cref="TasLoad"/> gate immediately so the next
     /// Manager.Update pauses playback; the restore itself runs as an async continuation. <paramref name="commandName"/>

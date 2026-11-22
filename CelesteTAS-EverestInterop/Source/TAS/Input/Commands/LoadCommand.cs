@@ -247,7 +247,7 @@ public static class LoadCommand {
         UnpauseGame();
 
         var fixturePath = IdleFixturePath();
-        _ = interop.LoadSavestateFromFile(fixturePath);
+        _ = interop.LoadSavestateFromFile(fixturePath, reloadScene: false);
 
         DeterministicTimePatch.RebaseClock(interop.LastLoadedGameTime ?? 0f, interop.LastLoadedFrameCount ?? 0);
         if (JObject.Parse(File.ReadAllText(fixturePath))["PlayerData"] is { } fixturePlayerData) {
