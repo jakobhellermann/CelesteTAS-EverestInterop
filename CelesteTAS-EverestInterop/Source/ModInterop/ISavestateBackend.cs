@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace TAS.ModInterop;
 
@@ -21,6 +22,9 @@ internal interface ISavestateBackend {
     void ApplyPendingSnapshot();
 
     (float Time, int FrameCount)? LastLoadedClock { get; }
+
+    /// CelesteTAS' own state stored in the savestate being or last loaded, set as soon as Load starts
+    JToken? LastLoadedCustomData { get; }
 
     /// Shifts all live game state holding absolute timestamps by delta seconds
     void RebaseAbsoluteTimes(double delta);

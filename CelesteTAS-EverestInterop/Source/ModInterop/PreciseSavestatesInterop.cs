@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using BepInEx;
 using JetBrains.Annotations;
+using Newtonsoft.Json.Linq;
 using TAS.Utils;
 
 namespace TAS.ModInterop;
@@ -52,6 +53,8 @@ public class PreciseSavestatesInterop {
     private readonly MethodInfo applyPendingSnapshot;
     private readonly MethodInfo prepareSceneLoad;
     private readonly MethodInfo rebaseAbsoluteTimes;
+    private readonly MethodInfo setCustomDataProvider;
+    private readonly MethodInfo lastLoadedCustomData;
 
     private PreciseSavestatesInterop(BaseUnityPlugin plugin) {
         this.plugin = plugin;
@@ -74,6 +77,8 @@ public class PreciseSavestatesInterop {
         applyPendingSnapshot = Resolve(type, "ApplyPendingSnapshot");
         prepareSceneLoad = Resolve(type, "PrepareSceneLoad");
         rebaseAbsoluteTimes = Resolve(type, "RebaseAbsoluteTimes", typeof(double));
+        setCustomDataProvider = Resolve(type, "SetCustomDataProvider", typeof(string), typeof(Func<JToken>));
+        lastLoadedCustomData = Resolve(type, "LastLoadedCustomData", typeof(string));
     }
 
     private static MethodInfo Resolve(Type type, string name, params Type[] parameterTypes) =>
@@ -123,4 +128,8 @@ public class PreciseSavestatesInterop {
     public Task PrepareSceneLoad() => (Task)prepareSceneLoad.Invoke(interop, [])!;
 
     public void RebaseAbsoluteTimes(double delta) => rebaseAbsoluteTimes.Invoke(interop, [delta]);
+
+    public void SetCustomDataProvider(string key, Func<JToken> capture) => setCustomDataProvider.Invoke(interop, [key, capture]);
+
+    public JToken? LastLoadedCustomData(string key) => (JToken?) lastLoadedCustomData.Invoke(interop, [key]);
 }

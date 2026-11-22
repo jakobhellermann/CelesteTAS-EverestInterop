@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace TAS.ModInterop;
 
@@ -7,6 +8,7 @@ internal class PreciseSavestatesBackend : ISavestateBackend {
     private static void Register() => SpeedrunToolInterop.Backend = new PreciseSavestatesBackend();
 
     private const string Layer = "CelesteTAS";
+    private const string CustomDataKey = "CelesteTAS";
 
     private static PreciseSavestatesInterop Plugin => PreciseSavestatesInterop.Instance ?? throw new System.InvalidOperationException("PreciseSavestates not loaded");
 
@@ -21,10 +23,14 @@ internal class PreciseSavestatesBackend : ISavestateBackend {
     public bool Save(string slot) {
         var s = SlotFile(slot);
         Tracer.TasTracer.TraceEvent($"Savestate save: {s}");
+        Plugin.SetCustomDataProvider(CustomDataKey, InputHelper.CaptureFixedStep);
         return Plugin.CreateSavestate(s, s, Layer);
     }
 
-    public bool SaveToFile(string path) => Plugin.CreateSavestateToFile(path);
+    public bool SaveToFile(string path) {
+        Plugin.SetCustomDataProvider(CustomDataKey, InputHelper.CaptureFixedStep);
+        return Plugin.CreateSavestateToFile(path);
+    }
 
     public Task<bool> Load(string slot) => Plugin.LoadSavestate(SlotFile(slot), Layer);
 
@@ -48,4 +54,6 @@ internal class PreciseSavestatesBackend : ISavestateBackend {
 
     public (float Time, int FrameCount)? LastLoadedClock =>
         Plugin.LastLoadedGameTime is { } time ? (time, Plugin.LastLoadedFrameCount ?? 0) : null;
+
+    public JToken? LastLoadedCustomData => Plugin.LastLoadedCustomData(CustomDataKey);
 }

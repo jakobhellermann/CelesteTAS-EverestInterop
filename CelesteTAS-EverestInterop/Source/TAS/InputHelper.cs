@@ -1,4 +1,5 @@
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
 using StudioCommunication;
 using System;
 using System.Collections.Generic;
@@ -75,6 +76,8 @@ public static class InputHelper {
 
         alignFixedStep = false;
         restoreCaptureFramerate = false;
+        alignmentTarget = null;
+        alignmentTargetToCheck = null;
     }
 
     private static bool alignFixedStep;
@@ -86,6 +89,20 @@ public static class InputHelper {
 
     public static bool FixedStepAlignmentPending => alignFixedStep || restoreCaptureFramerate;
 
+    /// FixedUpdate phase (engine time since the last fixed step) for the next alignment, instead of the run start's
+    private static double? alignmentTarget;
+    private static double? alignmentTargetToCheck;
+
+    public static JToken CaptureFixedStep() => new JObject {
+        ["FixedStepPhase"] = DeterministicTimePatch.EngineTime - Time.fixedTimeAsDouble,
+        ["FixedDeltaTime"] = Time.fixedDeltaTime,
+    };
+
+    public static void RestoreFixedStep(JToken data) {
+        Time.fixedDeltaTime = (float) (data["FixedDeltaTime"] ?? throw new InvalidOperationException("savestate CelesteTAS data has no FixedDeltaTime"));
+        alignmentTarget = (double) (data["FixedStepPhase"] ?? throw new InvalidOperationException("savestate CelesteTAS data has no FixedStepPhase"));
+    }
+
     /// The FixedUpdate phase is left over from what ran before, so one frame gets the length that leaves the next
     /// step boundary an irrational fraction of a TAS frame ahead: the frame after steps physics, and no integer
     /// framerate lands exactly on a boundary, where float rounding of this frame would decide (Unity compares
@@ -93,6 +110,14 @@ public static class InputHelper {
     public static void AlignFixedStep() {
         if (restoreCaptureFramerate) {
             restoreCaptureFramerate = false;
+            // captureDeltaTime is a float, so the phase lands within its rounding of the target
+            if (alignmentTargetToCheck is { } expected) {
+                alignmentTargetToCheck = null;
+                var reached = DeterministicTimePatch.EngineTime - Time.fixedTimeAsDouble;
+                if (Math.Abs(reached - expected) > 1e-6) {
+                    throw new InvalidOperationException($"FixedUpdate alignment reached phase {reached:R} instead of the savestate's {expected:R}");
+                }
+            }
             Time.captureFramerate = CurrentTasFramerate;
             // A load that started meanwhile has already replaced the override
             if (DeterministicTimePatch.OverwriteTimeScale == 1) {
@@ -104,7 +129,9 @@ public static class InputHelper {
 
         double step = Time.fixedDeltaTime;
         var phase = DeterministicTimePatch.EngineTime - Time.fixedTimeAsDouble;
-        var target = step - (Math.Sqrt(2) - 1) / CurrentTasFramerate % step;
+        var target = alignmentTarget ?? step - (Math.Sqrt(2) - 1) / CurrentTasFramerate % step;
+        alignmentTargetToCheck = alignmentTarget;
+        alignmentTarget = null;
         Time.captureDeltaTime = (float)(step - phase + target);
         // e.g. a load during the death freeze
         timeScaleBeforeAlignment = DeterministicTimePatch.OverwriteTimeScale;

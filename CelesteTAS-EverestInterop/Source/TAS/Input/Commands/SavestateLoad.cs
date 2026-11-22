@@ -46,7 +46,12 @@ internal static class SavestateLoad {
         backend.DeferSnapshotRestore = true;
         TasLoad.Begin();
         try {
-            if (!await load(backend)) {
+            var loading = load(backend);
+            if (backend.LastLoadedCustomData is { } data) {
+                InputHelper.RestoreFixedStep(data);
+            }
+
+            if (!await loading) {
                 // The load failed (missing savestate, or an inner exception PreciseSavestates caught and toasted —
                 // e.g. "Can't load savestate in state EXITING_LEVEL"). A TAS whose savestate didn't load can't
                 // continue meaningfully, and silently completing would let a broken run pass a test. Abort so it
