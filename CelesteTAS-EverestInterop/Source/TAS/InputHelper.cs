@@ -66,6 +66,15 @@ public static class InputHelper {
         RequestFixedStepAlignment();
     }
 
+    // Vsync caps playback at the refresh rate; mods turn it back on (FastGameLoad after every scene load)
+    [BeforeActiveTasFrame]
+    private static void KeepVsyncOff() {
+        if (QualitySettings.vSyncCount == 0) return;
+
+        $"Turning vsync off again, something set vSyncCount to {QualitySettings.vSyncCount} during the TAS".Log();
+        QualitySettings.vSyncCount = 0;
+    }
+
     [DisableRun]
     private static void DisableRun() {
         if (savedFramerateTimeConfig is null) {
