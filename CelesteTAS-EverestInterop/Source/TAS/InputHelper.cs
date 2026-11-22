@@ -86,6 +86,7 @@ public static class InputHelper {
         alignFixedStep = false;
         restoreCaptureFramerate = false;
         alignmentTargetTicks = null;
+        heldFeed = null;
     }
 
     private static bool alignFixedStep;
@@ -144,11 +145,27 @@ public static class InputHelper {
 
     private static InputFrame? currentFeed;
 
+    /// The input of the frame whose commands started a load. The load's frames aren't TAS frames, so the game keeps
+    /// the previous input until the load ends; otherwise a press on the first frame after a load is already held then
+    private static InputFrame? heldFeed;
+
     public static void FeedInputs(InputFrame inputFrame) {
+        if (Input.Commands.TasLoad.IsLoading) {
+            heldFeed = inputFrame;
+            return;
+        }
+
         currentFeed = inputFrame;
 #if UNITY_NEW_INPUT_SYSTEM
         NewInputSystemInjector.FeedFrame(inputFrame);
 #endif
+    }
+
+    public static void FeedHeldInputs() {
+        if (heldFeed is not { } held) return;
+
+        heldFeed = null;
+        FeedInputs(held);
     }
 
     private record FramerateTimeConfig(

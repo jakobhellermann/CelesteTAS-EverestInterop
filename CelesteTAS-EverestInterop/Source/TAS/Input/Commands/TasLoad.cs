@@ -32,6 +32,7 @@ internal static class TasLoad {
     public static void EndNow() {
         finishLoadPending = false;
         IsLoading = false;
+        InputHelper.FeedHeldInputs();
     }
 
     [BeforeTasFrame]
@@ -39,6 +40,7 @@ internal static class TasLoad {
         if (finishLoadPending) {
             finishLoadPending = false;
             IsLoading = false;
+            InputHelper.FeedHeldInputs();
         }
     }
 
