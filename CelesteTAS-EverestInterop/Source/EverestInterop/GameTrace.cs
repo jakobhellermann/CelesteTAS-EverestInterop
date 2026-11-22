@@ -61,6 +61,8 @@ internal static class GameTrace {
         ("heroState", () => HeroController.UnsafeInstance?.hero_state),
         ("vel", () => HeroController.UnsafeInstance?.GetFieldValue<Rigidbody2D>("rb2d")?.linearVelocity),
         ("pos", () => HeroController.UnsafeInstance?.transform.position),*/
+        ("tf", () => HeroController.UnsafeInstance?.transform.position.y),
+        ("rb", () => HeroController.UnsafeInstance?.GetFieldValue<Rigidbody2D>("rb2d")?.position.y),
     ];
     internal static readonly (string Name, Func<object?> Get)[] TraceVarsThroughFramePausedVars = TraceVarsThroughFrameVars;
 
