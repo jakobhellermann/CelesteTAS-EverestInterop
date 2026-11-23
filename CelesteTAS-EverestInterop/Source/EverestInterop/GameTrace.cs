@@ -474,6 +474,9 @@ internal static class GameTrace {
     private static readonly Type traceAllType = typeof(HeroController);
     private static readonly HashSet<string> Unpatchable = ["DownAttack", "CheckForBump"]; // crashes UnpatchSelf
     private static readonly HashSet<string> TracedSeparately = ["SetState"];
+    // State reads flood every stage from other components polling the hero (dozens of get_instance /
+    // IsInputBlocked roots per frame), drowning the state-changing calls the call tree is for.
+    private static readonly HashSet<string> TraceAllNoise = ["IsInputBlocked", "IsPaused", "CanInteract"];
 
     [Initialize]
     private static void InitializeTraceAll() {
@@ -498,7 +501,9 @@ internal static class GameTrace {
                                       && !method.ContainsGenericParameters
                                       && method.GetMethodBody() != null
                                       && !Unpatchable.Contains(method.Name)
-                                      && !TracedSeparately.Contains(method.Name))) {
+                                      && !TracedSeparately.Contains(method.Name)
+                                      && !(method.Name.StartsWith("get_") && method.GetParameters().Length == 0)
+                                      && !TraceAllNoise.Contains(method.Name))) {
             try {
                 traceAllHarmony.Patch(method, prefix: prefix, finalizer: finalizer);
             } catch (Exception e) {
